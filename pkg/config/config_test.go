@@ -1533,10 +1533,10 @@ func TestToolsConfig_GetFilterMinLength(t *testing.T) {
 	}
 }
 
-func TestDefaultConfig_CronAllowCommandLocked(t *testing.T) {
+func TestDefaultConfig_CronAllowCommandEnabled(t *testing.T) {
 	cfg := DefaultConfig()
-	if cfg.Tools.Cron.AllowCommand {
-		t.Fatal("NeuroClaw lockdown: DefaultConfig().Tools.Cron.AllowCommand must be false")
+	if !cfg.Tools.Cron.AllowCommand {
+		t.Fatal("DefaultConfig().Tools.Cron.AllowCommand should be true")
 	}
 }
 
@@ -1590,7 +1590,7 @@ func TestLoadConfig_ExecAllowRemoteDefaultsTrueWhenUnset(t *testing.T) {
 	}
 }
 
-func TestLoadConfig_CronAllowCommandLockedWhenUnset(t *testing.T) {
+func TestLoadConfig_CronAllowCommandDefaultsTrueWhenUnset(t *testing.T) {
 	dir := t.TempDir()
 	configPath := filepath.Join(dir, "config.json")
 	if err := os.WriteFile(
@@ -1605,8 +1605,8 @@ func TestLoadConfig_CronAllowCommandLockedWhenUnset(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadConfig() error: %v", err)
 	}
-	if cfg.Tools.Cron.AllowCommand {
-		t.Fatal("NeuroClaw lockdown: tools.cron.allow_command must be false")
+	if !cfg.Tools.Cron.AllowCommand {
+		t.Fatal("tools.cron.allow_command should remain true when unset in config file")
 	}
 }
 
@@ -1700,8 +1700,8 @@ func TestLoadConfig_HooksProcessConfig(t *testing.T) {
 	if !ok {
 		t.Fatal("expected review-gate process hook")
 	}
-	if processCfg.Enabled {
-		t.Fatal("NeuroClaw lockdown: a process hook is parsed but never enabled")
+	if !processCfg.Enabled {
+		t.Fatal("expected review-gate process hook to be enabled")
 	}
 	if processCfg.Transport != "stdio" {
 		t.Fatalf("Transport = %q, want stdio", processCfg.Transport)

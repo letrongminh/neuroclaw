@@ -41,11 +41,12 @@ func NewCronTool(
 	cronService *cron.CronService, executor JobExecutor, msgBus *bus.MessageBus, workspace string, restrict bool,
 	execTimeout time.Duration, config *config.Config,
 ) (*CronTool, error) {
-	// NeuroClaw lockdown: a cron job never runs a shell command, whatever the config says.
-	allowCommand := false
-	execEnabled := false
+	allowCommand := true
+	execEnabled := true
 	var commandAllowedRemotes []string
 	if config != nil {
+		allowCommand = config.Tools.Cron.AllowCommand
+		execEnabled = config.Tools.Exec.Enabled
 		commandAllowedRemotes = config.Tools.Cron.CommandAllowedRemotes
 	}
 

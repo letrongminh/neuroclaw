@@ -200,7 +200,7 @@ else
 endif
 	@echo "Run generate complete"
 
-## build: Build the picoclaw binary for current platform
+## build: Build the neuroclaw binary for current platform
 build: generate
 	@echo "Building $(BINARY_NAME)$(EXT) for $(PLATFORM)/$(ARCH)..."
 ifeq ($(OS),Windows_NT)
@@ -215,23 +215,23 @@ else
 endif
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)$(EXT)"
 
-## build-launcher: Build the picoclaw-launcher (web console) binary
+## build-launcher: Build the neuroclaw-launcher (web console) binary
 build-launcher:
-	@echo "Building picoclaw-launcher for $(PLATFORM)/$(ARCH)..."
+	@echo "Building neuroclaw-launcher for $(PLATFORM)/$(ARCH)..."
 ifeq ($(OS),Windows_NT)
 	@$(POWERSHELL) "New-Item -ItemType Directory -Force -Path '$(BUILD_DIR)' | Out-Null"
-	@$(MAKE) -C web build PLATFORM="$(PLATFORM)" ARCH="$(ARCH)" EXT="$(EXT)" OUTPUT="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT)" GO_BUILD_TAGS="$(GO_BUILD_TAGS)"
-	@$(POWERSHELL) "Copy-Item -LiteralPath '$(BUILD_DIR)/picoclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT)' -Destination '$(BUILD_DIR)/picoclaw-launcher$(EXT)' -Force"
+	@$(MAKE) -C web build PLATFORM="$(PLATFORM)" ARCH="$(ARCH)" EXT="$(EXT)" OUTPUT="$(CURDIR)/$(BUILD_DIR)/neuroclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT)" GO_BUILD_TAGS="$(GO_BUILD_TAGS)"
+	@$(POWERSHELL) "Copy-Item -LiteralPath '$(BUILD_DIR)/neuroclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT)' -Destination '$(BUILD_DIR)/neuroclaw-launcher$(EXT)' -Force"
 else
 	@mkdir -p $(BUILD_DIR)
 	@GOOS=$(PLATFORM) GOARCH=$(ARCH) $(MAKE) -C web build \
-		OUTPUT="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT)" \
+		OUTPUT="$(CURDIR)/$(BUILD_DIR)/neuroclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT)" \
 		WEB_GO='$(WEB_GO)' \
 		GO_BUILD_TAGS='$(GO_BUILD_TAGS)' \
 		LDFLAGS='$(LDFLAGS)'
-	@$(LNCMD) picoclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT) $(BUILD_DIR)/picoclaw-launcher$(EXT)
+	@$(LNCMD) neuroclaw-launcher-$(PLATFORM)-$(ARCH)$(EXT) $(BUILD_DIR)/neuroclaw-launcher$(EXT)
 endif
-	@echo "Build complete: $(BUILD_DIR)/picoclaw-launcher$(EXT)"
+	@echo "Build complete: $(BUILD_DIR)/neuroclaw-launcher$(EXT)"
 
 build-launcher-frontend:
 	@$(MAKE) -C web build-frontend
@@ -285,13 +285,13 @@ build-android-arm64: generate
 
 ## build-launcher-android-arm64: Build launcher for Android ARM64
 build-launcher-android-arm64:
-	@echo "Building picoclaw-launcher for android/arm64..."
+	@echo "Building neuroclaw-launcher for android/arm64..."
 	@mkdir -p $(BUILD_DIR)
 	@$(MAKE) -C web build-android-arm64 \
-		OUTPUT_ANDROID_ARM64="$(CURDIR)/$(BUILD_DIR)/picoclaw-launcher-android-arm64" \
+		OUTPUT_ANDROID_ARM64="$(CURDIR)/$(BUILD_DIR)/neuroclaw-launcher-android-arm64" \
 		GO='$(GO)' \
 		LDFLAGS='$(LDFLAGS)'
-	@echo "Build complete: $(BUILD_DIR)/picoclaw-launcher-android-arm64"
+	@echo "Build complete: $(BUILD_DIR)/neuroclaw-launcher-android-arm64"
 
 ## build-android-bundle: Build core and launcher for all Android architectures and package as universal zip
 build-android-bundle: generate
@@ -303,17 +303,17 @@ build-android-bundle: generate
 	@echo "Staging JNI libs..."
 	@rm -rf $(BUILD_DIR)/android-staging
 	@mkdir -p $(BUILD_DIR)/android-staging/arm64-v8a
-	@cp $(BUILD_DIR)/$(BINARY_NAME)-android-arm64 $(BUILD_DIR)/android-staging/arm64-v8a/libpicoclaw.so
-	@cp $(BUILD_DIR)/picoclaw-launcher-android-arm64 $(BUILD_DIR)/android-staging/arm64-v8a/libpicoclaw-web.so
-	@cd $(BUILD_DIR)/android-staging && zip -r ../picoclaw-android-universal.zip .
+	@cp $(BUILD_DIR)/$(BINARY_NAME)-android-arm64 $(BUILD_DIR)/android-staging/arm64-v8a/libneuroclaw.so
+	@cp $(BUILD_DIR)/neuroclaw-launcher-android-arm64 $(BUILD_DIR)/android-staging/arm64-v8a/libneuroclaw-web.so
+	@cd $(BUILD_DIR)/android-staging && zip -r ../neuroclaw-android-universal.zip .
 	@rm -rf $(BUILD_DIR)/android-staging
-	@echo "All Android builds complete: $(BUILD_DIR)/picoclaw-android-universal.zip"
+	@echo "All Android builds complete: $(BUILD_DIR)/neuroclaw-android-universal.zip"
 
 ## build-pi-zero: Build for Raspberry Pi Zero 2 W (32-bit and 64-bit)
 build-pi-zero: build-linux-arm build-linux-arm64
 	@echo "Pi Zero 2 W builds: $(BUILD_DIR)/$(BINARY_NAME)-linux-arm (32-bit), $(BUILD_DIR)/$(BINARY_NAME)-linux-arm64 (64-bit)"
 
-## build-all: Build the picoclaw core binary for all Makefile-managed platforms
+## build-all: Build the neuroclaw core binary for all Makefile-managed platforms
 build-all: generate
 	@echo "Building for multiple platforms..."
 	@mkdir -p $(BUILD_DIR)
@@ -332,7 +332,7 @@ build-all: generate
 	GOOS=netbsd GOARCH=arm64 $(GO) build $(GOFLAGS) -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY_NAME)-netbsd-arm64 ./$(CMD_DIR)
 	@echo "Core builds complete"
 
-## install: Install picoclaw to system and copy builtin skills
+## install: Install neuroclaw to system and copy builtin skills
 install: build
 	@echo "Installing $(BINARY_NAME)..."
 	@mkdir -p $(INSTALL_BIN_DIR)
@@ -343,7 +343,7 @@ install: build
 	@echo "Installed binary to $(INSTALL_BIN_DIR)/$(BINARY_NAME)"
 	@echo "Installation complete!"
 
-## uninstall: Remove picoclaw from system
+## uninstall: Remove neuroclaw from system
 uninstall:
 	@echo "Uninstalling $(BINARY_NAME)..."
 	@rm -f $(INSTALL_BIN_DIR)/$(BINARY_NAME)
@@ -351,7 +351,7 @@ uninstall:
 	@echo "Note: Only the executable file has been deleted."
 	@echo "If you need to delete all configurations (config.json, workspace, etc.), run 'make uninstall-all'"
 
-## uninstall-all: Remove picoclaw and all data
+## uninstall-all: Remove neuroclaw and all data
 uninstall-all:
 	@echo "Removing workspace and skills..."
 	@rm -rf $(NEUROCLAW_HOME)
@@ -413,19 +413,19 @@ update-deps:
 ## check: Run deps, fmt, vet, tests, and docs consistency checks
 check: deps fmt vet test lint-docs
 
-## run: Build and run picoclaw
+## run: Build and run neuroclaw
 run: build
 	@$(BUILD_DIR)/$(BINARY_NAME) $(ARGS)
 
 ## docker-build: Build Docker image (minimal Alpine-based)
 docker-build:
 	@echo "Building minimal Docker image (Alpine-based)..."
-	docker compose -f docker/docker-compose.yml build picoclaw-agent picoclaw-gateway
+	docker compose -f docker/docker-compose.yml build neuroclaw-agent neuroclaw-gateway
 
 ## docker-build-full: Build Docker image with full MCP support (Node.js 24)
 docker-build-full:
 	@echo "Building full-featured Docker image (Node.js 24)..."
-	docker compose -f docker/docker-compose.full.yml build picoclaw-agent picoclaw-gateway
+	docker compose -f docker/docker-compose.full.yml build neuroclaw-agent neuroclaw-gateway
 
 ## docker-test: Test MCP tools in Docker container
 docker-test:
@@ -433,30 +433,30 @@ docker-test:
 	@chmod +x scripts/test-docker-mcp.sh
 	@./scripts/test-docker-mcp.sh
 
-## docker-run: Run picoclaw gateway in Docker (Alpine-based)
+## docker-run: Run neuroclaw gateway in Docker (Alpine-based)
 docker-run:
 	docker compose -f docker/docker-compose.yml --profile gateway up
 
-## docker-run-full: Run picoclaw gateway in Docker (full-featured)
+## docker-run-full: Run neuroclaw gateway in Docker (full-featured)
 docker-run-full:
 	docker compose -f docker/docker-compose.full.yml --profile gateway up
 
-## docker-run-agent: Run picoclaw agent in Docker (interactive, Alpine-based)
+## docker-run-agent: Run neuroclaw agent in Docker (interactive, Alpine-based)
 docker-run-agent:
-	docker compose -f docker/docker-compose.yml run --rm picoclaw-agent
+	docker compose -f docker/docker-compose.yml run --rm neuroclaw-agent
 
-## docker-run-agent-full: Run picoclaw agent in Docker (interactive, full-featured)
+## docker-run-agent-full: Run neuroclaw agent in Docker (interactive, full-featured)
 docker-run-agent-full:
-	docker compose -f docker/docker-compose.full.yml run --rm picoclaw-agent
+	docker compose -f docker/docker-compose.full.yml run --rm neuroclaw-agent
 
 ## docker-clean: Clean Docker images and volumes
 docker-clean:
 	docker compose -f docker/docker-compose.yml down -v
 	docker compose -f docker/docker-compose.full.yml down -v
-	docker rmi picoclaw:latest picoclaw:full 2>/dev/null || true
+	docker rmi neuroclaw:latest neuroclaw:full 2>/dev/null || true
 
 
-## build-macos-app: Build PicoClaw macOS .app bundle (no terminal window)
+## build-macos-app: Build NeuroClaw macOS .app bundle (no terminal window)
 build-macos-app:build-launcher
 	@echo "Building macOS .app bundle..."
 	@if [ "$(UNAME_S)" != "Darwin" ]; then \
@@ -464,7 +464,7 @@ build-macos-app:build-launcher
 		exit 1; \
 	fi
 	@./scripts/build-macos-app.sh $(PLATFORM)-$(ARCH)
-	@echo "macOS .app bundle created: $(BUILD_DIR)/PicoClaw.app"
+	@echo "macOS .app bundle created: $(BUILD_DIR)/NeuroClaw.app"
 
 ## mem: Build membench, download LOCOMO data (if needed), run benchmark, and show results
 mem:
@@ -487,7 +487,7 @@ mem:
 
 ## help: Show this help message
 help:
-	@echo "picoclaw Makefile"
+	@echo "neuroclaw Makefile"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make [target]"
@@ -505,7 +505,7 @@ help:
 	@echo ""
 	@echo "Environment Variables:"
 	@echo "  INSTALL_PREFIX          # Installation prefix (default: ~/.local)"
-	@echo "  WORKSPACE_DIR           # Workspace directory (default: ~/.picoclaw/workspace)"
+	@echo "  WORKSPACE_DIR           # Workspace directory (default: ~/.neuroclaw/workspace)"
 	@echo "  VERSION                 # Version string (default: git describe)"
 	@echo ""
 	@echo "Current Configuration:"

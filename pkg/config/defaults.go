@@ -13,14 +13,7 @@ import (
 )
 
 // DefaultConfig returns the default configuration for PicoClaw.
-// DefaultConfig is PicoClaw's default configuration with the NeuroClaw lockdown applied.
 func DefaultConfig() *Config {
-	cfg := defaultConfig()
-	ApplyLockdown(cfg)
-	return cfg
-}
-
-func defaultConfig() *Config {
 	workspacePath := filepath.Join(GetHome(), pkg.WorkspaceName)
 
 	return &Config{

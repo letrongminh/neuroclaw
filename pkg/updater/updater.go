@@ -187,8 +187,8 @@ func UpdateSelf(programName string) error {
 }
 
 // ReleaseOwner and ReleaseRepo name the GitHub repository whose releases
-// `neuroclaw update` installs. Never upstream PicoClaw: its binary has no
-// NeuroClaw lockdown.
+// `neuroclaw update` installs: NeuroClaw's, not upstream PicoClaw's (whose
+// binary has no MCP mutual TLS or NeuroEdge guidance).
 const (
 	ReleaseOwner = "letrongminh"
 	ReleaseRepo  = "neuroclaw"

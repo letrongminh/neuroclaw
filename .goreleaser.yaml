@@ -15,7 +15,8 @@ before:
     - sh -c 'if [ "${INCLUDE_ANDROID_BUNDLE:-}" = "true" ]; then make build-android-bundle; fi'
 
 builds:
-  - id: picoclaw
+  - id: neuroclaw
+    binary: neuroclaw
     env:
       - CGO_ENABLED=0
     tags:
@@ -57,8 +58,8 @@ builds:
       - goos: netbsd
         goarch: arm
 
-  - id: picoclaw-launcher
-    binary: picoclaw-launcher
+  - id: neuroclaw-launcher
+    binary: neuroclaw-launcher
     env:
       - CGO_ENABLED=0
     tags:
@@ -101,15 +102,16 @@ builds:
         goarch: arm
 
 dockers_v2:
-  - id: picoclaw
+  - id: neuroclaw
     dockerfile: docker/Dockerfile.goreleaser
     extra_files:
       - docker/entrypoint.sh
     ids:
-      - picoclaw
+      - neuroclaw
     images:
-      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/picoclaw"
-      - 'docker.io/{{ .Env.DOCKERHUB_IMAGE_NAME }}'
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/neuroclaw"
+      # Docker Hub only when the repository has its credentials (DOCKERHUB_IMAGE_NAME set).
+      - '{{ if isEnvSet "DOCKERHUB_IMAGE_NAME" }}docker.io/{{ .Env.DOCKERHUB_IMAGE_NAME }}{{ end }}'
     tags:
       - '{{ if isEnvSet "NIGHTLY_BUILD" }}nightly{{ else }}{{ .Tag }}{{ end }}'
       - '{{ if isEnvSet "NIGHTLY_BUILD" }}nightly{{ else }}latest{{ end }}'
@@ -118,14 +120,15 @@ dockers_v2:
       - linux/arm64
       - linux/riscv64
 
-  - id: picoclaw-launcher
+  - id: neuroclaw-launcher
     dockerfile: docker/Dockerfile.goreleaser.launcher
     ids:
-      - picoclaw
-      - picoclaw-launcher
+      - neuroclaw
+      - neuroclaw-launcher
     images:
-      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/picoclaw"
-      - 'docker.io/{{ .Env.DOCKERHUB_IMAGE_NAME }}'
+      - "ghcr.io/{{ .Env.GITHUB_REPOSITORY_OWNER }}/neuroclaw"
+      # Docker Hub only when the repository has its credentials (DOCKERHUB_IMAGE_NAME set).
+      - '{{ if isEnvSet "DOCKERHUB_IMAGE_NAME" }}docker.io/{{ .Env.DOCKERHUB_IMAGE_NAME }}{{ end }}'
     tags:
       - '{{ if isEnvSet "NIGHTLY_BUILD" }}nightly-launcher{{ else }}{{ .Tag }}-launcher{{ end }}'
       - '{{ if isEnvSet "NIGHTLY_BUILD" }}nightly-launcher{{ else }}launcher{{ end }}'
@@ -138,8 +141,8 @@ notarize:
   macos:
     - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
       ids:
-        - picoclaw
-        - picoclaw-launcher
+        - neuroclaw
+        - neuroclaw-launcher
       sign:
         certificate: "{{.Env.MACOS_SIGN_P12}}"
         password: "{{.Env.MACOS_SIGN_PASSWORD}}"
@@ -166,31 +169,31 @@ archives:
         formats: [zip]
 
 nfpms:
-  - id: picoclaw
+  - id: neuroclaw
     ids:
-      - picoclaw
-      - picoclaw-launcher
-    package_name: picoclaw
+      - neuroclaw
+      - neuroclaw-launcher
+    package_name: neuroclaw
     file_name_template: >-
       {{ .PackageName }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "arm64" }}aarch64
       {{- else if eq .Arch "arm" }}armv{{ .Arm }}
       {{- else }}{{ .Arch }}{{ end }}
-    vendor: picoclaw
-    homepage: https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/picoclaw
-    maintainer: picoclaw contributors
-    description: picoclaw - a tool for managing and running tasks
+    vendor: neuroclaw
+    homepage: https://github.com/{{ .Env.GITHUB_REPOSITORY_OWNER }}/neuroclaw
+    maintainer: neuroclaw contributors
+    description: NeuroClaw - an AI assistant for chat apps, and the brain of a NeuroEdge home
     license: MIT
     formats:
       - rpm
       - deb
     bindir: /usr/bin
     contents:
-      - src: web/picoclaw-launcher.desktop
-        dst: /usr/share/applications/picoclaw-launcher.desktop
-      - src: web/picoclaw-launcher.png
-        dst: /usr/share/icons/hicolor/512x512/apps/picoclaw-launcher.png
+      - src: web/neuroclaw-launcher.desktop
+        dst: /usr/share/applications/neuroclaw-launcher.desktop
+      - src: web/neuroclaw-launcher.png
+        dst: /usr/share/icons/hicolor/512x512/apps/neuroclaw-launcher.png
 
 changelog:
   sort: asc
@@ -207,7 +210,7 @@ changelog:
 release:
   disable: '{{ isEnvSet "NIGHTLY_BUILD" }}'
   extra_files:
-    - glob: ./build/picoclaw-android-universal.zip
+    - glob: ./build/neuroclaw-android-universal.zip
   footer: >-
 
     ---

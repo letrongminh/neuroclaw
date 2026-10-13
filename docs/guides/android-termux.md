@@ -2,7 +2,7 @@
 
 > Back to [Guides](README.md)
 
-This guide covers running the PicoClaw terminal binary on an ARM64 Android phone with Termux. Use the APK from [picoclaw.io](https://picoclaw.io/download/) if you want the Android app experience; use Termux when you want a lightweight command-line install on an older or resource-constrained device.
+This guide covers running the NeuroClaw terminal binary on an ARM64 Android phone with Termux. Use the APK from [picoclaw.io](https://picoclaw.io/download/) if you want the Android app experience; use Termux when you want a lightweight command-line install on an older or resource-constrained device.
 
 ## Requirements
 
@@ -11,7 +11,7 @@ This guide covers running the PicoClaw terminal binary on an ARM64 Android phone
 - Network access for downloading the release and calling your LLM provider.
 - An API key for at least one configured model provider.
 
-## Install PicoClaw
+## Install NeuroClaw
 
 Open Termux and install the packages used by the release archive and chroot wrapper:
 
@@ -23,17 +23,17 @@ pkg install -y wget tar proot
 Download and unpack the ARM64 Linux release:
 
 ```bash
-mkdir -p ~/picoclaw
-cd ~/picoclaw
-wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
-tar xzf picoclaw_Linux_arm64.tar.gz
-chmod +x ./picoclaw
+mkdir -p ~/neuroclaw
+cd ~/neuroclaw
+wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
+tar xzf neuroclaw_Linux_arm64.tar.gz
+chmod +x ./neuroclaw
 ```
 
 Start first-run setup through `termux-chroot`, which gives the Linux binary a more standard filesystem layout than a raw Android userspace:
 
 ```bash
-termux-chroot ./picoclaw onboard
+termux-chroot ./neuroclaw onboard
 ```
 
 ## Configure
@@ -41,10 +41,10 @@ termux-chroot ./picoclaw onboard
 Edit the generated config and add at least one model provider API key:
 
 ```bash
-vim ~/.picoclaw/config.json
+vim ~/.neuroclaw/config.json
 ```
 
-The default workspace is `~/.picoclaw/workspace`. If you want PicoClaw to read or write Android shared storage, run `termux-setup-storage` first and then point the workspace or any file paths at the mounted storage directory.
+The default workspace is `~/.neuroclaw/workspace`. If you want NeuroClaw to read or write Android shared storage, run `termux-setup-storage` first and then point the workspace or any file paths at the mounted storage directory.
 
 See [Configuration Guide](configuration.md) and [Providers & Model Configuration](providers.md) for the available config fields and provider examples.
 
@@ -53,36 +53,36 @@ See [Configuration Guide](configuration.md) and [Providers & Model Configuration
 Use one-shot agent mode to confirm the installation:
 
 ```bash
-termux-chroot ./picoclaw agent -m "Hello from Termux"
+termux-chroot ./neuroclaw agent -m "Hello from Termux"
 ```
 
 For long-running use, start the gateway:
 
 ```bash
-termux-chroot ./picoclaw gateway
+termux-chroot ./neuroclaw gateway
 ```
 
-Keep the Termux session open while PicoClaw is running. Android battery optimization can stop background work, so disable battery optimization for Termux if you expect PicoClaw to keep running after the screen locks.
+Keep the Termux session open while NeuroClaw is running. Android battery optimization can stop background work, so disable battery optimization for Termux if you expect NeuroClaw to keep running after the screen locks.
 
 ## Update
 
-Your config and workspace live under `~/.picoclaw`, so updating the binary does not remove them:
+Your config and workspace live under `~/.neuroclaw`, so updating the binary does not remove them:
 
 ```bash
-cd ~/picoclaw
-rm -f picoclaw_Linux_arm64.tar.gz
-wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
-tar xzf picoclaw_Linux_arm64.tar.gz
-chmod +x ./picoclaw
-termux-chroot ./picoclaw version
+cd ~/neuroclaw
+rm -f neuroclaw_Linux_arm64.tar.gz
+wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
+tar xzf neuroclaw_Linux_arm64.tar.gz
+chmod +x ./neuroclaw
+termux-chroot ./neuroclaw version
 ```
 
 ## Troubleshooting
 
 | Symptom | Check |
 |---------|-------|
-| `permission denied` | Run `chmod +x ./picoclaw` after unpacking the archive. |
-| `not found` after running `./picoclaw` | Confirm `uname -m` prints `aarch64` and that you downloaded `picoclaw_Linux_arm64.tar.gz`. |
-| Files or paths behave differently than Linux | Run PicoClaw through `termux-chroot` instead of calling the binary directly. |
-| Provider requests fail | Check the API key and network access in `~/.picoclaw/config.json`. |
-| PicoClaw stops when the phone sleeps | Disable Android battery optimization for Termux and keep a foreground Termux session active. |
+| `permission denied` | Run `chmod +x ./neuroclaw` after unpacking the archive. |
+| `not found` after running `./neuroclaw` | Confirm `uname -m` prints `aarch64` and that you downloaded `neuroclaw_Linux_arm64.tar.gz`. |
+| Files or paths behave differently than Linux | Run NeuroClaw through `termux-chroot` instead of calling the binary directly. |
+| Provider requests fail | Check the API key and network access in `~/.neuroclaw/config.json`. |
+| NeuroClaw stops when the phone sleeps | Disable Android battery optimization for Termux and keep a foreground Termux session active. |

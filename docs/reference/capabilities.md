@@ -12,7 +12,7 @@ every key.
 
 ## 1. The promise
 
-NeuroClaw can do everything PicoClaw v0.3.1 does, and it is the brain of a NeuroEdge home:
+NeuroClaw can do everything NeuroClaw v0.3.1 does, and it is the brain of a NeuroEdge home:
 
 - The devices of a NeuroEdge home are reached through a tool of the home's gate: MCP tools of the
   NeuroEdge box (Go), or `nc_gate` callbacks into the firmware's gate (ESP). The system prompt tells
@@ -26,7 +26,7 @@ NeuroClaw can do everything PicoClaw v0.3.1 does, and it is the brain of a Neuro
 
 ## 2. Risk labels
 
-Nothing is locked: every PicoClaw capability is there, with PicoClaw's defaults. When `gateway` or
+Nothing is locked: every NeuroClaw capability is there, with NeuroClaw's defaults. When `gateway` or
 `agent` starts, [`pkg/config/risk.go`](../../pkg/config/risk.go) logs one warning
 `NeuroClaw risk=<name>` for each of these that is on:
 
@@ -212,7 +212,7 @@ or applies new *skills* under `state/evolution`. It improves skills, not chat me
 - The `neuroclaw cron` CLI does the same: `list`, `add -n -m -e|-c --to --channel`, `remove`,
   `enable`, `disable`.
 - A job can run a shell command (`command`) when `exec` and `tools.cron.allow_command` are on
-  (`risk=cron_shell`), as in PicoClaw.
+  (`risk=cron_shell`), as in NeuroClaw.
 
 **Heartbeat** ([`pkg/heartbeat`](../../pkg/heartbeat)):
 
@@ -237,7 +237,7 @@ To manage them: `neuroclaw skills list|show|remove|list-builtin|install-builtin`
 (`search`, `install`; ClawHub and GitHub, on by default, `risk=skill_install`) fetch skills from the internet.
 
 Shipped in [`workspace/skills`](../../workspace/skills): `weather`, `skill-creator`, `summarize`,
-`github`, `tmux`, `agent-browser`, `hardware`, `picoclaw-agent`. See section 13: most of them need
+`github`, `tmux`, `agent-browser`, `hardware`, `neuroclaw-agent`. See section 13: most of them need
 tools that NeuroClaw locks.
 
 ## 10. Voice, images and files
@@ -274,7 +274,7 @@ tools that NeuroClaw locks.
 - Secrets can live in `.security.yml` next to `config.json`.
 - `onboard --enc` stores secrets encrypted (`enc://`, AES-256-GCM, passphrase in
   `NEUROCLAW_KEY_PASSPHRASE`).
-- Without a config file, NeuroClaw starts on PicoClaw's defaults.
+- Without a config file, NeuroClaw starts on NeuroClaw's defaults.
 - [Configuration guide](../guides/configuration.md).
 
 **Gateway HTTP** (default `localhost:18790`):
@@ -322,6 +322,6 @@ know them when you configure a brain:
 | Gap | Where | Effect |
 |:---|:---|:---|
 | Empty `allow_from` lets anyone talk | `pkg/channels/base.go` | Only a warning is logged; set the owner's ID |
-| `picoclaw-agent` skill | `workspace/skills` | Still describes PicoClaw |
-| PicoClaw names left over | help text, banner, MQTT topic `/picoclaw`, IRC nick, links to docs.picoclaw.io | Cosmetic |
+| `neuroclaw-agent` skill | `workspace/skills` | Still describes NeuroClaw |
+| NeuroClaw names left over | help text, banner, MQTT topic `/neuroclaw`, IRC nick, links to docs.picoclaw.io | Cosmetic |
 | WeCom variables are not prefixed | `pkg/config/config.go` (`BOT_ID`, `SECRET`) | Can collide with other programs' variables |

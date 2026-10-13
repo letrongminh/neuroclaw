@@ -2,7 +2,7 @@
 
 # WeCom
 
-NeuroClaw expose WeCom en tant que canal unique `channels.wecom`, basé sur l'API WebSocket officielle WeCom AI Bot.
+NeuroClaw expose WeCom en tant que canal unique `channel_list.wecom`, basé sur l'API WebSocket officielle WeCom AI Bot.
 Ce canal remplace l'ancienne séparation `wecom`, `wecom_app` et `wecom_aibot` par un modèle de configuration unifié.
 
 > Aucune URL de callback webhook publique n'est requise. NeuroClaw établit une connexion WebSocket sortante vers WeCom.
@@ -40,7 +40,7 @@ La commande :
 1. Demande un QR code à WeCom et l'affiche dans le terminal
 2. Affiche également un **lien QR code** que vous pouvez ouvrir dans un navigateur si le QR du terminal est difficile à scanner
 3. Attend la confirmation — après le scan, vous devez également **confirmer la connexion dans l'application WeCom**
-4. En cas de succès, écrit `bot_id` et `secret` dans `channels.wecom` et sauvegarde la configuration
+4. En cas de succès, écrit `bot_id` et `secret` dans `channel_list.wecom` et sauvegarde la configuration
 
 Le délai d'expiration par défaut est de **5 minutes**. Utilisez `--timeout` pour l'étendre :
 
@@ -82,7 +82,7 @@ Si vous disposez déjà d'un `bot_id` et d'un `secret` depuis la plateforme WeCo
 | `secret` | string | — | Secret WeCom AI Bot. Stocké chiffré dans `.security.yml`. Requis lorsque le canal est activé. |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | Point de terminaison WebSocket WeCom. |
 | `send_thinking_message` | bool | `true` | Envoyer un message `Processing...` avant le début de la réponse en streaming. |
-| `allow_from` | array | `[]` | Liste blanche des expéditeurs. Vide signifie autoriser tous les expéditeurs. |
+| `allow_from` | array | `[]` | Liste blanche des expéditeurs. Vide laisse entrer tout expéditeur (la passerelle consigne un avertissement) ; renseignez-la, ou utilisez `["*"]` pour autoriser tout le monde volontairement. |
 | `reasoning_channel_id` | string | `""` | ID de chat optionnel pour router la sortie de raisonnement vers une conversation séparée. |
 
 ### Variables d'environnement
@@ -117,9 +117,9 @@ Tous les champs peuvent être remplacés par des variables d'environnement avec 
 
 | Configuration précédente | Migration |
 | ------------------------ | --------- |
-| `channels.wecom` (bot webhook) | Remplacer par `channels.wecom` avec `bot_id` + `secret`. |
-| `channels.wecom_app` | Supprimer. Utiliser `channels.wecom` à la place. |
-| `channels.wecom_aibot` | Déplacer `bot_id` et `secret` vers `channels.wecom`. |
+| `channel_list.wecom` (bot webhook) | Remplacer par `channel_list.wecom` avec `bot_id` + `secret`. |
+| `channel_list.wecom_app` | Supprimer. Utiliser `channel_list.wecom` à la place. |
+| `channel_list.wecom_aibot` | Déplacer `bot_id` et `secret` vers `channel_list.wecom`. |
 | `token`, `encoding_aes_key`, `webhook_url`, `webhook_path` | Plus utilisés. Supprimer de la configuration. |
 | `corp_id`, `corp_secret`, `agent_id` | Plus utilisés. Supprimer de la configuration. |
 | `welcome_message`, `processing_message`, `max_steps` | Ne font plus partie de la configuration du canal WeCom. |
@@ -146,4 +146,4 @@ Tous les champs peuvent être remplacés par des variables d'environnement avec 
 ### Les réponses n'arrivent pas
 
 - Vérifiez si `allow_from` bloque l'expéditeur.
-- Vérifiez que `channels.wecom.bot_id` et `channels.wecom.secret` sont définis et non vides.
+- Vérifiez que `channel_list.wecom.bot_id` et `channel_list.wecom.secret` sont définis et non vides.

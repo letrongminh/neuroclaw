@@ -24,8 +24,8 @@ MaixCam là kênh chuyên dụng để kết nối với các thiết bị camer
 | ---------- | ------ | -------- | ------------------------------------------------------------------------ |
 | enabled    | bool   | Có       | Có bật kênh MaixCam hay không                                            |
 | host       | string | Có       | Địa chỉ lắng nghe của máy chủ TCP                                        |
-| port       | int    | Có       | Cổng lắng nghe của máy chủ TCP                                           |
-| allow_from | array  | Không    | Danh sách trắng ID thiết bị; để trống nghĩa là cho phép tất cả thiết bị  |
+| port       | int    | Có       | Cổng lắng nghe của máy chủ TCP (mặc định `18790`, trùng với cổng HTTP của gateway; hãy đặt cổng khác nếu cả hai chạy trên cùng một máy) |
+| allow_from | array  | Không    | Danh sách trắng ID thiết bị; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 
 ## Trường hợp sử dụng
 

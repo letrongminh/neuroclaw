@@ -29,7 +29,7 @@ Feishu (nom international : Lark) est une plateforme de collaboration d'entrepri
 | app_secret            | string | Oui    | App Secret de l'application Feishu                                          |
 | encrypt_key           | string | Non    | Clé de chiffrement pour les callbacks d'événements                          |
 | verification_token    | string | Non    | Token utilisé pour la vérification des événements Webhook                   |
-| allow_from            | array  | Non    | Liste blanche d'identifiants utilisateur ; vide signifie tous les utilisateurs |
+| allow_from            | array  | Non    | Liste blanche d'identifiants utilisateur ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 | random_reaction_emoji | array  | Non    | Liste d'emojis de réaction aléatoires ; vide utilise le "Pin" par défaut    |
 
 ## Configuration initiale

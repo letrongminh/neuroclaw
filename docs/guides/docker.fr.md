@@ -2,6 +2,15 @@
 
 > Retour au [README](../project/README.fr.md)
 
+## Images
+
+| Image | Contient | Démarre |
+|---|---|---|
+| `ghcr.io/letrongminh/neuroclaw:<tag>` ou `:latest` | `neuroclaw` | la passerelle (premier lancement : `onboard`, puis arrêt) |
+| `ghcr.io/letrongminh/neuroclaw:<tag>-launcher` ou `:launcher` | `neuroclaw`, `neuroclaw-launcher` | la console web (`-console -public -no-browser`) |
+
+Les deux sont publiées pour linux/amd64, arm64 et riscv64. La configuration et le workspace se trouvent dans `/root/.neuroclaw` à l'intérieur du conteneur ; le fichier compose y monte `docker/data`.
+
 ## 🐳 Docker Compose
 
 Vous pouvez également exécuter NeuroClaw avec Docker Compose sans rien installer localement.
@@ -42,7 +51,7 @@ L'image `launcher` inclut les deux binaires (`neuroclaw`, `neuroclaw-launcher`) 
 docker compose -f docker/docker-compose.yml --profile launcher up -d
 ```
 
-Ouvrez http://localhost:18800 dans votre navigateur. Le launcher gère automatiquement le processus gateway.
+Ouvrez http://localhost:18800 dans votre navigateur (le fichier compose publie aussi le port de la passerelle 18790). Le launcher gère automatiquement le processus gateway.
 
 > [!WARNING]
 > La console web est protégée par un mot de passe de connexion au dashboard. Ne l'exposez pas à des réseaux non fiables ni à Internet public.
@@ -67,7 +76,7 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ### 🚀 Démarrage Rapide
 
 > [!TIP]
-> Configurez votre clé API dans `~/.neuroclaw/config.json`. Obtenir des clés API : [Volcengine (CodingPlan)](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). La recherche web est optionnelle — obtenez gratuitement une [API Tavily](https://tavily.com) (1000 requêtes gratuites/mois) ou une [API Brave Search](https://brave.com/search/api) (2000 requêtes gratuites/mois).
+> Configurez votre clé API dans `~/.neuroclaw/config.json`. Obtenir des clés API : [Volcengine (CodingPlan)](https://www.volcengine.com) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). La recherche web est optionnelle — obtenez gratuitement une [API Tavily](https://tavily.com) (1000 requêtes gratuites/mois) ou une [API Brave Search](https://brave.com/search/api) (2000 requêtes gratuites/mois).
 
 **1. Initialiser**
 

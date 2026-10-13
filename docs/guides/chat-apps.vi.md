@@ -4,14 +4,16 @@
 
 ## 💬 Ứng Dụng Chat
 
-Trò chuyện với neuroclaw của bạn qua Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, Feishu, Slack, IRC, OneBot, MQTT hoặc MaixCam
+Trò chuyện với neuroclaw của bạn qua Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, Feishu, Slack, IRC, OneBot, MQTT, MaixCam hoặc Pico (giao thức bản địa)
 
-> **Lưu ý**: Tất cả các kênh dựa trên webhook (LINE, WeCom, v.v.) được phục vụ trên một máy chủ HTTP Gateway chung (`gateway.host`:`gateway.port`, mặc định `127.0.0.1:18790`). Không có port riêng cho từng kênh. Lưu ý: Feishu sử dụng chế độ WebSocket/SDK và không sử dụng máy chủ HTTP webhook chung.
+> **Lưu ý**: Các kênh dựa trên HTTP callback dùng chung một máy chủ HTTP Gateway (`gateway.host`:`gateway.port`, mặc định `127.0.0.1:18790`). Các kênh dựa trên socket/stream như Feishu, DingTalk và WeCom không dùng máy chủ webhook chung để nhận tin.
+
+> **Hãy đặt `allow_from` cho mọi kênh.** Nếu `allow_from` để trống, bất kỳ ai tiếp cận được bot đều có thể trò chuyện với nó (gateway chỉ ghi cảnh báo `SECURITY: Channel allows EVERYONE`). Hãy liệt kê ID người dùng của bạn, hoặc dùng `["*"]` để nói rõ rằng cố ý cho truy cập mở. Một số ví dụ bên dưới ghi `"allow_from": []` cho ngắn gọn; đừng để trống trên bot có thể chạy công cụ. Những việc người dùng chat có thể khiến agent làm (shell, lệnh theo lịch, cài skill) được liệt kê cùng nhãn rủi ro tại [Khả năng §2](../reference/capabilities.md).
 
 | Kênh                 | Độ khó             | Mô tả                                                 | Tài liệu                                                                                                         |
 | -------------------- | ------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | **Telegram**         | ⭐ Dễ              | Khuyến nghị, chuyển giọng nói thành văn bản, long polling (không cần IP công khai) | [Tài liệu](../channels/telegram/README.vi.md)                                              |
-| **Discord**          | ⭐ Dễ              | Socket Mode, hỗ trợ nhóm/DM, hệ sinh thái bot phong phú | [Tài liệu](../channels/discord/README.vi.md)                                                                  |
+| **Discord**          | ⭐ Dễ              | Gateway WebSocket (không cần IP công khai), hỗ trợ nhóm/DM     | [Tài liệu](../channels/discord/README.vi.md)                                                                  |
 | **WhatsApp**         | ⭐ Dễ              | Bản địa (quét QR) hoặc Bridge URL                     | [Tài liệu](#whatsapp)                                                                                            |
 | **Weixin**           | ⭐ Dễ              | Quét QR gốc (API Tencent iLink)                       | [Tài liệu](#weixin)                                                                                              |
 | **Slack**            | ⭐ Dễ              | **Socket Mode** (không cần IP công khai), doanh nghiệp | [Tài liệu](../channels/slack/README.vi.md)                                                                      |
@@ -19,7 +21,7 @@ Trò chuyện với neuroclaw của bạn qua Telegram, Discord, WhatsApp, Matri
 | **QQ**               | ⭐⭐ Trung bình    | API bot chính thức, cộng đồng Trung Quốc              | [Tài liệu](../channels/qq/README.vi.md)                                                                         |
 | **DingTalk**         | ⭐⭐ Trung bình    | Chế độ Stream (không cần IP công khai), doanh nghiệp  | [Tài liệu](../channels/dingtalk/README.vi.md)                                                                   |
 | **LINE**             | ⭐⭐⭐ Nâng cao    | Yêu cầu HTTPS Webhook                                 | [Tài liệu](../channels/line/README.vi.md)                                                                       |
-| **WeCom (企业微信)** | ⭐⭐⭐ Nâng cao    | Bot nhóm (Webhook), ứng dụng tùy chỉnh (API), AI Bot | [Hướng dẫn](../channels/wecom/README.vi.md) |
+| **WeCom (企业微信)** | ⭐⭐⭐ Nâng cao    | AI Bot chính thức qua WebSocket, streaming + media     | [Hướng dẫn](../channels/wecom/README.vi.md) |
 | **Feishu (飞书)**    | ⭐⭐⭐ Nâng cao    | Cộng tác doanh nghiệp, nhiều tính năng                | [Tài liệu](../channels/feishu/README.vi.md)                                                                     |
 | **IRC**              | ⭐⭐ Trung bình    | Máy chủ + cấu hình TLS                                | [Tài liệu](#irc) |
 | **OneBot**           | ⭐⭐ Trung bình    | Tương thích NapCat/Go-CQHTTP, hệ sinh thái cộng đồng  | [Tài liệu](../channels/onebot/README.vi.md)                                                                     |
@@ -62,18 +64,23 @@ neuroclaw gateway
 
 **4. Menu lệnh Telegram (tự động đăng ký khi khởi động)**
 
-NeuroClaw hiện lưu trữ định nghĩa lệnh trong một registry chung. Khi khởi động, Telegram sẽ tự động đăng ký các lệnh bot được hỗ trợ (ví dụ `/start`, `/help`, `/show`, `/list`, `/use`, `/btw`) để menu lệnh và hành vi runtime luôn đồng bộ.
+NeuroClaw lưu trữ định nghĩa lệnh trong một registry chung. Khi khởi động, Telegram sẽ tự động đăng ký các lệnh bot được hỗ trợ (ví dụ `/start`, `/help`, `/show`, `/list`, `/use`, `/btw`) để menu lệnh và hành vi runtime luôn đồng bộ.
 Đăng ký menu lệnh Telegram vẫn là UX khám phá cục bộ của kênh; thực thi lệnh chung được xử lý tập trung trong vòng lặp agent qua commands executor.
 
 Nếu đăng ký lệnh thất bại (lỗi tạm thời mạng/API), kênh vẫn khởi động và NeuroClaw thử lại đăng ký trong nền.
 
-Ban cung co the quan ly skill da cai dat truc tiep tu Telegram:
+Bạn cũng có thể xem skill và máy chủ MCP trực tiếp từ Telegram:
 
 - `/list skills`
+- `/list mcp`
+- `/show mcp <server>`
 - `/use <skill> <message>`
-- `/use <skill>` roi gui yeu cau that o tin nhan tiep theo
+- `/use <skill>` rồi gửi yêu cầu thật ở tin nhắn tiếp theo
 - `/use clear`
-- `/btw <question>` de hoi them mot cau ngoai le ngay lap tuc ma khong thay doi lich su phien dang hoat dong; `/btw` duoc xu ly nhu mot truy van truc tiep khong dung cong cu va khong di vao luong thuc thi cong cu thong thuong
+- `/btw <question>` để hỏi nhanh một câu ngoài lề mà không thay đổi lịch sử phiên đang hoạt động; `/btw` được xử lý như một truy vấn không dùng công cụ và không đi vào luồng thực thi công cụ thông thường
+
+**5. Định dạng nâng cao**
+Bạn có thể đặt `use_markdown_v2: true` để bật các tùy chọn định dạng nâng cao. Khi đó bot dùng được đầy đủ tính năng Telegram MarkdownV2, gồm kiểu lồng nhau, spoiler và khối độ rộng cố định tùy chỉnh.
 
 </details>
 
@@ -287,7 +294,7 @@ Nếu bạn muốn tạo bot thủ công:
 }
 ```
 
-> Đặt `allow_from` trống để cho phép tất cả người dùng, hoặc chỉ định DingTalk user ID để giới hạn truy cập.
+> Chỉ định DingTalk user ID trong `allow_from` để giới hạn truy cập. Để trống là cho phép tất cả; dùng `["*"]` để nói rõ điều đó.
 
 **3. Chạy**
 
@@ -296,30 +303,6 @@ neuroclaw gateway
 ```
 
 </details>
-
-<a id="maixcam"></a>
-<details>
-<summary><b>MaixCam</b></summary>
-
-Kênh tích hợp được thiết kế đặc biệt cho phần cứng camera AI Sipeed.
-
-```json
-{
-  "channel_list": {
-    "maixcam": {
-      "enabled": true,
-      "type": "maixcam"
-    }
-  }
-}
-```
-
-```bash
-neuroclaw gateway
-```
-
-</details>
-
 
 <a id="matrix"></a>
 <details>
@@ -411,22 +394,22 @@ neuroclaw gateway
 <details>
 <summary><b>WeCom (企业微信)</b></summary>
 
-NeuroClaw hỗ trợ ba loại tích hợp WeCom:
+NeuroClaw cung cấp WeCom dưới dạng một kênh AI Bot duy nhất qua WebSocket.
+Không cần URL callback webhook công khai.
 
-**Tùy chọn 1: WeCom Bot (Bot)** - Thiết lập dễ hơn, hỗ trợ chat nhóm
-**Tùy chọn 2: WeCom App (App Tùy chỉnh)** - Nhiều tính năng hơn, nhắn tin chủ động, chỉ chat riêng
-**Tùy chọn 3: WeCom AI Bot (AI Bot)** - AI Bot chính thức, phản hồi streaming, hỗ trợ chat nhóm & riêng
+Xem [Hướng Dẫn Cấu Hình WeCom](../channels/wecom/README.vi.md) để biết đầy đủ tham chiếu cấu hình và ghi chú di chuyển.
 
-Xem [Hướng Dẫn Cấu Hình WeCom](../channels/wecom/README.vi.md) để biết hướng dẫn thiết lập chi tiết.
+**Thiết Lập Nhanh - Khuyến nghị**
 
-**Thiết Lập Nhanh - WeCom Bot:**
+**1. Xác thực**
 
-**1. Tạo bot**
+```bash
+neuroclaw auth wecom
+```
 
-* Truy cập Console Quản Trị WeCom → Chat Nhóm → Thêm Bot Nhóm
-* Sao chép URL webhook (định dạng: `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx`)
+Lệnh này hiển thị mã QR, chờ phê duyệt trong WeCom và ghi `bot_id` + `secret` vào mục `wecom` của `channel_list`.
 
-**2. Cấu hình**
+**2. Cấu hình thủ công nếu cần**
 
 ```json
 {
@@ -434,80 +417,12 @@ Xem [Hướng Dẫn Cấu Hình WeCom](../channels/wecom/README.vi.md) để bi�
     "wecom": {
       "enabled": true,
       "type": "wecom",
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY",
-      "webhook_path": "/webhook/wecom",
-      "allow_from": []
-    }
-  }
-}
-```
-
-> Webhook WeCom được phục vụ trên máy chủ Gateway chung (`gateway.host`:`gateway.port`, mặc định `127.0.0.1:18790`).
-
-**Thiết Lập Nhanh - WeCom App:**
-
-**1. Tạo ứng dụng**
-
-* Truy cập Console Quản Trị WeCom → Quản Lý App → Tạo App
-* Sao chép **AgentId** và **Secret**
-* Truy cập trang "Công Ty Của Tôi", sao chép **CorpID**
-
-**2. Cấu hình nhận tin nhắn**
-
-* Trong chi tiết App, nhấp "Nhận Tin Nhắn" → "Cấu Hình API"
-* Đặt URL thành `http://your-server:18790/webhook/wecom-app`
-* Tạo **Token** và **EncodingAESKey**
-
-**3. Cấu hình**
-
-```json
-{
-  "channel_list": {
-    "wecom_app": {
-      "enabled": true,
-      "corp_id": "wwxxxxxxxxxxxxxxxx",
-      "corp_secret": "YOUR_CORP_SECRET",
-      "agent_id": 1000002,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-app",
-      "allow_from": []
-    }
-  }
-}
-```
-
-**4. Chạy**
-
-```bash
-neuroclaw gateway
-```
-
-> **Lưu ý**: Callback webhook WeCom được phục vụ trên port Gateway (mặc định 18790). Sử dụng reverse proxy cho HTTPS.
-
-**Thiết Lập Nhanh - WeCom AI Bot:**
-
-**1. Tạo AI Bot**
-
-* Truy cập Console Quản Trị WeCom → Quản Lý App → AI Bot
-* Trong cài đặt AI Bot, cấu hình callback URL: `http://your-server:18790/webhook/wecom-aibot`
-* Sao chép **Token** và nhấp "Tạo Ngẫu Nhiên" cho **EncodingAESKey**
-
-**2. Cấu hình**
-
-```json
-{
-  "channel_list": {
-    "wecom_aibot": {
-      "enabled": true,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_43_CHAR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-aibot",
+      "bot_id": "YOUR_BOT_ID",
+      "secret": "YOUR_SECRET",
+      "websocket_url": "wss://openws.work.weixin.qq.com",
+      "send_thinking_message": true,
       "allow_from": [],
-      "welcome_message": "Hello! How can I help you?",
-      "processing_message": "⏳ Processing, please wait. The results will be sent shortly."
+      "reasoning_channel_id": ""
     }
   }
 }
@@ -519,7 +434,7 @@ neuroclaw gateway
 neuroclaw gateway
 ```
 
-> **Lưu ý**: WeCom AI Bot sử dụng giao thức streaming pull — không lo timeout phản hồi. Tác vụ dài (>30 giây) tự động chuyển sang gửi qua `response_url` push.
+> Các mục cũ `wecom_app` và `wecom_aibot` được thay bằng mục `wecom` thống nhất trong `channel_list`.
 
 </details>
 
@@ -669,28 +584,6 @@ Cài đặt và chạy framework bot QQ tương thích OneBot v11. Bật máy ch
 | `reconnect_interval` | Khoảng thời gian kết nối lại tính bằng giây (mặc định: 5) |
 
 **3. Chạy**
-
-```bash
-neuroclaw gateway
-```
-
-</details>
-
-<details>
-<summary><b>MaixCam</b></summary>
-
-Kênh tích hợp được thiết kế đặc biệt cho phần cứng camera AI Sipeed.
-
-```json
-{
-  "channel_list": {
-    "maixcam": {
-      "enabled": true,
-      "type": "maixcam"
-    }
-  }
-}
-```
 
 ```bash
 neuroclaw gateway

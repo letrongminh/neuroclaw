@@ -323,5 +323,5 @@ know them when you configure a brain:
 |:---|:---|:---|
 | Empty `allow_from` lets anyone talk | `pkg/channels/base.go` | Only a warning is logged; set the owner's ID |
 | `neuroclaw-agent` skill | `workspace/skills` | Still describes NeuroClaw |
-| NeuroClaw names left over | help text, banner, MQTT topic `/neuroclaw`, IRC nick, links to docs.picoclaw.io | Cosmetic |
+| PicoClaw names left over | MQTT topic `/picoclaw` and client id `picoclaw-mqtt-…`, the credential key `~/.ssh/picoclaw_ed25519.key`, the WeCom QR source id; changing them would break existing setups | Kept on purpose |
 | WeCom variables are not prefixed | `pkg/config/config.go` (`BOT_ID`, `SECRET`) | Can collide with other programs' variables |

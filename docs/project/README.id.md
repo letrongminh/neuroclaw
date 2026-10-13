@@ -1,533 +1,65 @@
-<div align="center">
-<img src="../../assets/logo.webp" alt="NeuroClaw" width="512">
-
-<h1>NeuroClaw: Asisten AI Super Ringan berbasis Go</h1>
-
-<h3>Perangkat Keras $10 · RAM 10MB · Boot ms · Let's Go, NeuroClaw!</h3>
-  <p>
-    <img src="https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
-    <img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20MIPS%2C%20RISC--V%2C%20LoongArch-blue" alt="Hardware">
-    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-    <br>
-    <a href="https://picoclaw.io"><img src="https://img.shields.io/badge/Website-picoclaw.io-blue?style=flat&logo=google-chrome&logoColor=white" alt="Website"></a>
-    <a href="https://docs.picoclaw.io/"><img src="https://img.shields.io/badge/Docs-Official-007acc?style=flat&logo=read-the-docs&logoColor=white" alt="Docs"></a>
-    <a href="https://deepwiki.com/sipeed/neuroclaw"><img src="https://img.shields.io/badge/Wiki-DeepWiki-FFA500?style=flat&logo=wikipedia&logoColor=white" alt="Wiki"></a>
-    <br>
-    <a href="https://x.com/SipeedIO"><img src="https://img.shields.io/badge/X_(Twitter)-SipeedIO-black?style=flat&logo=x&logoColor=white" alt="Twitter"></a>
-    <a href="../../assets/wechat.png"><img src="https://img.shields.io/badge/WeChat-Group-41d56b?style=flat&logo=wechat&logoColor=white"></a>
-    <a href="https://discord.gg/V4sAZ9XWpN"><img src="https://img.shields.io/badge/Discord-Community-4c60eb?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
-  </p>
-
-[中文](README.zh.md) | [日本語](README.ja.md) | [한국어](README.ko.md) | [Português](README.pt-br.md) | [Tiếng Việt](README.vi.md) | [Français](README.fr.md) | [Italiano](README.it.md) | **Bahasa Indonesia** | [Malay](README.ms.md) | [English](../../README.md)
-
-<p>
-  <a href="https://picopaw.ai">
-    <img src="../../assets/picopaw-banner-en.webp" alt="PicoPaw AI: Your AI Desktop Buddy" width="100%">
-  </a>
-</p>
-
-<p>
-  <strong>PicoPaw AI is now live at <a href="https://picopaw.ai">picopaw.ai</a>.</strong><br>
-  Create, preview, and share playful AI companions for the NeuroClaw ecosystem.
-</p>
-
-</div>
-
----
-
-> **NeuroClaw** adalah proyek open-source independen yang diinisiasi oleh [Sipeed](https://sipeed.com), ditulis sepenuhnya dalam **Go** — bukan fork dari OpenClaw, NanoBot, atau proyek lainnya.
-
-**NeuroClaw** adalah asisten AI pribadi yang super ringan, terinspirasi dari [NanoBot](https://github.com/HKUDS/nanobot). Dibangun ulang dari awal dalam **Go** melalui proses "self-bootstrapping" — AI Agent itu sendiri yang memandu migrasi arsitektur dan optimasi kode.
-
-**Berjalan di perangkat keras $10 dengan RAM <10MB** — hemat 99% memori dibanding OpenClaw dan 98% lebih murah dari Mac mini!
-
-<table align="center">
-<tr align="center">
-<td align="center" valign="top">
-<p align="center">
-<img src="../../assets/neuroclaw_mem.gif" width="360" height="240">
-</p>
-</td>
-<td align="center" valign="top">
-<p align="center">
-<img src="../../assets/licheervnano.png" width="400" height="240">
-</p>
-</td>
-</tr>
-</table>
-
-> [!CAUTION]
-> **Peringatan Keamanan**
->
-> * **TANPA KRIPTO:** NeuroClaw **tidak** menerbitkan token atau cryptocurrency resmi apa pun. Semua klaim di `pump.fun` atau platform trading lainnya adalah **penipuan**.
-> * **DOMAIN RESMI:** Satu-satunya website resmi adalah **[picoclaw.io](https://picoclaw.io)**, dan website perusahaan adalah **[sipeed.com](https://sipeed.com)**
-> * **WASPADA:** Banyak domain `.ai/.org/.com/.net/...` telah didaftarkan oleh pihak ketiga. Jangan percaya mereka.
-> * **CATATAN:** NeuroClaw masih dalam tahap pengembangan awal yang cepat. Mungkin ada masalah keamanan yang belum terselesaikan. Jangan deploy ke produksi sebelum v1.0.
-> * **CATATAN:** NeuroClaw baru-baru ini menggabungkan banyak PR. Build terbaru mungkin menggunakan RAM 10-20MB. Optimasi sumber daya direncanakan setelah fitur stabil.
-
-## 📢 Berita
-
-2026-06-11 🐾 **PicoPaw AI is live!** Explore the new PicoPaw companion experience at [picopaw.ai](https://picopaw.ai), with animated AI pet previews and ecosystem updates for NeuroClaw users.
-
-2026-05-11 🛒 **LicheeRV-Claw tersedia di AliExpress!** Kini Anda dapat membeli LicheeRV-Claw di [AliExpress](https://www.aliexpress.com/item/1005006519668532.html), sehingga lebih mudah mencoba NeuroClaw di hardware RISC-V ringkas.
-
-<p align="center">
-  <a href="https://www.aliexpress.com/item/1005006519668532.html">
-    <img src="../../assets/licheerv-claw.jpg" alt="LicheeRV-Claw on AliExpress" width="520">
-  </a>
-</p>
-
-2026-03-31 📱 **Dukungan Android!** NeuroClaw sekarang berjalan di Android! Unduh APK di [picoclaw.io](https://picoclaw.io/download)
-
-2026-03-25 🚀 **v0.2.4 Dirilis!** Perombakan arsitektur Agent (SubTurn, Hooks, Steering, EventBus), integrasi WeChat/WeCom, penguatan keamanan (.security.yml, penyaringan data sensitif), provider baru (AWS Bedrock, Azure, Xiaomi MiMo), dan 35 perbaikan bug. NeuroClaw telah mencapai **26K Stars**!
-
-2026-03-17 🚀 **v0.2.3 Dirilis!** UI system tray (Windows & Linux), pelacakan status sub-agent (`spawn_status`), eksperimental Gateway hot-reload, gerbang keamanan Cron, dan 2 perbaikan keamanan. NeuroClaw telah mencapai **25K Stars**!
-
-2026-03-09 🎉 **v0.2.1 — Pembaruan terbesar sejauh ini!** Dukungan protokol MCP, 4 channel baru (Matrix/IRC/WeCom/Discord Proxy), 3 provider baru (Kimi/Minimax/Avian), pipeline visi, penyimpanan memori JSONL, perutean model.
-
-2026-02-28 📦 **v0.2.0** dirilis dengan dukungan Docker Compose dan Web UI Launcher.
-
-<details>
-<summary>Berita sebelumnya...</summary>
-
-2026-02-26 🎉 NeuroClaw mencapai **20K Stars** hanya dalam 17 hari! Orkestrasi channel otomatis dan antarmuka kapabilitas kini aktif.
-
-2026-02-16 🎉 NeuroClaw menembus 12K Stars dalam satu minggu! Peran maintainer komunitas dan [Roadmap](../../ROADMAP.md) resmi diluncurkan.
-
-2026-02-13 🎉 NeuroClaw menembus 5000 Stars dalam 4 hari! Roadmap proyek dan grup pengembang sedang dalam proses.
-
-2026-02-09 🎉 **NeuroClaw Diluncurkan!** Dibangun dalam 1 hari untuk menghadirkan AI Agent ke perangkat keras $10 dengan RAM <10MB. Let's Go, NeuroClaw!
-
-</details>
-
-## ✨ Fitur
-
-🪶 **Super Ringan**: Penggunaan memori inti <10MB — 99% lebih kecil dari OpenClaw.*
-
-💰 **Biaya Minimal**: Cukup efisien untuk berjalan di perangkat keras $10 — 98% lebih murah dari Mac mini.
-
-⚡️ **Boot Secepat Kilat**: Startup 400x lebih cepat. Boot dalam <1 detik bahkan di prosesor single-core 0,6GHz.
-
-🌍 **Portabilitas Sejati**: Satu binary untuk RISC-V, ARM, MIPS, dan x86. Satu binary, jalan di mana saja!
-
-🤖 **AI-Bootstrapped**: Implementasi Go native murni — 95% kode inti dihasilkan oleh Agent dengan penyempurnaan human-in-the-loop.
-
-🔌 **Dukungan MCP**: Integrasi [Model Context Protocol](https://modelcontextprotocol.io/) native — hubungkan server MCP mana pun untuk memperluas kapabilitas Agent.
-
-👁️ **Pipeline Vision**: Kirim gambar dan file langsung ke Agent — encoding base64 otomatis untuk LLM multimodal.
-
-🧠 **Routing Cerdas**: Routing model berbasis aturan — kueri sederhana diarahkan ke model ringan, menghemat biaya API.
-
-_*Build terbaru mungkin menggunakan 10-20MB karena penggabungan PR yang cepat. Optimasi sumber daya direncanakan. Perbandingan kecepatan boot berdasarkan benchmark single-core 0,8GHz (lihat tabel di bawah)._
-
-<div align="center">
-
-|                                | OpenClaw      | NanoBot                  | **NeuroClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **Bahasa**                     | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **Waktu Boot**</br>(core 0,8GHz) | >500d       | >30d                     | **<1d**                                |
-| **Biaya**                      | Mac Mini $599 | Kebanyakan board Linux ~$50 | **Board Linux mana pun**</br>**mulai $10** |
-
-<img src="../../assets/compare.jpg" alt="NeuroClaw" width="512">
-
-</div>
-
-> **[Daftar Kompatibilitas Hardware](../guides/hardware-compatibility.md)** — Lihat semua board yang telah diuji, dari RISC-V $5 hingga Raspberry Pi hingga ponsel Android. Board Anda belum terdaftar? Kirim PR!
-
-<p align="center">
-<img src="../../assets/hardware-banner.jpg" alt="NeuroClaw Hardware Compatibility" width="100%">
-</p>
-
-## 🦾 Demonstrasi
-
-### 🛠️ Alur Kerja Asisten Standar
-
-<table align="center">
-<tr align="center">
-<th><p align="center">Mode Full-Stack Engineer</p></th>
-<th><p align="center">Pencatatan & Perencanaan</p></th>
-<th><p align="center">Pencarian Web & Pembelajaran</p></th>
-</tr>
-<tr>
-<td align="center"><p align="center"><img src="../../assets/neuroclaw_code.gif" width="240" height="180"></p></td>
-<td align="center"><p align="center"><img src="../../assets/neuroclaw_memory.gif" width="240" height="180"></p></td>
-<td align="center"><p align="center"><img src="../../assets/neuroclaw_search.gif" width="240" height="180"></p></td>
-</tr>
-<tr>
-<td align="center">Develop · Deploy · Scale</td>
-<td align="center">Jadwal · Otomasi · Ingat</td>
-<td align="center">Temukan · Wawasan · Tren</td>
-</tr>
-</table>
-
-### 🐜 Deploy Inovatif dengan Footprint Rendah
-
-NeuroClaw dapat di-deploy di hampir semua perangkat Linux!
-
-- $9,9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html) versi E(Ethernet) atau W(WiFi6), untuk home assistant minimal
-- $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html), atau $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html), untuk operasi server otomatis
-- $50 [MaixCAM](https://www.aliexpress.com/item/1005008053333693.html) atau $100 [MaixCAM2](https://www.kickstarter.com/projects/zepan/maixcam2-build-your-next-gen-4k-ai-camera), untuk pengawasan cerdas
-
-<https://private-user-images.githubusercontent.com/83055338/547056448-e7b031ff-d6f5-4468-bcca-5726b6fecb5c.mp4>
-
-🌟 Lebih Banyak Kasus Deploy Menanti!
-
-## 📦 Instalasi
-
-### Unduh dari picoclaw.io (Direkomendasikan)
-
-Kunjungi **[picoclaw.io](https://picoclaw.io)** — website resmi mendeteksi platform Anda secara otomatis dan menyediakan unduhan satu klik. Tidak perlu memilih arsitektur secara manual.
-
-### Unduh binary yang sudah dikompilasi
-
-Atau, unduh binary untuk platform Anda dari halaman [GitHub Releases](https://github.com/letrongminh/neuroclaw/releases).
-
-### Build dari source (untuk pengembangan)
-
-Prasyarat:
-
-- Go 1.25+
-- Node.js 22+ dan pnpm 10.33.0+ untuk build Web UI / launcher
-
-```bash
-git clone https://github.com/letrongminh/neuroclaw.git
-
-cd neuroclaw
-make deps
-
-# Instal dependensi frontend
-(cd web/frontend && pnpm install --frozen-lockfile)
-
-# Build binary inti
-make build
-
-# Build Web UI Launcher (diperlukan untuk mode WebUI)
-make build-launcher
-
-# Build binary inti untuk semua platform yang dikelola Makefile
-make build-all
-
-# Build untuk Raspberry Pi Zero 2 W (32-bit: make build-linux-arm; 64-bit: make build-linux-arm64)
-make build-pi-zero
-
-# Build dan instal
-make install
-```
-
-**Raspberry Pi Zero 2 W:** Gunakan binary yang sesuai dengan OS Anda: Raspberry Pi OS 32-bit -> `make build-linux-arm`; 64-bit -> `make build-linux-arm64`. Atau jalankan `make build-pi-zero` untuk build keduanya.
-
-## 🚀 Panduan Memulai Cepat
-
-### 🌐 WebUI Launcher (Direkomendasikan untuk Desktop)
-
-WebUI Launcher menyediakan antarmuka berbasis browser untuk konfigurasi dan chat. Ini adalah cara termudah untuk memulai — tidak perlu pengetahuan command-line.
-
-**Opsi 1: Klik dua kali (Desktop)**
-
-Setelah mengunduh dari [picoclaw.io](https://picoclaw.io), klik dua kali `neuroclaw-launcher` (atau `neuroclaw-launcher.exe` di Windows). Browser Anda akan terbuka otomatis di `http://localhost:18800`.
-
-**Opsi 2: Command line**
-
-```bash
-neuroclaw-launcher
-# Buka http://localhost:18800 di browser Anda
-```
-
-> [!TIP]
-> **Akses jarak jauh / Docker / VM:** Tambahkan flag `-public` untuk mendengarkan di semua antarmuka:
-> ```bash
-> neuroclaw-launcher -public
-> ```
-
-<p align="center">
-<img src="../../assets/launcher-webui.jpg" alt="WebUI Launcher" width="600">
-</p>
-
-**Memulai:**
-
-Buka WebUI, lalu: **1)** Konfigurasi Provider (tambahkan API key LLM Anda) -> **2)** Konfigurasi Channel (mis. Telegram) -> **3)** Mulai Gateway -> **4)** Chat!
-
-Untuk dokumentasi WebUI lengkap, lihat [docs.picoclaw.io](https://docs.picoclaw.io).
-
-<details>
-<summary><b>Docker (alternatif)</b></summary>
-
-```bash
-# 1. Clone repo ini
-git clone https://github.com/letrongminh/neuroclaw.git
-cd neuroclaw
-
-# 2. Jalankan pertama kali — otomatis membuat docker/data/config.json lalu keluar
-#    (hanya terpicu ketika config.json dan workspace/ keduanya tidak ada)
-docker compose -f docker/docker-compose.yml --profile launcher up
-# Container mencetak "First-run setup complete." dan berhenti.
-
-# 3. Atur API key Anda
-vim docker/data/config.json
-
-# 4. Mulai
-docker compose -f docker/docker-compose.yml --profile launcher up -d
-# Buka http://localhost:18800
-```
-
-> **Pengguna Docker / VM:** Gateway mendengarkan di `127.0.0.1` secara default. Atur `NEUROCLAW_GATEWAY_HOST=0.0.0.0` atau gunakan flag `-public` agar dapat diakses dari host.
-
-```bash
-# Cek log
-docker compose -f docker/docker-compose.yml logs -f
-
-# Hentikan
-docker compose -f docker/docker-compose.yml --profile launcher down
-
-# Update
-docker compose -f docker/docker-compose.yml pull
-docker compose -f docker/docker-compose.yml --profile launcher up -d
-```
-
-</details>
-
-<details>
-<summary><b>macOS — Peringatan Keamanan saat Pertama Kali Diluncurkan</b></summary>
-
-macOS mungkin memblokir `neuroclaw-launcher` saat pertama kali diluncurkan karena diunduh dari internet dan tidak dinotarisasi melalui Mac App Store.
-
-**Langkah 1:** Klik dua kali `neuroclaw-launcher`. Anda akan melihat peringatan keamanan:
-
-<p align="center">
-<img src="../../assets/macos-gatekeeper-warning.jpg" alt="Peringatan macOS Gatekeeper" width="400">
-</p>
-
-> *"neuroclaw-launcher" Tidak Dapat Dibuka — Apple tidak dapat memverifikasi bahwa "neuroclaw-launcher" bebas dari malware yang dapat membahayakan Mac Anda atau mengancam privasi Anda.*
-
-**Langkah 2:** Buka **Pengaturan Sistem** → **Privasi & Keamanan** → gulir ke bawah ke bagian **Keamanan** → klik **Tetap Buka** → konfirmasi dengan mengklik **Tetap Buka** pada dialog.
-
-<p align="center">
-<img src="../../assets/macos-gatekeeper-allow.jpg" alt="macOS Privasi & Keamanan — Tetap Buka" width="600">
-</p>
-
-Setelah langkah satu kali ini, `neuroclaw-launcher` akan terbuka secara normal pada peluncuran berikutnya.
-
-</details>
-
-### 📱 Android
-
-Berikan kehidupan kedua untuk ponsel lama Anda! Ubah menjadi Asisten AI pintar dengan NeuroClaw.
-
-**Opsi 1: Instal APK**
-
-Pratinjau:
-
-<table>
-  <tr>
-    <td><img src="../../assets/fui_main_page.jpg" width="200"></td>
-    <td><img src="../../assets/fui_web_page.jpg" width="200"></td>
-    <td><img src="../../assets/fui_log_page.jpg" width="200"></td>
-    <td><img src="../../assets/fui_setting_page.jpg" width="200"></td>
-  </tr>
-</table>
-
-Unduh APK dari [picoclaw.io](https://picoclaw.io/download/) dan instal langsung. Tanpa Termux!
-
-**Opsi 2: Termux**
-
-<details>
-<summary><b>Terminal Launcher (untuk lingkungan dengan sumber daya terbatas)</b></summary>
-
-1. Instal [Termux](https://github.com/termux/termux-app) (unduh dari [GitHub Releases](https://github.com/termux/termux-app/releases), atau cari di F-Droid / Google Play)
-2. Jalankan perintah berikut:
-
-```bash
-# Unduh rilis terbaru
-wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
-tar xzf neuroclaw_Linux_arm64.tar.gz
-pkg install proot
-termux-chroot ./neuroclaw onboard   # chroot menyediakan tata letak filesystem Linux standar
-```
-
-Kemudian ikuti bagian Terminal Launcher di bawah untuk menyelesaikan konfigurasi.
-
-<img src="../../assets/termux.jpg" alt="NeuroClaw on Termux" width="512">
-
-Untuk lingkungan minimal di mana hanya binary inti `neuroclaw` yang tersedia (tanpa Launcher UI), Anda dapat mengonfigurasi semuanya melalui command line dan file konfigurasi JSON.
-
-**1. Inisialisasi**
-
-```bash
-neuroclaw onboard
-```
-
-Ini membuat `~/.neuroclaw/config.json` dan direktori workspace.
-
-**2. Konfigurasi** (`~/.neuroclaw/config.json`)
+# NeuroClaw 🦞
+
+Semua yang dilakukan [PicoClaw](https://github.com/sipeed/picoclaw) v0.3.1 — aplikasi chat, penyedia
+LLM, memori, pengingat, shell, skill, MCP, konsol web dan launcher — serta otak dari rumah
+[NeuroEdge](https://github.com/letrongminh/neuroedge-init). Saat terhubung ke kotak rumah NeuroEdge,
+ia menjangkau perangkat di rumah lewat tool MCP milik kotak itu, yang memutuskan berdasarkan aturan rumah
+dan, untuk apa pun yang tidak bisa dibatalkan, bertanya dulu kepada Anda di rumah. Semua yang membuat
+model bisa menjangkau lebih jauh dari chat (shell, bus perangkat keras, instalasi skill, hook, server MCP
+stdio) menyala atau mati sesuai konfigurasi Anda, dan setiap yang menyala disebut saat startup (`risk=…`).
+
+Jalankan di papan Linux, server (NeuroEdge Cloud), Mac, atau PC Windows; rilisnya mencakup platform yang
+sama dengan PicoClaw. Instalasi: [install.md](../guides/install.md) (bahasa Inggris).
+
+Atau langsung di chip: [`esp32/`](../../esp32/) adalah **NeuroClaw-ESP**, otak yang sama yang ditulis ulang
+dalam C sebagai komponen ESP-IDF untuk satu ESP32-S3 — Telegram, LLM (dengan fallback), memori, pengingat,
+heartbeat, pencarian web, pesan dan berkas ke pemilik, serta gate di chip seharga beberapa dolar, dengan
+workspace dan tool yang sama seperti di sini ([apa yang sama, apa yang tidak](../../esp32/README.md)),
+diberi label `risk=single_chip` karena otak dan gate berbagi satu ruang alamat.
+
+NeuroClaw adalah hard fork dari [PicoClaw](https://github.com/sipeed/picoclaw) v0.3.1 (MIT). Lihat
+[NOTICE](../../NOTICE).
+
+## Apa yang berubah dari PicoClaw
+
+| | PicoClaw | NeuroClaw |
+|:---|:---|:---|
+| MCP lewat HTTP | Hanya header | Juga TLS timbal balik: `tls.ca_file`, `cert_file`, `key_file`, `server_name`, TLS 1.3. Kotak NeuroEdge (`neuroedge mcp serve --http`) mewajibkan sertifikat klien, sehingga tidak perlu jembatan. |
+| Shell, perangkat keras, instalasi skill, hook, MCP stdio | Menyala atau mati lewat konfigurasi | Sama, dengan bawaan PicoClaw; setiap yang menyala dicatat saat startup sebagai `NeuroClaw risk=<name>` (`shell`, `cron_shell`, `hardware_bus`, `skill_install`, `process_hooks`, `usb_monitor`, `stdio_mcp`; [`pkg/config/risk.go`](../../pkg/config/risk.go)). Rumah NeuroEdge yang ingin otaknya tertutup menyatakannya di `config.json`. |
+| Gate yang berkata "tanya pemilik" | Hasil tool biasa | Saat tool kotak mengembalikan `BLOCK` dengan `confirmation`, NeuroClaw memberi tahu model dengan jelas bahwa tidak ada yang dijalankan, bahwa hanya pemilik di rumah yang bisa menyetujui, dan agar tidak mencoba lagi ([`pkg/tools/integration/neuroedge_result.go`](../../pkg/tools/integration/neuroedge_result.go)). |
+| `update` | Mengunduh rilis `sipeed/picoclaw` | Mengunduh rilis repositori ini, diperiksa terhadap checksum-nya |
+| Nama | `picoclaw`, `~/.picoclaw`, `PICOCLAW_*` | `neuroclaw`, `~/.neuroclaw`, `NEUROCLAW_*` |
+
+Selebihnya adalah milik PicoClaw: kanal chat (Telegram dan lainnya), penyedia LLM, memori dan sesi,
+cron dan heartbeat, pencarian web, pesan, skill bawaan, subagen, konsol web dan launcher
+(`neuroclaw-launcher`), image Docker (`ghcr.io/letrongminh/neuroclaw`), build nightly, paket deb/rpm,
+dan DMG macOS. Panduannya ada di [`docs/`](../) ([README asli](PICOCLAW_README.md)); baca `picoclaw`
+sebagai `neuroclaw` di sana.
+
+**[Apa yang bisa dilakukan NeuroClaw](../reference/capabilities.md)** mendaftar setiap kemampuan kedua
+otak, apa yang menyala secara bawaan, arti setiap label risiko, dan apa yang diketahui masih salah.
+
+## Menghubungkan ke kotak NeuroEdge
+
+Panduan: [neuroedge.md](../guides/neuroedge.md) (bahasa Inggris).
+
+Kotak menjalankan `neuroedge mcp serve --http --ui …`; kuncinya berasal dari
+`demo/i2f-chat-den-cua/tao-khoa.py` milik NeuroEdge. Di `~/.neuroclaw/config.json`:
 
 ```json
-{
-  "version": 3,
-  "agents": {
-    "defaults": {
-      "model_name": "gpt-5.4"
-    }
-  },
-  "model_list": [
-    {
-      "model_name": "gpt-5.4",
-      "model": "openai/gpt-5.4",
-      "api_keys": ["sk-your-api-key"]
-    }
-  ]
-}
-```
-
-> Lihat `config/config.example.json` di repo untuk template konfigurasi lengkap dengan semua opsi yang tersedia.
-
-**3. Chat**
-
-```bash
-# Pertanyaan satu kali
-neuroclaw agent -m "What is 2+2?"
-
-# Mode interaktif
-neuroclaw agent
-
-# Mulai gateway untuk integrasi aplikasi chat
-neuroclaw gateway
-```
-
-</details>
-
-## 🔌 Providers (LLM)
-
-NeuroClaw mendukung 30+ provider LLM melalui konfigurasi `model_list`. Gunakan format `protocol/model`:
-
-| Provider | Protocol | API Key | Catatan |
-|----------|----------|---------|---------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | Diperlukan | GPT-5.4, GPT-4o, o3, dll. |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | Diperlukan | Claude Opus 4.6, Sonnet 4.6, dll. |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | Diperlukan | Gemini 3 Flash, 2.5 Pro, dll. |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | Diperlukan | 200+ model, API terpadu |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | Diperlukan | GLM-4.7, GLM-5, dll. |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | Diperlukan | DeepSeek-V3, DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | Diperlukan | Doubao, model Ark |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | Diperlukan | Qwen3, Qwen-Max, dll. |
-| [Groq](https://console.groq.com/keys) | `groq/` | Diperlukan | Inferensi cepat (Llama, Mixtral) |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | Diperlukan | Model Kimi |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | Diperlukan | Model MiniMax |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | Diperlukan | Mistral Large, Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | Diperlukan | Model yang di-host NVIDIA |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | Diperlukan | Inferensi cepat |
-| [Novita AI](https://novita.ai/) | `novita/` | Diperlukan | Berbagai model open |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | Diperlukan | Model MiMo |
-| [Ollama](https://ollama.com/) | `ollama/` | Tidak perlu | Model lokal, self-hosted |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | Tidak perlu | Deploy lokal, kompatibel OpenAI |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | Bervariasi | Proxy untuk 100+ provider |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | Diperlukan | Deploy Azure enterprise |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | Login dengan device code |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
-
-<details>
-<summary><b>Deploy lokal (Ollama, vLLM, dll.)</b></summary>
-
-**Ollama:**
-```json
-{
-  "model_list": [
-    {
-      "model_name": "local-llama",
-      "model": "ollama/llama3.1:8b",
-      "api_base": "http://localhost:11434/v1"
-    }
-  ]
-}
-```
-
-**vLLM:**
-```json
-{
-  "model_list": [
-    {
-      "model_name": "local-vllm",
-      "model": "vllm/your-model",
-      "api_base": "http://localhost:8000/v1"
-    }
-  ]
-}
-```
-
-Untuk detail konfigurasi provider lengkap, lihat [Providers & Models](../guides/providers.md).
-
-</details>
-
-## 💬 Channels (Aplikasi Chat)
-
-Bicara dengan NeuroClaw Anda melalui 17+ platform pesan:
-
-| Channel | Pengaturan | Protocol | Dokumentasi |
-|---------|------------|----------|-------------|
-| **Telegram** | Mudah (bot token) | Long polling | [Panduan](../channels/telegram/README.md) |
-| **Discord** | Mudah (bot token + intents) | WebSocket | [Panduan](../channels/discord/README.md) |
-| **WhatsApp** | Mudah (scan QR atau bridge URL) | Native / Bridge | [Panduan](../guides/chat-apps.md#whatsapp) |
-| **Weixin** | Mudah (scan QR native) | iLink API | [Panduan](../guides/chat-apps.md#weixin) |
-| **QQ** | Mudah (AppID + AppSecret) | WebSocket | [Panduan](../channels/qq/README.md) |
-| **Slack** | Mudah (bot + app token) | Socket Mode | [Panduan](../channels/slack/README.md) |
-| **Matrix** | Sedang (homeserver + token) | Sync API | [Panduan](../channels/matrix/README.md) |
-| **DingTalk** | Sedang (client credentials) | Stream | [Panduan](../channels/dingtalk/README.md) |
-| **Feishu / Lark** | Sedang (App ID + Secret) | WebSocket/SDK | [Panduan](../channels/feishu/README.md) |
-| **LINE** | Sedang (credentials + webhook) | Webhook | [Panduan](../channels/line/README.md) |
-| **WeCom** | Mudah (login QR atau manual) | WebSocket | [Panduan](../channels/wecom/README.md) |
-| **IRC** | Sedang (server + nick) | IRC protocol | [Panduan](../guides/chat-apps.md#irc) |
-| **OneBot** | Sedang (WebSocket URL) | OneBot v11 | [Panduan](../channels/onebot/README.md) |
-| **MaixCam** | Mudah (aktifkan) | TCP socket | [Panduan](../channels/maixcam/README.md) |
-| **Pico** | Mudah (aktifkan) | Native protocol | Bawaan |
-| **Pico Client** | Mudah (WebSocket URL) | WebSocket | Bawaan |
-
-> Semua channel berbasis webhook berbagi satu server HTTP Gateway (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`). Feishu menggunakan mode WebSocket/SDK dan tidak menggunakan server HTTP bersama.
-
-> Verbositas log dikontrol oleh `gateway.log_level` (default: `warn`). Nilai yang didukung: `debug`, `info`, `warn`, `error`, `fatal`. Juga dapat diatur melalui `NEUROCLAW_LOG_LEVEL`. Lihat [Konfigurasi](../guides/configuration.md#gateway-log-level) untuk detail.
-
-Untuk instruksi pengaturan channel lengkap, lihat [Konfigurasi Aplikasi Chat](../guides/chat-apps.md).
-
-## 🔧 Tools
-
-### 🔍 Pencarian Web
-
-NeuroClaw dapat mencari web untuk memberikan informasi terkini. Konfigurasi di `tools.web`:
-
-| Mesin Pencari | API Key | Tier Gratis | Tautan |
-|--------------|---------|-------------|--------|
-| DuckDuckGo | Tidak perlu | Tidak terbatas | Fallback bawaan |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | Diperlukan | 1500 kueri/bulan (alokasi harian) | Bertenaga AI, dioptimalkan untuk bahasa Mandarin |
-| [Tavily](https://tavily.com) | Diperlukan | 1000 kueri/bulan | Dioptimalkan untuk AI Agent |
-| [Brave Search](https://brave.com/search/api) | Diperlukan | 2000 kueri/bulan | Cepat dan privat |
-| [Perplexity](https://www.perplexity.ai) | Diperlukan | Berbayar | Pencarian bertenaga AI |
-| [SearXNG](https://github.com/searxng/searxng) | Tidak perlu | Self-hosted | Mesin metasearch gratis |
-| [GLM Search](https://open.bigmodel.cn/) | Diperlukan | Bervariasi | Pencarian web Zhipu |
-
-### ⚙️ Tools Lainnya
-
-NeuroClaw menyertakan tools bawaan untuk operasi file, eksekusi kode, penjadwalan, dan lainnya. Lihat [Konfigurasi Tools](../reference/tools_configuration.md) untuk detail.
-
-## 🎯 Skills
-
-Skills adalah kapabilitas modular yang memperluas Agent Anda. Dimuat dari file `SKILL.md` di workspace Anda.
-
-**Instal skills dari ClawHub:**
-
-```bash
-neuroclaw skills search "web scraping"
-neuroclaw skills install <skill-name>
-```
-
-**Konfigurasi token ClawHub** (opsional, untuk rate limit lebih tinggi):
-
-Tambahkan ke `config.json` Anda:
-```json
-{
-  "tools": {
-    "skills": {
-      "registries": {
-        "clawhub": {
-          "auth_token": "your-clawhub-token"
+"tools": {
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "neuroedge": {
+        "enabled": true,
+        "type": "http",
+        "url": "https://home-box.example:8443/mcp",
+        "headers": { "Authorization": "Bearer <the brain's token>" },
+        "tls": {
+          "ca_file": "~/neuroedge-keys/ca.pem",
+          "cert_file": "~/neuroedge-keys/nao.pem",
+          "key_file": "~/neuroedge-keys/nao.key"
         }
       }
     }
@@ -535,95 +67,23 @@ Tambahkan ke `config.json` Anda:
 }
 ```
 
-Untuk detail lebih lanjut, lihat [Konfigurasi Tools - Skills](../reference/tools_configuration.md#skills-tool).
+`neuroclaw mcp test neuroedge` seharusnya mencetak `reachable (3 tools)` untuk agen demo.
 
-## 🔗 MCP (Model Context Protocol)
+## Build
 
-NeuroClaw mendukung [MCP](https://modelcontextprotocol.io/) secara native — hubungkan server MCP mana pun untuk memperluas kapabilitas Agent Anda dengan tools dan sumber data eksternal.
-
-```json
-{
-  "tools": {
-    "mcp": {
-      "enabled": true,
-      "servers": {
-        "filesystem": {
-          "enabled": true,
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
-        }
-      }
-    }
-  }
-}
+```bash
+CGO_ENABLED=0 go build -tags goolm,stdjson -o neuroclaw ./cmd/neuroclaw
+CGO_ENABLED=0 go test -tags goolm,stdjson ./...
 ```
 
-Untuk konfigurasi MCP lengkap (transport stdio, SSE, HTTP, Tool Discovery), lihat [Konfigurasi Tools - MCP](../reference/tools_configuration.md#mcp-tool).
+`make build-launcher` membangun konsol web (`web/`, butuh pnpm); `make build-all` dan goreleaser
+(`.goreleaser.yaml`) membangun semua platform. Di macOS tiga tes tool shell gagal seperti di PicoClaw
+v0.3.1; CI berjalan di Linux, tempat tes itu lulus.
 
-## <img src="../../assets/clawdchat-icon.png" width="24" height="24" alt="ClawdChat"> Bergabung dengan Jaringan Sosial Agent
+**Memperbarui dari build NeuroClaw sebelum label risiko** (2026-10-13): build tersebut memaksa shell,
+perintah cron, instalasi skill, dan pemantauan USB mati, dan `onboard` menyimpannya dalam keadaan mati di
+`config.json`. Nyalakan kembali di sana, atau mulai lagi dari bawaan dengan `neuroclaw config reset`.
 
-Hubungkan NeuroClaw ke Jaringan Sosial Agent hanya dengan mengirim satu pesan melalui CLI atau Aplikasi Chat terintegrasi mana pun.
+## Lisensi
 
-**Baca `https://clawdchat.ai/skill.md` dan ikuti instruksi untuk bergabung dengan [ClawdChat.ai](https://clawdchat.ai)**
-
-## 🖥️ Referensi CLI
-
-| Perintah                   | Deskripsi                        |
-| -------------------------- | -------------------------------- |
-| `neuroclaw onboard`         | Inisialisasi konfigurasi & workspace |
-| `neuroclaw auth weixin` | Hubungkan akun WeChat via QR |
-| `neuroclaw agent -m "..."` | Chat dengan agent                |
-| `neuroclaw agent`           | Mode chat interaktif             |
-| `neuroclaw gateway`         | Mulai gateway                    |
-| `neuroclaw status`          | Tampilkan status                 |
-| `neuroclaw version`         | Tampilkan info versi             |
-| `neuroclaw model`           | Lihat atau ganti model default   |
-| `neuroclaw cron list`       | Daftar semua tugas terjadwal     |
-| `neuroclaw cron add ...`    | Tambah tugas terjadwal           |
-| `neuroclaw cron disable`    | Nonaktifkan tugas terjadwal      |
-| `neuroclaw cron remove`     | Hapus tugas terjadwal            |
-| `neuroclaw skills list`     | Daftar skill yang terinstal      |
-| `neuroclaw skills install`  | Instal skill                     |
-| `neuroclaw migrate`         | Migrasi data dari versi lama     |
-| `neuroclaw auth login`      | Autentikasi dengan provider      |
-
-### ⏰ Tugas Terjadwal / Pengingat
-
-NeuroClaw mendukung pengingat terjadwal dan tugas berulang melalui tool `cron`:
-
-* **Pengingat satu kali**: "Ingatkan saya dalam 10 menit" -> terpicu sekali setelah 10 menit
-* **Tugas berulang**: "Ingatkan saya setiap 2 jam" -> terpicu setiap 2 jam
-* **Ekspresi cron**: "Ingatkan saya jam 9 pagi setiap hari" -> menggunakan ekspresi cron
-
-## 📚 Dokumentasi
-
-Untuk panduan lengkap di luar README ini:
-
-| Topik | Deskripsi |
-|-------|-----------|
-| [Docker & Panduan Cepat](../guides/docker.md) | Pengaturan Docker Compose, mode Launcher/Agent |
-| [Aplikasi Chat](../guides/chat-apps.md) | Semua 17+ panduan pengaturan channel |
-| [Konfigurasi](../guides/configuration.md) | Variabel environment, tata letak workspace, sandbox keamanan |
-| [Providers & Models](../guides/providers.md) | 30+ provider LLM, routing model, konfigurasi model_list |
-| [Spawn & Tugas Async](../guides/spawn-tasks.md) | Tugas cepat, tugas panjang dengan spawn, orkestrasi sub-agent async |
-| [Hooks](../architecture/hooks/README.md) | Sistem hook berbasis event: observer, interceptor, approval hook |
-| [Steering](../architecture/steering.md) | Menyuntikkan pesan ke dalam loop agent yang sedang berjalan |
-| [SubTurn](../architecture/subturn.md) | Koordinasi subagent, kontrol konkurensi, siklus hidup |
-| [Pemecahan Masalah](../operations/troubleshooting.md) | Masalah umum dan solusinya |
-| [Konfigurasi Tools](../reference/tools_configuration.md) | Aktifkan/nonaktifkan per-tool, kebijakan exec, MCP, Skills |
-| [Kompatibilitas Hardware](../guides/hardware-compatibility.md) | Board yang telah diuji, persyaratan minimum |
-
-## 🤝 Kontribusi & Roadmap
-
-PR sangat diterima! Codebase sengaja dibuat kecil dan mudah dibaca.
-
-Lihat [Roadmap Komunitas](https://github.com/letrongminh/neuroclaw/issues/988) dan [CONTRIBUTING.md](../../CONTRIBUTING.md) untuk panduan.
-
-Grup pengembang sedang dibangun, bergabunglah setelah PR pertama Anda di-merge!
-
-Grup Pengguna:
-
-Discord: <https://discord.gg/V4sAZ9XWpN>
-
-WeChat:
-<img src="../../assets/wechat.png" alt="Kode QR grup WeChat" width="512">
+MIT, seperti PicoClaw. Copyright (c) 2026 PicoClaw contributors dan NeuroClaw contributors.

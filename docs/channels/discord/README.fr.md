@@ -26,7 +26,7 @@ Discord est une application gratuite de chat vocal, vidéo et textuel conçue po
 | ------------- | ------ | ------ | --------------------------------------------------------------------------- |
 | enabled       | bool   | Oui    | Activer ou non le canal Discord                                             |
 | token         | string | Oui    | Token du bot Discord                                                        |
-| allow_from    | array  | Non    | Liste blanche d'identifiants utilisateur ; vide signifie tous les utilisateurs |
+| allow_from    | array  | Non    | Liste blanche d'identifiants utilisateur ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 | group_trigger | object | Non    | Paramètres de déclenchement de groupe (exemple : { "mention_only": false }) |
 
 ## Configuration initiale

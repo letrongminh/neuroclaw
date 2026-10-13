@@ -82,7 +82,7 @@ neuroclaw auth wecom --timeout 10m
 | `secret` | string | — | 企业微信 AI Bot 密钥。加密存储于 `.security.yml`。启用时必填。 |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | 企业微信 WebSocket 端点。 |
 | `send_thinking_message` | bool | `true` | 在流式回复开始前发送"处理中..."提示消息。 |
-| `allow_from` | array | `[]` | 发送者白名单。为空时允许所有人。 |
+| `allow_from` | array | `[]` | 发送者白名单。为空时任何发送者都能使用（网关会记录警告）；请设置，或用 `["*"]` 明确允许所有人。 |
 | `reasoning_channel_id` | string | `""` | 可选，将推理/思考内容路由到指定会话 ID。 |
 
 ### 环境变量

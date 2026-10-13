@@ -25,7 +25,7 @@ Telegram Channel 通过 Telegram 机器人 API 使用长轮询实现基于机器
 | ---------------- | ------ | ---- | --------------------------------------------------------- |
 | enabled          | bool   | 是   | 是否启用 Telegram 频道                                    |
 | token            | string | 是   | Telegram 机器人 API Token                                 |
-| allow_from       | array  | 否   | 用户ID白名单，空表示允许所有用户                          |
+| allow_from       | array  | 否   | 用户ID白名单；为空时任何人都能使用（网关会记录警告）；请设置，或用 `["*"]` 明确允许所有人                          |
 | proxy            | string | 否   | 连接 Telegram API 的代理 URL (例如 http://127.0.0.1:7890) |
 | use_markdown_v2 | bool   | 否   | 启用 Telegram MarkdownV2 格式化                           |
 

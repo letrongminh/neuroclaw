@@ -1,6 +1,6 @@
-# PicoClaw Channel System: Complete Development Guide
+# NeuroClaw Channel System: Complete Development Guide
 
-> **Scope**: `pkg/channels/`, `pkg/bus/`, `pkg/media/`, `pkg/identity/`, `cmd/picoclaw/internal/gateway/`
+> **Scope**: `pkg/channels/`, `pkg/bus/`, `pkg/media/`, `pkg/identity/`, `cmd/neuroclaw/internal/gateway/`
 
 ---
 
@@ -341,7 +341,7 @@ func init() {
 **3h. Import sub-package in Gateway**
 
 ```go
-// cmd/picoclaw/internal/gateway/helpers.go
+// cmd/neuroclaw/internal/gateway/helpers.go
 import (
     _ "github.com/letrongminh/neuroclaw/pkg/channels/telegram"   // Triggers init() registration
     _ "github.com/letrongminh/neuroclaw/pkg/channels/discord"
@@ -841,7 +841,7 @@ just register the factory and the config entry.
 #### Add blank import in Gateway
 
 ```go
-// cmd/picoclaw/internal/gateway/helpers.go
+// cmd/neuroclaw/internal/gateway/helpers.go
 import (
     _ "github.com/letrongminh/neuroclaw/pkg/channels/matrix"
 )
@@ -1423,7 +1423,7 @@ agentLoop.Stop()               // Stop Agent
 
 3. **WeCom is now a single channel**: `"wecom"` is implemented as a WebSocket-based AI Bot channel with route persistence. Access control uses the shared channel allowlist mechanism. It no longer exposes the legacy webhook/app split.
 
-4. **Pico Protocol**: `pkg/channels/pico/` implements a custom PicoClaw native protocol channel that receives messages via WebSocket webhook (`/pico/ws`).
+4. **Pico Protocol**: `pkg/channels/pico/` implements a custom NeuroClaw native protocol channel that receives messages via WebSocket webhook (`/pico/ws`).
 
 5. **WhatsApp has two modes**: `"whatsapp"` (Bridge mode, communicates via external bridge URL) and `"whatsapp_native"` (native whatsmeow mode, connects directly to WhatsApp). Manager selects which to initialize based on `WhatsAppConfig.UseNative`.
 

@@ -722,7 +722,7 @@ neuroclaw agent -m "Hello" --model your-model
 
 ```bash
 # Remplacer le modèle par défaut
-export NEUROCLAW_AGENTS_DEFAULTS_MODEL=your-model
+export NEUROCLAW_AGENTS_DEFAULTS_MODEL_NAME=your-model
 
 # Remplacer les paramètres du fournisseur
 export NEUROCLAW_MODEL_LIST='[{"model_name":"your-model","model":"your-provider/model-name","api_keys":["..."]}]'

@@ -722,7 +722,7 @@ neuroclaw agent -m "Hello" --model your-model
 
 ```bash
 # Ghi đè mô hình mặc định
-export NEUROCLAW_AGENTS_DEFAULTS_MODEL=your-model
+export NEUROCLAW_AGENTS_DEFAULTS_MODEL_NAME=your-model
 
 # Ghi đè cài đặt nhà cung cấp
 export NEUROCLAW_MODEL_LIST='[{"model_name":"your-model","model":"your-provider/model-name","api_keys":["..."]}]'

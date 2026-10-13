@@ -275,6 +275,69 @@ Routing 通过 `agents.dispatch.rules` 配置。
 
 如果你想看更完整的 agent 路由和模型分层示例，请看 [路由使用指南](routing-guide.zh.md)。
 
+### Agent 工具白名单
+
+每个 Agent 的工具声明写在 `AGENT.md` 的 frontmatter 中，而不是 `config.json`。
+
+如果 frontmatter 中省略 `tools`，该 Agent 会得到全局启用的常规工具集。如果存在 `tools`，NeuroClaw 只会为该 Agent 注册列出的运行时工具。
+
+```md
+---
+name: Research Agent
+description: Specialist for web research and in-depth analysis.
+tools: [read_file, write_file, web_search, web_fetch, message]
+skills: [deep-research]
+mcpServers: [web-index]
+---
+
+You are the research agent.
+```
+
+说明：
+
+- 这是白名单，不是偏好提示。
+- 工具名与运行时工具名一一匹配。
+- 请使用 `web_search`、`web_fetch`、`spawn`、`subagent`、`send_file` 这样的运行时工具名。
+- `AGENT.md` 中的工具声明供运行时/工具层使用，但不会注入到发现（discovery）提示词中。
+
+### Agent 发现（自动）
+
+当一个 Agent 有可派生的同伴并且可以调用 `spawn` 时，NeuroClaw 会在每一轮把结构化的 Agent 注册表注入到该 Agent 的系统提示词中。不需要额外调用 `list_agents` 工具。
+
+这份注册表让委派更具体、更可靠，尤其是在用 `spawn` 并指定目标 `agent_id` 时。
+
+每个条目包含：
+
+| 字段 | 含义 |
+|------|------|
+| `id` | 稳定的 Agent id |
+| `name` | 来自 `AGENT.md` frontmatter 的 Agent 身份名称 |
+| `description` | 来自 `AGENT.md` frontmatter 的 Agent 身份描述 |
+
+重要行为：
+
+- 只有当前 Agent 拥有 `spawn` 工具时才会出现发现部分，并且只包含它通过 `subagents.allow_agents` 被允许派生的同伴 Agent。
+- 当前 Agent 自身和不可派生的同伴会被省略，因此模型不会针对不可用的 Agent 做规划。
+- 发现有意保持轻量，只给模型选择同伴所需的身份信息：`id`、`name` 和 `description`。
+- `config.json` 仍是基础设施层：工作区、默认 Agent 选择、路由和子 Agent 权限。这些权限同时决定发现结果的可见性。
+- `AGENT.md` 仍是身份层。委派发生时，运行时/工具代码仍可使用它的 `tools`、`skills`、`mcpServers` 和 `model` 字段。
+
+注入内容的示例形状：
+
+```json
+{
+  "agents": [
+    {
+      "id": "research",
+      "name": "Research Agent",
+      "description": "Specialist for long-form investigation and web work."
+    }
+  ]
+}
+```
+
+实际使用中，通才型 Agent 可以根据同伴的角色描述选择同伴，然后用该同伴的 `agent_id` 调用 `spawn`，其余由运行时解决。
+
 ### 🔒 安全沙箱 (Security Sandbox)
 
 NeuroClaw 默认在沙箱环境中运行。Agent 只能访问配置的工作区内的文件和执行命令。
@@ -320,6 +383,7 @@ NeuroClaw 默认在沙箱环境中运行。Agent 只能访问配置的工作区�
 * 写入 `/dev/sd[a-z]` — 直接磁盘写入
 * `shutdown`、`reboot`、`poweroff` — 系统关机
 * Fork bomb `:(){ :|:& };:`
+* 此外还包括：`sudo`、`chmod`/`chown`、`kill`/`pkill`、`curl ... | sh`、`git push`、`docker run`、软件包安装，以及命令替换（`$(...)`、反引号）。完整列表见 `pkg/tools/shell.go` 中的 `defaultDenyPatterns`。
 
 ### 文件访问控制
 
@@ -328,14 +392,78 @@ NeuroClaw 默认在沙箱环境中运行。Agent 只能访问配置的工作区�
 | `tools.allow_read_paths` | string[] | `[]` | 允许在工作区外读取的额外路径 |
 | `tools.allow_write_paths` | string[] | `[]` | 允许在工作区外写入的额外路径 |
 
+| `tools.message.media_enabled` | bool | `false` | 允许 `message` 工具按路径附加本地媒体文件。这与 `tools.send_file.enabled` 是分开的；只有在需要统一的文本/媒体/说明文字投递时才启用。 |
+
+### 读取文件模式
+
+`read_file` 有两种互斥的实现，由配置选择。NeuroClaw 启动时只会注册其中一种：
+
+| 配置键 | 类型 | 默认值 | 描述 |
+|--------|------|--------|------|
+| `tools.read_file.enabled` | bool | `true` | 启用 `read_file` 工具 |
+| `tools.read_file.mode` | string | `bytes` | 选择 `read_file` 的实现：`bytes` 或 `lines` |
+| `tools.read_file.max_read_file_size` | int | `65536` | `read_file` 返回的最大字节数 |
+
+#### 模式：`bytes`
+
+针对任意文件和二进制安全的分页做了优化。
+
+参数：
+
+* `path`（必需）：文件路径
+* `offset`（可选）：起始字节偏移，默认 `0`
+* `length`（可选）：最多读取的字节数，默认 `max_read_file_size`
+
+以下情况使用 `bytes`：
+
+* 可能会读取二进制文件
+* 需要确定性的字节范围分页
+
+#### 模式：`lines`
+
+面向文本的行为，针对源文件、markdown、日志和配置做了优化。工具按行顺序读取，达到配置的字节预算时停止。
+
+参数：
+
+* `path`（必需）：文件路径
+* `start_line`（可选）：起始行号，从 1 开始计数且包含该行，默认 `1`
+* `max_lines`（可选）：最多读取的行数，默认读到文件末尾或字节预算耗尽为止
+
+行为说明：
+
+* 看起来是二进制的文件会被拒绝，并提示把 `read_file` 切换到 `mode = bytes`
+* 极长的单行会被截断，而不是被跳过
+
+以下情况使用 `mode = lines`：
+
+* Agent 主要读取文本文件
+* 希望在提示词和工具调用中按行分页
+* 希望为代码审查、日志和文档得到更清晰的分块
+
+#### 示例
+
+```json
+{
+  "tools": {
+    "read_file": {
+      "enabled": true,
+      "mode": "lines",
+      "max_read_file_size": 65536
+    }
+  }
+}
+```
+
 ### Exec 安全配置
 
 | 配置键 | 类型 | 默认值 | 描述 |
 |--------|------|--------|------|
-| `tools.exec.allow_remote` | bool | `false` | 允许从远程渠道（Telegram/Discord 等）执行 exec 工具 |
+| `tools.exec.allow_remote` | bool | `true` | 允许从远程渠道（Telegram/Discord 等）执行 exec 工具。设为 `false` 可限制为仅内部渠道 |
 | `tools.exec.enable_deny_patterns` | bool | `true` | 启用危险命令拦截 |
 | `tools.exec.custom_deny_patterns` | string[] | `[]` | 自定义阻止的正则表达式模式 |
 | `tools.exec.custom_allow_patterns` | string[] | `[]` | 自定义允许的正则表达式模式 |
+
+> **风险标签：** `exec` 和 cron 的 shell 命令默认开启，启动时会各自记录一条标签（`NeuroClaw risk=shell`、`NeuroClaw risk=cron_shell`）。技能安装和硬件总线工具也有标签。完整列表、每项能力让模型可以做什么，以及如何关闭，见 [能力说明 §2](../reference/capabilities.md)。请在每个渠道上为 `exec` 配上非空的 `allow_from`（[聊天应用](chat-apps.md)）。
 
 > **安全提示：** Symlink 保护默认启用——所有文件路径在允许列表匹配前都会通过 `filepath.EvalSymlinks` 解析，防止符号链接逃逸攻击。
 
@@ -487,7 +615,7 @@ Agent 读取 HEARTBEAT.md
 | ------------ | --------------------------------------- | ------------------------------------------------------------ |
 | `gemini`     | LLM（Gemini 直连）                      | [aistudio.google.com](https://aistudio.google.com)           |
 | `zhipu`      | LLM（智谱直连）                         | [bigmodel.cn](https://bigmodel.cn)                           |
-| `volcengine` | LLM（火山引擎直连）                     | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) |
+| `volcengine` | LLM（火山引擎直连）                     | [volcengine.com](https://www.volcengine.com) |
 | `openrouter` | LLM（推荐，可访问所有模型）             | [openrouter.ai](https://openrouter.ai)                       |
 | `anthropic`  | LLM（Claude 直连）                      | [console.anthropic.com](https://console.anthropic.com)       |
 | `openai`     | LLM（GPT 直连）                         | [platform.openai.com](https://platform.openai.com)           |
@@ -499,7 +627,7 @@ Agent 读取 HEARTBEAT.md
 
 ### 模型配置 (model_list)
 
-> **新特性：** NeuroClaw 现在优先推荐显式 `provider` + 原生 `model` 的配置方式，例如 `"provider": "zhipu", "model": "glm-4.7"`。如果未设置 `provider`，旧的单字段 `provider/model` 写法仍然兼容。
+> NeuroClaw 优先推荐显式 `provider` + 原生 `model` 的配置方式，例如 `"provider": "zhipu", "model": "glm-4.7"`。如果未设置 `provider`，旧的单字段 `provider/model` 写法仍然兼容。
 
 这一设计同时支持**多 Agent**场景，灵活选择提供商：
 
@@ -507,6 +635,72 @@ Agent 读取 HEARTBEAT.md
 - **模型降级**：配置主模型和备用模型，提升可用性
 - **负载均衡**：将请求分发到多个端点
 - **集中管理**：在一处管理所有提供商配置
+
+#### 🔒 安全配置（推荐）
+
+NeuroClaw 支持把敏感数据（API 密钥、令牌、密码）与主配置分开，存放在 `.security.yml` 文件中。
+
+**主要好处：**
+- **安全**：敏感数据不会出现在主配置文件中
+- **便于分享**：分享 config.json 时不会暴露 API 密钥
+- **版本控制**：把 `.security.yml` 加入 `.gitignore`
+- **灵活部署**：不同环境可以使用不同的安全文件
+
+**快速设置：**
+
+1. 创建 `~/.neuroclaw/.security.yml`，写入你的 API 密钥：
+```yaml
+model_list:
+  gpt-5.4:
+    api_keys:
+      - "sk-proj-your-actual-openai-key"
+  claude-sonnet-4.6:
+    api_keys:
+      - "sk-ant-your-actual-anthropic-key"
+channel_list:
+  telegram:
+    token: "your-telegram-bot-token"
+web:
+  brave:
+    api_keys:
+      - "BSAyour-brave-api-key"
+  glm_search:
+    api_key: "your-glm-search-api-key"
+```
+
+2. 设置合适的权限：
+```bash
+chmod 600 ~/.neuroclaw/.security.yml
+```
+
+3. 从 `config.json` 中移除敏感字段（推荐）：
+```json
+{
+  "model_list": [
+    {
+      "model_name": "gpt-5.4",
+      "provider": "openai",
+      "model": "gpt-5.4"
+      // api_key loaded from .security.yml
+    }
+  ],
+  "channel_list": {
+    "telegram": {
+      "enabled": true,
+      "type": "telegram",
+      // token loaded from .security.yml
+    }
+  }
+}
+```
+
+**工作原理：**
+- `.security.yml` 中的值会自动映射到配置字段
+- 不需要特殊语法，只要在 config.json 中省略敏感字段即可
+- 如果某个字段同时出现在两个文件中，以 `.security.yml` 的值为准
+- 可以把 config.json 中的直接值与安全文件中的值混合使用
+
+完整文档见 [`../security/security_configuration.md`](../security/security_configuration.md)。
 
 #### 所有支持的厂商
 
@@ -527,7 +721,7 @@ Agent 读取 HEARTBEAT.md
 | **LiteLLM Proxy**       | `litellm`         | `http://localhost:4000/v1`                          | OpenAI    | 你的 LiteLLM 代理 Key                                            |
 | **VLLM**                | `vllm`            | `http://localhost:8000/v1`                          | OpenAI    | 本地                                                             |
 | **Cerebras**            | `cerebras`        | `https://api.cerebras.ai/v1`                        | OpenAI    | [获取](https://cerebras.ai)                                      |
-| **火山引擎 (豆包)**     | `volcengine`      | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [获取](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) |
+| **火山引擎 (豆包)**     | `volcengine`      | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [获取](https://www.volcengine.com) |
 | **神算云**              | `shengsuanyun`    | `https://router.shengsuanyun.com/api/v1`            | OpenAI    | —                                                                |
 | **BytePlus**            | `byteplus`        | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI    | [获取](https://www.byteplus.com)                                 |
 | **Vivgrid**             | `vivgrid`         | `https://api.vivgrid.com/v1`                        | OpenAI    | [获取](https://vivgrid.com)                                      |
@@ -568,7 +762,7 @@ Agent 读取 HEARTBEAT.md
   ],
   "agents": {
     "defaults": {
-      "model": "gpt-5.4"
+      "model_name": "gpt-5.4"
     }
   }
 }
@@ -921,7 +1115,9 @@ NeuroClaw 通过 `cron` 工具支持 cron 风格的定时任务。Agent 可以�
   "tools": {
     "cron": {
       "enabled": true,
-      "exec_timeout_minutes": 5
+      "exec_timeout_minutes": 5,
+      "allow_command": true,
+      "command_allowed_remotes": []
     }
   }
 }
@@ -929,12 +1125,14 @@ NeuroClaw 通过 `cron` 工具支持 cron 风格的定时任务。Agent 可以�
 
 定时任务在重启后持久保存，存储于 `~/.neuroclaw/workspace/cron/`。
 
+命令类 cron 任务可以执行 shell 命令（`allow_command` 默认为 `true`，启动时会记录为 `NeuroClaw risk=cron_shell`；见 [能力说明 §2](../reference/capabilities.md)）。默认情况下，远程渠道不能创建命令类任务。若要允许特定的远程渠道，请把 `command_allowed_remotes` 设为 `"telegram"` 或 `"telegram:1234567890"` 这样的条目；只有在所有非空渠道都应被允许时才使用 `"*"`。`"*"` 通配符有潜在危险，因为任何能与 NeuroClaw 对话的远程渠道都可以创建 shell 命令任务。这并不会绕过 `allow_command`（它为 `false` 时，任务需要 `command_confirm: true`）或 exec 的安全检查。
+
 ### 进阶主题
 
 | 主题 | 说明 |
 | ---- | ---- |
+| [安全配置](../security/security_configuration.md) | 把 API 密钥和密码存放在单独的 `.security.yml` 文件中 |
 | [敏感数据过滤](../security/sensitive_data_filtering.zh.md) | 在发送给 LLM 前，从工具结果中过滤 API 密钥和令牌 |
-| [Runtime Events 与事件日志](../architecture/runtime-events.zh.md) | 统一运行时事件、日志过滤和调试配置 |
 | [Hook 系统](../architecture/hooks/README.zh.md) | 事件驱动 Hook：观察者、拦截器、审批 Hook |
 | [Steering](../architecture/steering.md) | 在工具调用间向运行中的 Agent 注入消息 |
 | [SubTurn](../architecture/subturn.md) | 子 Agent 协调、并发控制、生命周期管理 |

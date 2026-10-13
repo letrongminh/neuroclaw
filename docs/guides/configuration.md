@@ -1148,6 +1148,42 @@ This keeps the runtime lightweight while making new OpenAI-compatible backends m
 
 </details>
 
+### Event Logs
+
+NeuroClaw publishes runtime events from the agent, channels, the gateway, the message bus and MCP. By default only `agent.*` events are printed; the others still go to the runtime event bus but not to the log.
+
+```json
+{
+  "events": {
+    "logging": {
+      "enabled": true,
+      "include": ["agent.*"],
+      "exclude": [],
+      "min_severity": "info",
+      "include_payload": false
+    }
+  }
+}
+```
+
+A common setting:
+
+```json
+{
+  "events": {
+    "logging": {
+      "include": ["*"],
+      "exclude": ["agent.llm.delta"],
+      "min_severity": "warn"
+    }
+  }
+}
+```
+
+`include` / `exclude` take exact event names or patterns such as `gateway.*` and `channel.lifecycle.*`. `include_payload` is off by default so full user messages and tool arguments stay out of the log; agent events log summary fields (lengths, counts, status) instead.
+
+More fields and examples: [Runtime events and event logs](../architecture/runtime-events.md).
+
 ### Scheduled Tasks / Reminders
 
 NeuroClaw supports cron-style scheduled tasks via the `cron` tool. The agent can set, list, and cancel reminders or recurring jobs that trigger at specified times.

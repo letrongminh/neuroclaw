@@ -29,7 +29,7 @@
 | app_secret            | string | はい   | 飛書アプリケーションの App Secret                                 |
 | encrypt_key           | string | いいえ | イベントコールバックの暗号化キー                                  |
 | verification_token    | string | いいえ | Webhook イベント検証に使用するトークン                            |
-| allow_from            | array  | いいえ | 許可するユーザーIDのリスト。空の場合はすべてのユーザーを許可     |
+| allow_from            | array  | いいえ | 許可するユーザーIDのリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 | random_reaction_emoji | array  | いいえ | ランダムに追加する絵文字のリスト。空の場合はデフォルトの "Pin" を使用 |
 
 ## セットアップ手順

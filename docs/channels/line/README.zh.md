@@ -27,7 +27,7 @@ NeuroClaw 通过 LINE Messaging API 配合 Webhook 回调功能实现对 LINE �
 | channel_secret       | string | 是   | LINE Messaging API 的 Channel Secret       |
 | channel_access_token | string | 是   | LINE Messaging API 的 Channel Access Token |
 | webhook_path         | string | 否   | Webhook 的路径 (默认为 /webhook/line)      |
-| allow_from           | array  | 否   | 用户ID白名单，空表示允许所有用户           |
+| allow_from           | array  | 否   | 用户ID白名单；为空时任何人都能使用（网关会记录警告）；请设置，或用 `["*"]` 明确允许所有人           |
 
 ## 设置流程
 

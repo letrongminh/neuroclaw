@@ -2,7 +2,7 @@
 
 # クレデンシャル暗号化
 
-NeuroClaw は `model_list` 設定エントリの `api_key` 値の暗号化をサポートしています。
+NeuroClaw は `model_list` 設定エントリの `api_key`/`api_keys` の値の暗号化をサポートしています。
 暗号化されたキーは `enc://<base64>` 文字列として保存され、起動時に自動的に復号されます。
 
 ---
@@ -32,7 +32,7 @@ enc://AAAA...base64...
     {
       "model_name": "gpt-4o",
       "model": "openai/gpt-4o",
-      "api_keys": ["enc://AAAA...base64..."],
+      // "api_keys": ["enc://AAAA...base64..."] move to .security.yml
       "api_base": "https://api.openai.com/v1"
     }
   ]
@@ -42,6 +42,8 @@ enc://AAAA...base64...
 ---
 
 ## サポートされる `api_key` 形式
+
+同じ形式が `api_key`（単数）と `api_keys`（配列）フィールドの各要素の両方に適用されます：
 
 | 形式 | 例 | 動作 |
 |------|---|------|
@@ -119,14 +121,14 @@ SSH 秘密鍵が提供されている場合、暗号を破るには**両方**が
 | 変数 | 必須 | 説明 |
 |------|------|------|
 | `NEUROCLAW_KEY_PASSPHRASE` | はい（`enc://` 使用時） | 鍵導出に使用するパスフレーズ |
-| `NEUROCLAW_SSH_KEY_PATH` | いいえ | SSH 秘密鍵のパス。未設定の場合、`~/.ssh/neuroclaw_ed25519.key` から自動検出 |
+| `NEUROCLAW_SSH_KEY_PATH` | いいえ | SSH 秘密鍵のパス。未設定の場合、`~/.ssh/picoclaw_ed25519.key` から自動検出 |
 
 ### SSH キーの自動検出
 
-`NEUROCLAW_SSH_KEY_PATH` が設定されていない場合、NeuroClaw は専用キーを探します：
+`NEUROCLAW_SSH_KEY_PATH` が設定されていない場合、NeuroClaw は専用のキーファイルを探します（ファイル名は PicoClaw v0.3.1 から引き継いだもので、コード側ではリネームされていません）：
 
 ```
-~/.ssh/neuroclaw_ed25519.key
+~/.ssh/picoclaw_ed25519.key
 ```
 
 この専用ファイルにより、ユーザーの既存の SSH キーとの競合を回避します。

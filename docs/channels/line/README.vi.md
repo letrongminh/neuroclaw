@@ -27,7 +27,7 @@ NeuroClaw hỗ trợ LINE thông qua LINE Messaging API kết hợp với webhoo
 | channel_secret       | string | Có       | Channel Secret của LINE Messaging API                                  |
 | channel_access_token | string | Có       | Channel Access Token của LINE Messaging API                            |
 | webhook_path         | string | Không    | Đường dẫn webhook (mặc định: /webhook/line)                            |
-| allow_from           | array  | Không    | Danh sách trắng ID người dùng; để trống cho phép tất cả                |
+| allow_from           | array  | Không    | Danh sách trắng ID người dùng; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 
 ## Quy trình thiết lập
 

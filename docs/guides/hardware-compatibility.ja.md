@@ -97,9 +97,9 @@ NeuroClaw でテスト済みのコンシューマー製品、ルーター、産�
 
 ### Android スマートフォン（Termux 経由）
 
-1GB 以上の RAM を搭載した ARM64 Android スマートフォン（2015年以降）。[Termux](https://github.com/termux/termux-app) をインストールし、`proot` を使用して NeuroClaw を実行します。
+1GB 以上の RAM を搭載した ARM64 Android スマートフォン（2015年以降）。[Termux](https://github.com/termux/termux-app) をインストールし、`termux-chroot`（`proot` に含まれます）経由で NeuroClaw を実行します。
 
-> セットアップ手順は [README：古い Android スマートフォンで実行](../project/README.ja.md#-run-on-old-android-phones) を参照してください。
+> セットアップ手順は [Android Termux ガイド](android-termux.md) を参照してください。
 
 ### デスクトップ / サーバー / クラウド
 
@@ -108,7 +108,7 @@ NeuroClaw でテスト済みのコンシューマー製品、ルーター、産�
 | x86_64 Linux | ネイティブバイナリ、依存関係なし |
 | x86_64 Windows | ネイティブバイナリ |
 | macOS (Intel / Apple Silicon) | ネイティブバイナリ |
-| Docker (any platform) | `docker compose` ワンライナー、[Docker ガイド](docker.md) を参照 |
+| Docker | linux/amd64、arm64、riscv64 向けの `ghcr.io/letrongminh/neuroclaw`。[Docker ガイド](docker.ja.md) を参照 |
 | OpenWrt routers | MIPS/ARM ビルド、32MB 以上の空きメモリが必要 |
 | FreeBSD / NetBSD | x86_64 および arm64 ビルドが利用可能 |
 
@@ -140,7 +140,7 @@ tar xzf neuroclaw_Linux_arm64.tar.gz
 ./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-利用可能なビルド：`linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+リリースアーカイブは `neuroclaw_<OS>_<arch>` という名前です：`Linux_x86_64`、`Linux_arm64`、`Linux_armv7`、`Linux_armv6`、`Linux_riscv64`、`Linux_loong64`、`Linux_mipsle`（ソフトフロート）、`Linux_s390x`。各プラットフォームについては [インストールガイド](install.ja.md) を参照してください。
 
 ### ハードウェアを追加する
 

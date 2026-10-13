@@ -16,6 +16,10 @@ neuroclaw gateway -d
 
 Neste modo, o sistema formata os logs de forma detalhada e exibe prévias dos prompts do sistema e dos resultados de execução das ferramentas.
 
+## Rótulos de risco na inicialização
+
+Com ou sem `--debug`, `gateway` e `agent` registram um aviso `NeuroClaw risk=<name>` para cada capacidade arriscada que esteja habilitada (por exemplo `risk=shell`). Procure por eles primeiro quando precisar saber o que o modelo pode fazer nesta máquina. Nomes e significados: [capabilities.md seção 2](../reference/capabilities.md#2-risk-labels).
+
 ## Desabilitando a truncagem de logs (logs completos)
 
 Por padrão, o NeuroClaw trunca strings muito longas (como o *Prompt do Sistema* ou resultados JSON grandes) nos logs de depuração para manter o console legível.

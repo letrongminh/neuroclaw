@@ -2,6 +2,15 @@
 
 > Kembali ke [README](../project/README.ms.md)
 
+## Imej
+
+| Imej | Mengandungi | Memulakan |
+|---|---|---|
+| `ghcr.io/letrongminh/neuroclaw:<tag>` atau `:latest` | `neuroclaw` | gateway (larian pertama: `onboard`, kemudian keluar) |
+| `ghcr.io/letrongminh/neuroclaw:<tag>-launcher` atau `:launcher` | `neuroclaw`, `neuroclaw-launcher` | konsol web (`-console -public -no-browser`) |
+
+Kedua-duanya diterbitkan untuk linux/amd64, arm64 dan riscv64. Config dan workspace berada dalam `/root/.neuroclaw` di dalam container; fail compose memasang `docker/data` di situ.
+
 ## 🐳 Docker Compose
 
 Anda juga boleh menjalankan NeuroClaw menggunakan Docker Compose tanpa memasang apa-apa secara setempat.
@@ -41,7 +50,7 @@ Imej `launcher` merangkumi kedua-dua binari (`neuroclaw`, `neuroclaw-launcher`) 
 docker compose -f docker/docker-compose.yml --profile launcher up -d
 ```
 
-Buka http://localhost:18800 dalam pelayar anda. Launcher mengurus proses gateway secara automatik.
+Buka http://localhost:18800 dalam pelayar anda (fail compose juga menerbitkan port gateway 18790). Launcher mengurus proses gateway secara automatik.
 
 > [!WARNING]
 > Konsol web dilindungi oleh kata laluan log masuk dashboard. Jangan dedahkannya kepada rangkaian tidak dipercayai atau internet awam.
@@ -66,7 +75,7 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ### 🚀 Quick Start
 
 > [!TIP]
-> Tetapkan API Key anda dalam `~/.neuroclaw/config.json`. Dapatkan API Key: [Volcengine (CodingPlan)](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). Carian web adalah pilihan — dapatkan [Tavily API](https://tavily.com) percuma (1000 pertanyaan percuma/bulan) atau [Brave Search API](https://brave.com/search/api) (2000 pertanyaan percuma/bulan).
+> Tetapkan API Key anda dalam `~/.neuroclaw/config.json`. Dapatkan API Key: [Volcengine (CodingPlan)](https://www.volcengine.com) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). Carian web adalah pilihan — dapatkan [Tavily API](https://tavily.com) percuma (1000 pertanyaan percuma/bulan) atau [Brave Search API](https://brave.com/search/api) (2000 pertanyaan percuma/bulan).
 
 **1. Inisialisasi**
 

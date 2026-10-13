@@ -2,6 +2,15 @@
 
 > 返回 [README](../project/README.zh.md)
 
+## 镜像
+
+| 镜像 | 包含 | 启动内容 |
+|---|---|---|
+| `ghcr.io/letrongminh/neuroclaw:<tag>` 或 `:latest` | `neuroclaw` | Gateway（首次运行：执行 `onboard` 后退出） |
+| `ghcr.io/letrongminh/neuroclaw:<tag>-launcher` 或 `:launcher` | `neuroclaw`、`neuroclaw-launcher` | Web 控制台（`-console -public -no-browser`） |
+
+两者均发布 linux/amd64、arm64 和 riscv64 版本。配置和工作区位于容器内的 `/root/.neuroclaw`；compose 文件会把 `docker/data` 挂载到该位置。
+
 ## 🐳 Docker Compose
 
 您也可以使用 Docker Compose 运行 NeuroClaw，无需在本地安装任何环境。
@@ -42,7 +51,7 @@ docker compose -f docker/docker-compose.yml --profile gateway down
 docker compose -f docker/docker-compose.yml --profile launcher up -d
 ```
 
-在浏览器中打开 <http://localhost:18800>。Launcher 会自动管理 Gateway 进程。
+在浏览器中打开 <http://localhost:18800>（compose 文件还会发布 Gateway 端口 18790）。Launcher 会自动管理 Gateway 进程。
 
 > [!WARNING]
 > Web 控制台通过 dashboard 登录密码保护。**不要**将启动器暴露到不可信网络或公网。完整说明见 [配置指南](configuration.md) 中的「Web 启动器控制台」一节。
@@ -69,7 +78,7 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ## 🚀 快速开始
 
 > [!TIP]
-> 在 `~/.neuroclaw/config.json` 中设置您的 API Key。获取 API Key: [火山引擎 (CodingPlan)](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu (智谱)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)。网络搜索是 **可选的** — 获取免费的 [Tavily API](https://tavily.com) (每月 1000 次免费查询) 或 [Brave Search API](https://brave.com/search/api) (每月 2000 次免费查询)。
+> 在 `~/.neuroclaw/config.json` 中设置您的 API Key。获取 API Key: [火山引擎](https://console.volcengine.com/ark) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu (智谱)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)。网络搜索是 **可选的** — 获取免费的 [Tavily API](https://tavily.com) (每月 1000 次免费查询) 或 [Brave Search API](https://brave.com/search/api) (每月 2000 次免费查询)。
 
 **1. 初始化 (Initialize)**
 

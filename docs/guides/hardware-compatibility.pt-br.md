@@ -97,7 +97,7 @@ Produtos de consumo, roteadores e dispositivos industriais testados com o NeuroC
 
 ### Celulares Android (via Termux)
 
-Qualquer celular Android ARM64 (2015+) com 1GB+ de RAM. Instale o [Termux](https://github.com/termux/termux-app), use `proot` para rodar o NeuroClaw.
+Qualquer celular Android ARM64 (2015+) com 1GB+ de RAM. Instale o [Termux](https://github.com/termux/termux-app), e rode o NeuroClaw por meio do `termux-chroot` (do pacote `proot`).
 
 > Veja [README: Rodar em celulares Android antigos](../project/README.pt-br.md#-run-on-old-android-phones) para instruções de configuração.
 
@@ -108,7 +108,7 @@ Qualquer celular Android ARM64 (2015+) com 1GB+ de RAM. Instale o [Termux](https
 | x86_64 Linux | Binário nativo, sem dependências |
 | x86_64 Windows | Binário nativo |
 | macOS (Intel / Apple Silicon) | Binário nativo |
-| Docker (any platform) | `docker compose` em uma linha, veja [Guia Docker](docker.md) |
+| Docker | `ghcr.io/letrongminh/neuroclaw` para linux/amd64, arm64 e riscv64; veja o [Guia Docker](docker.md) |
 | OpenWrt routers | Builds MIPS/ARM, requer >32MB de RAM livre |
 | FreeBSD / NetBSD | Builds x86_64 e arm64 disponíveis |
 
@@ -140,7 +140,7 @@ tar xzf neuroclaw_Linux_arm64.tar.gz
 ./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-Builds disponíveis: `linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+Os arquivos de release se chamam `neuroclaw_<OS>_<arch>`: `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`, `Linux_armv6`, `Linux_riscv64`, `Linux_loong64`, `Linux_mipsle` (soft-float), `Linux_s390x`. Veja o [guia de instalação](install.pt-br.md) para todas as plataformas.
 
 ### Adicionar seu hardware
 

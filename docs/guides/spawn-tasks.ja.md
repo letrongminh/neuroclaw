@@ -2,13 +2,15 @@
 
 > [README](../project/README.ja.md) に戻る
 
-### Spawn を使用した非同期タスク
+NeuroClaw は `spawn` ツールによる**非同期タスク実行**をサポートしています。これは主に **Heartbeat** システムが、メインの Agent ループをブロックせずに長時間実行タスクを動かすために使用します。
 
-長時間実行タスク（Web 検索、API 呼び出し）には、`spawn` ツールを使用して**サブ Agent (subagent)** を作成します：
+## Heartbeat
+
+Heartbeat システムは `workspace/HEARTBEAT.md` を定期的にチェックし、スケジュールされたタスクを確認します。初回実行時にはデフォルトのテンプレートが自動生成されます。これをカスタマイズして、簡単なタスク（その場で処理）と長時間タスク（`spawn` で委任）を定義できます。
+
+**`HEARTBEAT.md` の例：**
 
 ```markdown
-# Periodic Tasks
-
 ## Quick Tasks (respond directly)
 
 - Report current time
@@ -62,7 +64,7 @@ HEARTBEAT_OK を応答          ユーザーが直接結果を受信
 | `enabled`  | `true`       | ハートビートの有効/無効        |
 | `interval` | `30`         | チェック間隔（分単位、最小: 5）|
 
-**環境変数:**
+**環境変数：**
 
 - `NEUROCLAW_HEARTBEAT_ENABLED=false` で無効化
 - `NEUROCLAW_HEARTBEAT_INTERVAL=60` で間隔を変更

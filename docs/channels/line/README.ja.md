@@ -27,7 +27,7 @@ NeuroClaw は LINE Messaging API と Webhook コールバックを通じて LINE
 | channel_secret       | string | はい   | LINE Messaging API の Channel Secret                               |
 | channel_access_token | string | はい   | LINE Messaging API の Channel Access Token                         |
 | webhook_path         | string | いいえ | Webhook のパス（デフォルト: /webhook/line）                        |
-| allow_from           | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は全ユーザーを許可             |
+| allow_from           | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 
 ## セットアップ手順
 

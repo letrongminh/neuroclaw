@@ -25,7 +25,7 @@ MaixCam é um canal dedicado para conectar dispositivos de câmera AI Sipeed Mai
 | enabled    | bool   | Sim         | Se o canal MaixCam deve ser habilitado                                     |
 | host       | string | Sim         | Endereço de escuta do servidor TCP                                         |
 | port       | int    | Sim         | Porta de escuta do servidor TCP                                            |
-| allow_from | array  | Não         | Lista de IDs de dispositivos permitidos; vazio significa todos os dispositivos |
+| allow_from | array  | Não         | Lista de IDs de dispositivos permitidos; vazio deixa qualquer pessoa entrar (o gateway registra um aviso); defina-o, ou use `["*"]` para permitir todos de propósito |
 
 ## Casos de uso
 

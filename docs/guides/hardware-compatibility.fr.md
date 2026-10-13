@@ -97,9 +97,9 @@ Produits grand public, routeurs et appareils industriels testés avec NeuroClaw.
 
 ### Téléphones Android (via Termux)
 
-Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](https://github.com/termux/termux-app), utilisez `proot` pour exécuter NeuroClaw.
+Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](https://github.com/termux/termux-app) et exécutez NeuroClaw via `termux-chroot` (de `proot`).
 
-> Voir [README : Exécuter sur d'anciens téléphones Android](../project/README.fr.md#-run-on-old-android-phones) pour les instructions de configuration.
+> Voir le [guide Android Termux](android-termux.md) pour les instructions de configuration.
 
 ### Bureau / Serveur / Cloud
 
@@ -108,7 +108,7 @@ Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](htt
 | x86_64 Linux | Binaire natif, aucune dépendance |
 | x86_64 Windows | Binaire natif |
 | macOS (Intel / Apple Silicon) | Binaire natif |
-| Docker (any platform) | `docker compose` en une ligne, voir [Guide Docker](docker.md) |
+| Docker | `ghcr.io/letrongminh/neuroclaw` pour linux/amd64, arm64 et riscv64 ; voir le [Guide Docker](docker.fr.md) |
 | OpenWrt routers | Builds MIPS/ARM, nécessite >32 Mo de RAM libre |
 | FreeBSD / NetBSD | Builds x86_64 et arm64 disponibles |
 
@@ -140,7 +140,7 @@ tar xzf neuroclaw_Linux_arm64.tar.gz
 ./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-Builds disponibles : `linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+Les archives de release sont nommées `neuroclaw_<OS>_<arch>` : `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`, `Linux_armv6`, `Linux_riscv64`, `Linux_loong64`, `Linux_mipsle` (soft-float), `Linux_s390x`. Voir le [guide d'installation](install.fr.md) pour toutes les plateformes.
 
 ### Ajouter votre matériel
 

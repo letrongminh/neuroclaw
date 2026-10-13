@@ -120,14 +120,14 @@ Khi khóa riêng SSH được cung cấp, việc phá vỡ mã hóa yêu cầu *
 | Biến | Bắt buộc | Mô tả |
 |------|----------|-------|
 | `NEUROCLAW_KEY_PASSPHRASE` | Có (cho `enc://`) | Cụm mật khẩu dùng để dẫn xuất khóa |
-| `NEUROCLAW_SSH_KEY_PATH` | Không | Đường dẫn đến khóa riêng SSH. Nếu không đặt, tự động phát hiện từ `~/.ssh/neuroclaw_ed25519.key` |
+| `NEUROCLAW_SSH_KEY_PATH` | Không | Đường dẫn đến khóa riêng SSH. Nếu không đặt, tự động phát hiện từ `~/.ssh/picoclaw_ed25519.key` |
 
 ### Tự động Phát hiện Khóa SSH
 
-Nếu `NEUROCLAW_SSH_KEY_PATH` không được đặt, NeuroClaw tìm khóa chuyên dụng:
+Nếu `NEUROCLAW_SSH_KEY_PATH` không được đặt, NeuroClaw tìm một tệp khóa chuyên dụng (tên tệp được kế thừa từ PicoClaw v0.3.1; mã chưa đổi tên):
 
 ```
-~/.ssh/neuroclaw_ed25519.key
+~/.ssh/picoclaw_ed25519.key
 ```
 
 Tệp chuyên dụng này tránh xung đột với các khóa SSH hiện có của người dùng.

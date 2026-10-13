@@ -26,7 +26,9 @@ Ajoutez ceci à `config.json` :
         "text": "Thinking..."
       },
       "reasoning_channel_id": "",
-      "message_format": "richtext"
+      "message_format": "richtext",
+      "crypto_database_path": "",
+      "crypto_passphrase": "YOUR_MATRIX_CRYPTO_PICKLE_KEY"
     }
   }
 }
@@ -42,11 +44,13 @@ Ajoutez ceci à `config.json` :
 | access_token         | string   | Oui    | Jeton d'accès du bot |
 | device_id            | string   | Non    | ID d'appareil Matrix optionnel |
 | join_on_invite       | bool     | Non    | Rejoindre automatiquement les salons invités |
-| allow_from           | []string | Non    | Liste blanche d'utilisateurs (IDs Matrix) |
+| allow_from           | []string | Non    | Liste blanche d'utilisateurs (IDs Matrix) ; vide laisse entrer tout le monde (la passerelle consigne un avertissement), renseignez-le donc ou utilisez `["*"]` volontairement |
 | group_trigger        | object   | Non    | Stratégie de déclenchement de groupe (`mention_only` / `prefixes`) |
 | placeholder          | object   | Non    | Configuration du message de remplacement |
 | reasoning_channel_id | string   | Non    | Canal cible pour la sortie de raisonnement |
 | message_format       | string   | Non    | Format de sortie : `"richtext"` (défaut) rend le markdown en HTML ; `"plain"` envoie du texte brut uniquement |
+| crypto_database_path | string   | Non    | Chemin de stockage de la base de chiffrement (utilise l'espace de travail `~/.neuroclaw/workspace` si vide) |
+| crypto_passphrase    | string   | Non    | Clé de sérialisation pour chiffrer les clés de session dans la base ; ne doit plus changer une fois définie |
 
 ## 3. Fonctionnalités actuellement supportées
 

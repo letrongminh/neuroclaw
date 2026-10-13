@@ -2,7 +2,7 @@
 
 # WeCom
 
-NeuroClaw cung cấp WeCom dưới dạng một kênh duy nhất `channels.wecom`, được xây dựng trên API WebSocket chính thức của WeCom AI Bot.
+NeuroClaw cung cấp WeCom dưới dạng một kênh duy nhất `channel_list.wecom`, được xây dựng trên API WebSocket chính thức của WeCom AI Bot.
 Điều này thay thế việc phân tách cũ `wecom`, `wecom_app` và `wecom_aibot` bằng một mô hình cấu hình thống nhất.
 
 > Không cần URL callback webhook công khai. NeuroClaw thiết lập kết nối WebSocket đi ra tới WeCom.
@@ -40,7 +40,7 @@ Lệnh thực hiện:
 1. Yêu cầu mã QR từ WeCom và hiển thị trong terminal
 2. Đồng thời in ra một **Liên kết mã QR** mà bạn có thể mở trong trình duyệt nếu mã QR trên terminal khó quét
 3. Chờ xác nhận — sau khi quét, bạn cũng phải **xác nhận đăng nhập trong ứng dụng WeCom**
-4. Khi thành công, ghi `bot_id` và `secret` vào `channels.wecom` và lưu cấu hình
+4. Khi thành công, ghi `bot_id` và `secret` vào `channel_list.wecom` và lưu cấu hình
 
 Thời gian chờ mặc định là **5 phút**. Sử dụng `--timeout` để kéo dài:
 
@@ -82,7 +82,7 @@ Nếu bạn đã có `bot_id` và `secret` từ nền tảng WeCom AI Bot, hãy 
 | `secret` | string | — | Secret của WeCom AI Bot. Được lưu mã hóa trong `.security.yml`. Bắt buộc khi được kích hoạt. |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | Điểm cuối WebSocket của WeCom. |
 | `send_thinking_message` | bool | `true` | Gửi tin nhắn `Processing...` trước khi phản hồi streaming bắt đầu. |
-| `allow_from` | array | `[]` | Danh sách cho phép người gửi. Để trống nghĩa là cho phép tất cả. |
+| `allow_from` | array | `[]` | Danh sách cho phép người gửi; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 | `reasoning_channel_id` | string | `""` | ID chat tùy chọn để định tuyến đầu ra suy luận đến một cuộc hội thoại riêng. |
 
 ### Biến môi trường
@@ -117,9 +117,9 @@ Tất cả các trường có thể được ghi đè bằng biến môi trườ
 
 | Cấu hình trước đây | Di chuyển |
 | ------------------- | --------- |
-| `channels.wecom` (bot webhook) | Thay thế bằng `channels.wecom` sử dụng `bot_id` + `secret`. |
-| `channels.wecom_app` | Xóa. Sử dụng `channels.wecom` thay thế. |
-| `channels.wecom_aibot` | Di chuyển `bot_id` và `secret` sang `channels.wecom`. |
+| `channel_list.wecom` (bot webhook) | Thay thế bằng `channel_list.wecom` sử dụng `bot_id` + `secret`. |
+| `channel_list.wecom_app` | Xóa. Sử dụng `channel_list.wecom` thay thế. |
+| `channel_list.wecom_aibot` | Di chuyển `bot_id` và `secret` sang `channel_list.wecom`. |
 | `token`, `encoding_aes_key`, `webhook_url`, `webhook_path` | Không còn sử dụng. Xóa khỏi cấu hình. |
 | `corp_id`, `corp_secret`, `agent_id` | Không còn sử dụng. Xóa khỏi cấu hình. |
 | `welcome_message`, `processing_message`, `max_steps` | Không còn là một phần của cấu hình kênh WeCom. |
@@ -146,4 +146,4 @@ Tất cả các trường có thể được ghi đè bằng biến môi trườ
 ### Phản hồi không đến
 
 - Kiểm tra xem `allow_from` có đang chặn người gửi không.
-- Kiểm tra rằng `channels.wecom.bot_id` và `channels.wecom.secret` đã được thiết lập và không trống.
+- Kiểm tra rằng `channel_list.wecom.bot_id` và `channel_list.wecom.secret` đã được thiết lập và không trống.

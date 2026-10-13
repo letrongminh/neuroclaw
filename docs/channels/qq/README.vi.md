@@ -25,7 +25,7 @@ NeuroClaw hỗ trợ QQ thông qua API Bot chính thức của Nền tảng Mở
 | enabled    | bool   | Có       | Có bật kênh QQ hay không                                                 |
 | app_id     | string | Có       | App ID của ứng dụng bot QQ                                               |
 | app_secret | string | Có       | App Secret của ứng dụng bot QQ                                           |
-| allow_from | array  | Không    | Danh sách trắng ID người dùng; để trống nghĩa là cho phép tất cả        |
+| allow_from | array  | Không    | Danh sách trắng ID người dùng; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 
 ## Hướng dẫn thiết lập
 

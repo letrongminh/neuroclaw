@@ -25,7 +25,7 @@ OneBot est un standard de protocole ouvert pour les bots QQ, fournissant une int
 | enabled      | bool   | Oui    | Activer ou non le canal OneBot                                       |
 | ws_url       | string | Oui    | URL WebSocket du serveur OneBot                                      |
 | access_token | string | Non    | Jeton d'accès pour la connexion au serveur OneBot                    |
-| allow_from   | array  | Non    | Liste blanche d'ID utilisateurs ; vide signifie tous les utilisateurs |
+| allow_from   | array  | Non    | Liste blanche d'ID utilisateurs ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Procédure de configuration
 

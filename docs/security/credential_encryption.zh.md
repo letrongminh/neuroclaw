@@ -119,14 +119,14 @@ GCM 认证标签会自动附加到密文之后。任何篡改都会导致解密�
 | 变量 | 是否必需 | 描述 |
 |------|----------|------|
 | `NEUROCLAW_KEY_PASSPHRASE` | 是（用于 `enc://`） | 用于密钥派生的密码短语 |
-| `NEUROCLAW_SSH_KEY_PATH` | 否 | SSH 私钥路径。如未设置，自动从 `~/.ssh/neuroclaw_ed25519.key` 检测 |
+| `NEUROCLAW_SSH_KEY_PATH` | 否 | SSH 私钥路径。如未设置，自动从 `~/.ssh/picoclaw_ed25519.key` 检测 |
 
 ### SSH 密钥自动检测
 
-如果未设置 `NEUROCLAW_SSH_KEY_PATH`，NeuroClaw 会查找专用密钥：
+如果未设置 `NEUROCLAW_SSH_KEY_PATH`，NeuroClaw 会查找一个专用密钥文件（文件名沿用自 PicoClaw v0.3.1，代码尚未改名）：
 
 ```
-~/.ssh/neuroclaw_ed25519.key
+~/.ssh/picoclaw_ed25519.key
 ```
 
 此专用文件避免与用户现有的 SSH 密钥冲突。

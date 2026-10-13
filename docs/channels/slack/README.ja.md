@@ -25,7 +25,7 @@ Slack は世界をリードする企業向けインスタントメッセージ�
 | enabled    | bool   | はい   | Slack チャンネルを有効にするかどうか                                     |
 | bot_token  | string | はい   | Slack ボットの Bot User OAuth Token（xoxb- で始まる）                    |
 | app_token  | string | はい   | Slack アプリの Socket Mode App Level Token（xapp- で始まる）             |
-| allow_from | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は全ユーザーを許可                   |
+| allow_from | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 
 ## セットアップ手順
 

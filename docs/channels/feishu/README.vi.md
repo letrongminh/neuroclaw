@@ -29,7 +29,7 @@ Feishu (tên quốc tế: Lark) là nền tảng cộng tác doanh nghiệp củ
 | app_secret            | string | Có       | App Secret của ứng dụng Feishu                                           |
 | encrypt_key           | string | Không    | Khóa mã hóa cho callback sự kiện                                         |
 | verification_token    | string | Không    | Token dùng để xác minh sự kiện Webhook                                   |
-| allow_from            | array  | Không    | Danh sách trắng ID người dùng; để trống nghĩa là cho phép tất cả        |
+| allow_from            | array  | Không    | Danh sách trắng ID người dùng; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 | random_reaction_emoji | array  | Không    | Danh sách emoji phản ứng ngẫu nhiên; để trống dùng "Pin" mặc định       |
 
 ## Hướng dẫn thiết lập

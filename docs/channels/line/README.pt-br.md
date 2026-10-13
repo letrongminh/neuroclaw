@@ -27,7 +27,7 @@ O NeuroClaw suporta o LINE por meio da LINE Messaging API com callbacks de webho
 | channel_secret       | string | Sim         | Channel Secret da LINE Messaging API                                   |
 | channel_access_token | string | Sim         | Channel Access Token da LINE Messaging API                             |
 | webhook_path         | string | Não         | Caminho do webhook (padrão: /webhook/line)                             |
-| allow_from           | array  | Não         | Lista de permissão de IDs de usuário; vazio permite todos              |
+| allow_from           | array  | Não         | Lista de permissão de IDs de usuário; vazio deixa qualquer pessoa entrar (o gateway registra um aviso); defina-o, ou use `["*"]` para permitir todos de propósito              |
 
 ## Configuração passo a passo
 

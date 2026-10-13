@@ -120,14 +120,14 @@ Isso significa que um arquivo de configuração vazado sozinho não é suficient
 | Variável | Obrigatório | Descrição |
 |----------|-------------|-----------|
 | `NEUROCLAW_KEY_PASSPHRASE` | Sim (para `enc://`) | Frase secreta usada para derivação de chave |
-| `NEUROCLAW_SSH_KEY_PATH` | Não | Caminho para a chave privada SSH. Se não definido, detecta automaticamente em `~/.ssh/neuroclaw_ed25519.key` |
+| `NEUROCLAW_SSH_KEY_PATH` | Não | Caminho para a chave privada SSH. Se não definido, detecta automaticamente em `~/.ssh/picoclaw_ed25519.key` |
 
 ### Detecção Automática da Chave SSH
 
-Se `NEUROCLAW_SSH_KEY_PATH` não estiver definido, o NeuroClaw procura a chave dedicada:
+Se `NEUROCLAW_SSH_KEY_PATH` não estiver definido, o NeuroClaw procura um arquivo de chave dedicado (o nome do arquivo é herdado do PicoClaw v0.3.1; o código não o renomeou):
 
 ```
-~/.ssh/neuroclaw_ed25519.key
+~/.ssh/picoclaw_ed25519.key
 ```
 
 Este arquivo dedicado evita conflitos com as chaves SSH existentes do usuário.

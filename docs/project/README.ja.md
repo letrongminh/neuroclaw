@@ -1,534 +1,47 @@
-<div align="center">
-  <img src="../../assets/logo.webp" alt="NeuroClaw" width="512">
+# NeuroClaw 🦞
 
-  <h1>NeuroClaw: Go で書かれた超効率 AI アシスタント</h1>
+[PicoClaw](https://github.com/sipeed/picoclaw) v0.3.1 ができることはすべて（チャットアプリ、LLM プロバイダー、メモリ、リマインダー、シェル、スキル、MCP、Web コンソールとランチャー）、さらに [NeuroEdge](https://github.com/letrongminh/neuroedge-init) ホームの頭脳として動きます。NeuroEdge のホームボックスに接続すると、ボックスの MCP ツールを通じて家のデバイスにアクセスします。ツールは家のルールに従って判断し、取り消せない操作については先に家にいるあなたへ確認を求めます。モデルがチャットの外に手を伸ばせるようになる機能（シェル、ハードウェアバス、スキルのインストール、フック、stdio MCP サーバー）は、設定どおりにオン・オフされ、オンになっているものは起動時に名前が出力されます（`risk=…`）。
 
-  <h3>$10 ハードウェア · 10MB RAM · ms 起動 · Let's Go, NeuroClaw!</h3>
-  <p>
-    <img src="https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go&logoColor=white" alt="Go">
-    <img src="https://img.shields.io/badge/Arch-x86__64%2C%20ARM64%2C%20MIPS%2C%20RISC--V%2C%20LoongArch-blue" alt="Hardware">
-    <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
-    <br>
-    <a href="https://picoclaw.io"><img src="https://img.shields.io/badge/Website-picoclaw.io-blue?style=flat&logo=google-chrome&logoColor=white" alt="Website"></a>
-    <a href="https://docs.picoclaw.io/"><img src="https://img.shields.io/badge/Docs-Official-007acc?style=flat&logo=read-the-docs&logoColor=white" alt="Docs"></a>
-    <a href="https://deepwiki.com/sipeed/neuroclaw"><img src="https://img.shields.io/badge/Wiki-DeepWiki-FFA500?style=flat&logo=wikipedia&logoColor=white" alt="Wiki"></a>
-    <br>
-    <a href="https://x.com/SipeedIO"><img src="https://img.shields.io/badge/X_(Twitter)-SipeedIO-black?style=flat&logo=x&logoColor=white" alt="Twitter"></a>
-    <a href="../../assets/wechat.png"><img src="https://img.shields.io/badge/WeChat-Group-41d56b?style=flat&logo=wechat&logoColor=white"></a>
-    <a href="https://discord.gg/V4sAZ9XWpN"><img src="https://img.shields.io/badge/Discord-Community-4c60eb?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
-  </p>
+Linux ボード、サーバー（NeuroEdge Cloud）、Mac、Windows PC で動作します。リリースの対象プラットフォームは PicoClaw と同じです。インストール：[docs/guides/install.ja.md](../guides/install.ja.md)。
 
-[中文](README.zh.md) | **日本語** | [한국어](README.ko.md) | [Português](README.pt-br.md) | [Tiếng Việt](README.vi.md) | [Français](README.fr.md) | [Italiano](README.it.md) | [Bahasa Indonesia](README.id.md) | [Malay](README.ms.md) | [English](../../README.md)
+チップ上で動かすこともできます。[`esp32/`](../../esp32/) は **NeuroClaw-ESP** で、同じ頭脳を ESP-IDF コンポーネントとして C で書き直し、ESP32-S3 1 個で動かします。Telegram、LLM（フォールバック付き）、メモリ、リマインダー、ハートビート、Web 検索、オーナーへのメッセージとファイル、そしてゲートまでを数ドルのチップに載せ、ワークスペースとツールもここと同じです（[同じ点と違う点](../../esp32/README.md)）。頭脳とゲートが同じアドレス空間を共有するため、`risk=single_chip` のラベルが付きます。
 
-<p>
-  <a href="https://picopaw.ai">
-    <img src="../../assets/picopaw-banner-en.webp" alt="PicoPaw AI: Your AI Desktop Buddy" width="100%">
-  </a>
-</p>
+NeuroClaw は [PicoClaw](https://github.com/sipeed/picoclaw) v0.3.1（MIT）のハードフォークです。[NOTICE](../../NOTICE) を参照してください。
 
-<p>
-  <strong>PicoPaw AI is now live at <a href="https://picopaw.ai">picopaw.ai</a>.</strong><br>
-  Create, preview, and share playful AI companions for the NeuroClaw ecosystem.
-</p>
+## PicoClaw からの変更点
 
-</div>
+| | PicoClaw | NeuroClaw |
+|:---|:---|:---|
+| HTTP 経由の MCP | ヘッダーのみ | 相互 TLS にも対応：`tls.ca_file`、`cert_file`、`key_file`、`server_name`、TLS 1.3。NeuroEdge ボックス（`neuroedge mcp serve --http`）はクライアント証明書を必須とするため、ブリッジは不要です。 |
+| シェル、ハードウェア、スキルのインストール、フック、stdio MCP | 設定でオン・オフ | 同じで、デフォルトも PicoClaw と同じです。オンになっているものは起動時に `NeuroClaw risk=<name>` として記録されます（`shell`、`cron_shell`、`hardware_bus`、`skill_install`、`process_hooks`、`usb_monitor`、`stdio_mcp`。[`pkg/config/risk.go`](../../pkg/config/risk.go)）。頭脳を閉じたい NeuroEdge ホームは `config.json` でそう指定します。 |
+| 「オーナーに聞く」と言うゲート | 通常のツール結果 | ボックスのツールが `confirmation` 付きの `BLOCK` を返すと、NeuroClaw はモデルに、何も実行されていないこと、承認できるのは家にいるオーナーだけであること、再試行しないことをはっきり伝えます（[`pkg/tools/integration/neuroedge_result.go`](../../pkg/tools/integration/neuroedge_result.go)）。 |
+| `update` | `sipeed/picoclaw` のリリースをダウンロード | このリポジトリのリリースをダウンロードし、チェックサムで検証 |
+| 名前 | `picoclaw`、`~/.picoclaw`、`PICOCLAW_*` | `neuroclaw`、`~/.neuroclaw`、`NEUROCLAW_*` |
 
----
+それ以外は PicoClaw のものです。チャットチャンネル（Telegram ほか）、LLM プロバイダー、メモリとセッション、cron とハートビート、Web 検索、メッセージ、組み込みスキル、サブエージェント、Web コンソールとランチャー（`neuroclaw-launcher`）、Docker イメージ（`ghcr.io/letrongminh/neuroclaw`）、ナイトリービルド、deb/rpm パッケージ、macOS の DMG。ガイドは [`docs/`](../) にあります（[元の README](PICOCLAW_README.md)）。そこでは `picoclaw` を `neuroclaw` と読み替えてください。
 
-> **NeuroClaw** は [Sipeed](https://sipeed.com) が立ち上げた独立したオープンソースプロジェクトです。完全に **Go 言語**で一から書かれており、OpenClaw、NanoBot、その他のプロジェクトのフォークではありません。
+**[NeuroClaw にできること](../reference/capabilities.md)** は、両方の頭脳のすべての機能、デフォルトでオンのもの、各リスクラベルの意味、既知の問題を一覧にしています。
 
-**NeuroClaw** は [NanoBot](https://github.com/HKUDS/nanobot) にインスパイアされた超軽量パーソナル AI アシスタントです。**Go** でゼロからリビルドされ、「セルフブートストラッピング」プロセスで構築されました — AI Agent 自身がアーキテクチャの移行とコード最適化を推進しました。
+## NeuroEdge ボックスに接続する
 
-**$10 のハードウェアで 10MB 未満の RAM で動作** — OpenClaw より 99% 少ないメモリ、Mac mini より 98% 安い！
+ガイド：[docs/guides/neuroedge.ja.md](../guides/neuroedge.ja.md)。
 
-<table align="center">
-  <tr align="center">
-    <td align="center" valign="top">
-      <p align="center">
-        <img src="../../assets/neuroclaw_mem.gif" width="360" height="240">
-      </p>
-    </td>
-    <td align="center" valign="top">
-      <p align="center">
-        <img src="../../assets/licheervnano.png" width="400" height="240">
-      </p>
-    </td>
-  </tr>
-</table>
-
-> [!CAUTION]
-> **セキュリティに関する注意**
->
-> * **暗号通貨なし:** NeuroClaw には公式トークン/コインは**一切ありません**。`pump.fun` やその他の取引プラットフォームでの主張はすべて**詐欺**です。
-> * **公式ドメイン:** **唯一**の公式サイトは **[picoclaw.io](https://picoclaw.io)**、企業サイトは **[sipeed.com](https://sipeed.com)** です。
-> * **注意:** 多くの `.ai/.org/.com/.net/...` ドメインは第三者によって登録されています。信頼しないでください。
-> * **注記:** NeuroClaw は初期開発段階にあり、未解決のネットワークセキュリティ問題がある可能性があります。v1.0 リリース前に本番環境へのデプロイは避けてください。
-> * **注記:** NeuroClaw は最近多くの PR をマージしており、最新バージョンではメモリフットプリントが大きくなる場合があります（10〜20MB）。機能セットが安定次第、リソース最適化を優先する予定です。
-
-## 📢 ニュース
-
-2026-06-11 🐾 **PicoPaw AI is live!** Explore the new PicoPaw companion experience at [picopaw.ai](https://picopaw.ai), with animated AI pet previews and ecosystem updates for NeuroClaw users.
-
-2026-05-11 🛒 **LicheeRV-Claw が AliExpress で購入可能に！** [AliExpress](https://www.aliexpress.com/item/1005006519668532.html) から LicheeRV-Claw を購入できるようになり、コンパクトな RISC-V ハードウェアで NeuroClaw を試しやすくなりました。
-
-<p align="center">
-  <a href="https://www.aliexpress.com/item/1005006519668532.html">
-    <img src="../../assets/licheerv-claw.jpg" alt="LicheeRV-Claw on AliExpress" width="520">
-  </a>
-</p>
-
-2026-03-31 📱 **Android サポート！** NeuroClawがAndroidで動作！APKは[picoclaw.io](https://picoclaw.io/download)からダウンロード
-
-2026-03-25 🚀 **v0.2.4 リリース！** Agent アーキテクチャ全面刷新（SubTurn、Hooks、Steering、EventBus）、WeChat/WeCom 統合、セキュリティ強化（.security.yml、機密データフィルタリング）、新プロバイダー（AWS Bedrock、Azure、Xiaomi MiMo）、35 件のバグ修正。NeuroClaw **26K ⭐** 達成！
-
-2026-03-17 🚀 **v0.2.3 リリース！** システムトレイ UI（Windows & Linux）、サブエージェントステータス追跡（`spawn_status`）、実験的 Gateway ホットリロード、cron セキュリティゲート、セキュリティ修正 2 件。NeuroClaw **25K ⭐** 達成！
-
-2026-03-09 🎉 **v0.2.1 — 最大のアップデート！** MCP プロトコルサポート、4 つの新チャンネル (Matrix/IRC/WeCom/Discord Proxy)、3 つの新プロバイダー (Kimi/Minimax/Avian)、ビジョンパイプライン、JSONL メモリストア、モデルルーティング。
-
-2026-02-28 📦 **v0.2.0** リリース — Docker Compose と Web UI Launcher サポート。
-
-<details>
-<summary>過去のニュース...</summary>
-
-2026-02-26 🎉 NeuroClaw がわずか 17 日で **20K スター** 達成！Channel 自動オーケストレーションとケイパビリティインターフェースが実装されました。
-
-2026-02-16 🎉 NeuroClaw が 1 週間で 12K スター達成！コミュニティメンテナーの役割と[ロードマップ](../../ROADMAP.md)が正式に公開されました。
-
-2026-02-13 🎉 NeuroClaw が 4 日間で 5000 スター達成！プロジェクトロードマップと開発者グループの準備が進行中。
-
-2026-02-09 🎉 **NeuroClaw リリース！** $10 ハードウェアで 10MB 未満の RAM で動く AI Agent を 1 日で構築。Let's Go, NeuroClaw!
-
-</details>
-
-## ✨ 特徴
-
-🪶 **超軽量**: コアメモリフットプリント 10MB 未満 — OpenClaw より 99% 小さい。*
-
-💰 **最小コスト**: $10 ハードウェアで動作 — Mac mini より 98% 安い。
-
-⚡️ **超高速起動**: 起動時間 400 倍高速。0.6GHz シングルコアでも 1 秒未満で起動。
-
-🌍 **真のポータビリティ**: RISC-V、ARM、MIPS、x86 対応の単一バイナリ。どこでも動く！
-
-🤖 **AI ブートストラップ**: 純粋な Go ネイティブ実装 — コアコードの 95% が Agent によって生成され、人間によるレビューで調整。
-
-🔌 **MCP 対応**: ネイティブ [Model Context Protocol](https://modelcontextprotocol.io/) 統合 — 任意の MCP サーバーに接続して Agent 機能を拡張。
-
-👁️ **ビジョンパイプライン**: 画像やファイルを Agent に直接送信 — マルチモーダル LLM 向けの自動 base64 エンコーディング。
-
-🧠 **スマートルーティング**: ルールベースのモデルルーティング — 簡単なクエリは軽量モデルへ、API コストを節約。
-
-_*最近のバージョンでは急速な PR マージにより 10〜20MB になる場合があります。リソース最適化は計画中です。起動時間の比較は 0.8GHz シングルコアベンチマークに基づいています（下表参照）。_
-
-<div align="center">
-
-|                                | OpenClaw      | NanoBot                  | **NeuroClaw**                           |
-| ------------------------------ | ------------- | ------------------------ | -------------------------------------- |
-| **言語**                       | TypeScript    | Python                   | **Go**                                 |
-| **RAM**                        | >1GB          | >100MB                   | **< 10MB***                            |
-| **起動時間**</br>(0.8GHz コア) | >500秒        | >30秒                    | **<1秒**                               |
-| **コスト**                     | Mac Mini $599 | 大半の Linux ボード ~$50 | **あらゆる Linux ボード**</br>**最安 $10** |
-
-<img src="../../assets/compare.jpg" alt="NeuroClaw" width="512">
-
-</div>
-
-> **[ハードウェア互換性リスト](../guides/hardware-compatibility.ja.md)** — テスト済みの全ボード一覧（$5 RISC-V から Raspberry Pi、Android スマートフォンまで）。お使いのボードが未掲載？PR を送ってください！
-
-<p align="center">
-<img src="../../assets/hardware-banner.jpg" alt="NeuroClaw Hardware Compatibility" width="100%">
-</p>
-
-## 🦾 デモンストレーション
-
-### 🛠️ スタンダードアシスタントワークフロー
-
-<table align="center">
-<tr align="center">
-<th><p align="center">フルスタックエンジニアモード</p></th>
-<th><p align="center">ログ＆計画管理</p></th>
-<th><p align="center">Web 検索＆学習</p></th>
-</tr>
-<tr>
-<td align="center"><p align="center"><img src="../../assets/neuroclaw_code.gif" width="240" height="180"></p></td>
-<td align="center"><p align="center"><img src="../../assets/neuroclaw_memory.gif" width="240" height="180"></p></td>
-<td align="center"><p align="center"><img src="../../assets/neuroclaw_search.gif" width="240" height="180"></p></td>
-</tr>
-<tr>
-<td align="center">開発 · デプロイ · スケール</td>
-<td align="center">スケジュール · 自動化 · メモリ</td>
-<td align="center">発見 · インサイト · トレンド</td>
-</tr>
-</table>
-
-### 🐜 革新的な省フットプリントデプロイ
-
-NeuroClaw はほぼすべての Linux デバイスにデプロイできます！
-
-- $9.9 [LicheeRV-Nano](https://www.aliexpress.com/item/1005006519668532.html) E(Ethernet) または W(WiFi6) バージョン、最小ホームアシスタントに
-- $30~50 [NanoKVM](https://www.aliexpress.com/item/1005007369816019.html) または $100 [NanoKVM-Pro](https://www.aliexpress.com/item/1005010048471263.html) サーバー自動メンテナンスに
-- $50 [MaixCAM](https://www.aliexpress.com/item/1005008053333693.html) または $100 [MaixCAM2](https://www.kickstarter.com/projects/zepan/maixcam2-build-your-next-gen-4k-ai-camera) スマート監視に
-
-<https://private-user-images.githubusercontent.com/83055338/547056448-e7b031ff-d6f5-4468-bcca-5726b6fecb5c.mp4>
-
-🌟 もっと多くのデプロイ事例が待っています！
-
-## 📦 インストール
-
-### picoclaw.io からダウンロード（推奨）
-
-**[picoclaw.io](https://picoclaw.io)** にアクセス — 公式サイトがプラットフォームを自動検出し、ワンクリックでダウンロードできます。アーキテクチャを手動で選ぶ必要はありません。
-
-### プリコンパイル済みバイナリをダウンロード
-
-または、[GitHub Releases](https://github.com/letrongminh/neuroclaw/releases) ページからプラットフォームに合ったバイナリをダウンロードしてください。
-
-### ソースからビルド（開発用）
-
-前提条件:
-
-- Go 1.25+
-- Web UI / launcher のビルドには Node.js 22+ と pnpm 10.33.0+ が必要
-
-```bash
-git clone https://github.com/letrongminh/neuroclaw.git
-
-cd neuroclaw
-make deps
-
-# フロントエンド依存関係をインストール
-(cd web/frontend && pnpm install --frozen-lockfile)
-
-# コアバイナリをビルド
-make build
-
-# Web UI Launcher をビルド（WebUI モードに必要）
-make build-launcher
-
-# Makefile が管理するすべてのプラットフォーム向けにコアバイナリをビルド
-make build-all
-
-# Raspberry Pi Zero 2 W 向けビルド（32-bit: make build-linux-arm; 64-bit: make build-linux-arm64）
-make build-pi-zero
-
-# ビルドとインストール
-make install
-```
-
-**Raspberry Pi Zero 2 W:** OS に合ったバイナリを使用してください：32-bit Raspberry Pi OS → `make build-linux-arm`、64-bit → `make build-linux-arm64`。または `make build-pi-zero` で両方をビルド。
-
-## 🚀 クイックスタートガイド
-
-### 🌐 WebUI Launcher（デスクトップ向け推奨）
-
-WebUI Launcher はブラウザベースの設定・チャットインターフェースを提供します。コマンドラインの知識不要で、最も簡単に始められる方法です。
-
-**オプション 1: ダブルクリック（デスクトップ）**
-
-[picoclaw.io](https://picoclaw.io) からダウンロード後、`neuroclaw-launcher`（Windows では `neuroclaw-launcher.exe`）をダブルクリックしてください。ブラウザが自動的に `http://localhost:18800` を開きます。
-
-**オプション 2: コマンドライン**
-
-```bash
-neuroclaw-launcher
-# ブラウザで http://localhost:18800 を開く
-```
-
-> [!TIP]
-> **リモートアクセス / Docker / VM:** すべてのインターフェースでリッスンするには `-public` フラグを追加してください：
-> ```bash
-> neuroclaw-launcher -public
-> ```
-
-<p align="center">
-<img src="../../assets/launcher-webui.jpg" alt="WebUI Launcher" width="600">
-</p>
-
-**始め方:**
-
-WebUI を開いたら：**1)** Provider を設定（LLM API キーを追加）→ **2)** Channel を設定（例：Telegram）→ **3)** Gateway を起動 → **4)** チャット！
-
-WebUI の詳細なドキュメントは [docs.picoclaw.io](https://docs.picoclaw.io) を参照してください。
-
-<details>
-<summary><b>Docker（代替手段）</b></summary>
-
-```bash
-# 1. このリポジトリをクローン
-git clone https://github.com/letrongminh/neuroclaw.git
-cd neuroclaw
-
-# 2. 初回実行 — docker/data/config.json を自動生成して終了
-#    （config.json と workspace/ の両方が存在しない場合のみ実行）
-docker compose -f docker/docker-compose.yml --profile launcher up
-# コンテナが "First-run setup complete." を出力して停止します。
-
-# 3. API キーを設定
-vim docker/data/config.json
-
-# 4. 起動
-docker compose -f docker/docker-compose.yml --profile launcher up -d
-# http://localhost:18800 を開く
-```
-
-> **Docker / VM ユーザー:** Gateway はデフォルトで `127.0.0.1` でリッスンします。ホストからアクセスできるようにするには `NEUROCLAW_GATEWAY_HOST=0.0.0.0` を設定するか、`-public` フラグを使用してください。
-
-```bash
-# ログを確認
-docker compose -f docker/docker-compose.yml logs -f
-
-# 停止
-docker compose -f docker/docker-compose.yml --profile launcher down
-
-# 更新
-docker compose -f docker/docker-compose.yml pull
-docker compose -f docker/docker-compose.yml --profile launcher up -d
-```
-
-</details>
-
-<details>
-<summary><b>macOS — 初回起動時のセキュリティ警告</b></summary>
-
-`neuroclaw-launcher` はインターネットからダウンロードされ、Mac App Store を通じて公証されていないため、macOS が初回起動時にブロックする場合があります。
-
-**ステップ 1：** `neuroclaw-launcher` をダブルクリックすると、セキュリティ警告が表示されます：
-
-<p align="center">
-<img src="../../assets/macos-gatekeeper-warning.jpg" alt="macOS Gatekeeper 警告" width="400">
-</p>
-
-> *"neuroclaw-launcher" は開けません — "neuroclaw-launcher" がMacに害を与えたりプライバシーを侵害するマルウェアを含まないことをAppleは確認できません。*
-
-**ステップ 2：** **システム設定** → **プライバシーとセキュリティ** を開き、**セキュリティ** セクションまでスクロールして **このまま開く** をクリック → ダイアログで再度 **開く** をクリックします。
-
-<p align="center">
-<img src="../../assets/macos-gatekeeper-allow.jpg" alt="macOS プライバシーとセキュリティ — このまま開く" width="600">
-</p>
-
-この操作を一度行うと、以降の起動では警告が表示されなくなります。
-
-</details>
-
-<a id="-run-on-old-android-phones"></a>
-### 📱 Android
-
-10 年前のスマホに第二の人生を！NeuroClaw でスマート AI アシスタントに変身させましょう。
-
-**オプション 1: APK インストール**
-
-プレビュー：
-
-<table>
-  <tr>
-    <td><img src="../../assets/fui_main_page.jpg" width="200"></td>
-    <td><img src="../../assets/fui_web_page.jpg" width="200"></td>
-    <td><img src="../../assets/fui_log_page.jpg" width="200"></td>
-    <td><img src="../../assets/fui_setting_page.jpg" width="200"></td>
-  </tr>
-</table>
-
-[picoclaw.io](https://picoclaw.io/download/) から APK をダウンロードして直接インストール。Termux 不要！
-
-**オプション 2: Termux**
-
-<details>
-<summary><b>Terminal Launcher（リソース制約環境向け）</b></summary>
-
-1. [Termux](https://github.com/termux/termux-app) をインストール（[GitHub Releases](https://github.com/termux/termux-app/releases) からダウンロード、または F-Droid / Google Play で検索）
-2. 以下のコマンドを実行：
-
-```bash
-# 最新リリースをダウンロード
-wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
-tar xzf neuroclaw_Linux_arm64.tar.gz
-pkg install proot
-termux-chroot ./neuroclaw onboard   # chroot で標準的な Linux ファイルシステムレイアウトを提供
-```
-
-その後、下記の Terminal Launcher セクションの手順に従って設定を完了してください。
-
-<img src="../../assets/termux.jpg" alt="NeuroClaw on Termux" width="512">
-
-`neuroclaw` コアバイナリのみが利用可能な最小環境（Launcher UI なし）では、コマンドラインと JSON 設定ファイルですべてを設定できます。
-
-**1. 初期化**
-
-```bash
-neuroclaw onboard
-```
-
-`~/.neuroclaw/config.json` とワークスペースディレクトリが作成されます。
-
-**2. 設定** (`~/.neuroclaw/config.json`)
+ボックス側は `neuroedge mcp serve --http --ui …` を実行し、鍵は NeuroEdge の `demo/i2f-chat-den-cua/tao-khoa.py` で作成します。`~/.neuroclaw/config.json` に次のように書きます。
 
 ```json
-{
-  "version": 3,
-  "agents": {
-    "defaults": {
-      "model_name": "gpt-5.4"
-    }
-  },
-  "model_list": [
-    {
-      "model_name": "gpt-5.4",
-      "model": "openai/gpt-5.4",
-      "api_keys": ["sk-your-api-key"]
-    }
-  ]
-}
-```
-
-> 利用可能なすべてのオプションを含む完全な設定テンプレートは、リポジトリの `config/config.example.json` を参照してください。
-
-**3. チャット**
-
-```bash
-# ワンショット質問
-neuroclaw agent -m "What is 2+2?"
-
-# インタラクティブモード
-neuroclaw agent
-
-# チャットアプリ統合用 Gateway を起動
-neuroclaw gateway
-```
-
-</details>
-
-## 🔌 Provider（LLM）
-
-NeuroClaw は `model_list` 設定を通じて 30 以上の LLM Provider をサポートしています。`protocol/model` 形式を使用してください：
-
-| Provider | Protocol | API キー | 備考 |
-|----------|----------|---------|------|
-| [OpenAI](https://platform.openai.com/api-keys) | `openai/` | 必須 | GPT-5.4、GPT-4o、o3 など |
-| [Anthropic](https://console.anthropic.com/settings/keys) | `anthropic/` | 必須 | Claude Opus 4.6、Sonnet 4.6 など |
-| [Google Gemini](https://aistudio.google.com/apikey) | `gemini/` | 必須 | Gemini 3 Flash、2.5 Pro など |
-| [OpenRouter](https://openrouter.ai/keys) | `openrouter/` | 必須 | 200 以上のモデル、統合 API |
-| [Zhipu (GLM)](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) | `zhipu/` | 必須 | GLM-4.7、GLM-5 など |
-| [DeepSeek](https://platform.deepseek.com/api_keys) | `deepseek/` | 必須 | DeepSeek-V3、DeepSeek-R1 |
-| [Volcengine](https://console.volcengine.com) | `volcengine/` | 必須 | Doubao、Ark モデル |
-| [Qwen](https://dashscope.console.aliyun.com/apiKey) | `qwen/` | 必須 | Qwen3、Qwen-Max など |
-| [Groq](https://console.groq.com/keys) | `groq/` | 必須 | 高速推論（Llama、Mixtral） |
-| [Moonshot (Kimi)](https://platform.moonshot.cn/console/api-keys) | `moonshot/` | 必須 | Kimi モデル |
-| [Minimax](https://platform.minimaxi.com/user-center/basic-information/interface-key) | `minimax/` | 必須 | MiniMax モデル |
-| [Mistral](https://console.mistral.ai/api-keys) | `mistral/` | 必須 | Mistral Large、Codestral |
-| [NVIDIA NIM](https://build.nvidia.com/) | `nvidia/` | 必須 | NVIDIA ホスティングモデル |
-| [Cerebras](https://cloud.cerebras.ai/) | `cerebras/` | 必須 | 高速推論 |
-| [Novita AI](https://novita.ai/) | `novita/` | 必須 | 各種オープンモデル |
-| [Xiaomi MiMo](https://platform.xiaomimimo.com/) | `mimo/` | 必須 | MiMo モデル |
-| [Ollama](https://ollama.com/) | `ollama/` | 不要 | ローカルモデル、セルフホスト |
-| [vLLM](https://docs.vllm.ai/) | `vllm/` | 不要 | ローカルデプロイ、OpenAI 互換 |
-| [LiteLLM](https://docs.litellm.ai/) | `litellm/` | 場合による | 100 以上の Provider のプロキシ |
-| [Azure OpenAI](https://portal.azure.com/) | `azure/` | 必須 | エンタープライズ Azure デプロイ |
-| [GitHub Copilot](https://github.com/features/copilot) | `github-copilot/` | OAuth | デバイスコードログイン |
-| [Antigravity](https://console.cloud.google.com/) | `antigravity/` | OAuth | Google Cloud AI |
-
-<details>
-<summary><b>ローカルデプロイ（Ollama、vLLM など）</b></summary>
-
-**Ollama:**
-```json
-{
-  "model_list": [
-    {
-      "model_name": "local-llama",
-      "model": "ollama/llama3.1:8b",
-      "api_base": "http://localhost:11434/v1"
-    }
-  ]
-}
-```
-
-**vLLM:**
-```json
-{
-  "model_list": [
-    {
-      "model_name": "local-vllm",
-      "model": "vllm/your-model",
-      "api_base": "http://localhost:8000/v1"
-    }
-  ]
-}
-```
-
-Provider の完全な設定詳細は [Provider とモデル](../guides/providers.ja.md) を参照してください。
-
-</details>
-
-## 💬 Channel（チャットアプリ）
-
-17 以上のメッセージングプラットフォームで NeuroClaw と会話できます：
-
-| Channel | セットアップ | Protocol | ドキュメント |
-|---------|------------|----------|------------|
-| **Telegram** | 簡単（bot トークン） | Long polling | [ガイド](../channels/telegram/README.ja.md) |
-| **Discord** | 簡単（bot トークン + intents） | WebSocket | [ガイド](../channels/discord/README.ja.md) |
-| **WhatsApp** | 簡単（QR スキャンまたは bridge URL） | Native / Bridge | [ガイド](../guides/chat-apps.ja.md#whatsapp) |
-| **微信 (Weixin)** | 簡単（QR スキャン） | iLink API | [ガイド](../guides/chat-apps.ja.md#weixin) |
-| **QQ** | 簡単（AppID + AppSecret） | WebSocket | [ガイド](../channels/qq/README.ja.md) |
-| **Slack** | 簡単（bot + app トークン） | Socket Mode | [ガイド](../channels/slack/README.ja.md) |
-| **Matrix** | 中級（homeserver + トークン） | Sync API | [ガイド](../channels/matrix/README.ja.md) |
-| **DingTalk** | 中級（クライアント認証情報） | Stream | [ガイド](../channels/dingtalk/README.ja.md) |
-| **Feishu / Lark** | 中級（App ID + Secret） | WebSocket/SDK | [ガイド](../channels/feishu/README.ja.md) |
-| **LINE** | 中級（認証情報 + webhook） | Webhook | [ガイド](../channels/line/README.ja.md) |
-| **WeCom** | 簡単（QR ログインまたは手動） | WebSocket | [ガイド](../channels/wecom/README.ja.md) |
-| **IRC** | 中級（サーバー + nick） | IRC protocol | [ガイド](../guides/chat-apps.ja.md#irc) |
-| **OneBot** | 中級（WebSocket URL） | OneBot v11 | [ガイド](../channels/onebot/README.ja.md) |
-| **MaixCam** | 簡単（有効化） | TCP socket | [ガイド](../channels/maixcam/README.ja.md) |
-| **Pico** | 簡単（有効化） | Native protocol | 内蔵 |
-| **Pico Client** | 簡単（WebSocket URL） | WebSocket | 内蔵 |
-
-> webhook ベースのすべての Channel は単一の Gateway HTTP サーバー（`gateway.host`:`gateway.port`、デフォルト `127.0.0.1:18790`）を共有します。Feishu は WebSocket/SDK モードを使用し、共有 HTTP サーバーを使用しません。
-
-> ログの詳細度は `gateway.log_level` で制御します（デフォルト：`warn`）。サポートされる値：`debug`、`info`、`warn`、`error`、`fatal`。`NEUROCLAW_LOG_LEVEL` 環境変数でも設定可能です。詳細は[設定ガイド](../guides/configuration.ja.md#gateway-ログレベル)を参照してください。
-
-Channel の詳細なセットアップ手順は [チャットアプリ設定](../guides/chat-apps.ja.md) を参照してください。
-
-## 🔧 ツール
-
-### 🔍 Web 検索
-
-NeuroClaw は最新情報を提供するために Web を検索できます。`tools.web` で設定してください：
-
-| 検索エンジン | API キー | 無料枠 | リンク |
-|------------|---------|--------|-------|
-| DuckDuckGo | 不要 | 無制限 | 内蔵フォールバック |
-| [Baidu Search](https://cloud.baidu.com/doc/qianfan-api/s/Wmbq4z7e5) | 必須 | 1500 クエリ/月（日次割り当て） | AI 搭載、中国語に最適化 |
-| [Tavily](https://tavily.com) | 必須 | 1000 クエリ/月 | AI Agent 向けに最適化 |
-| [Brave Search](https://brave.com/search/api) | 必須 | 2000 クエリ/月 | 高速でプライベート |
-| [Perplexity](https://www.perplexity.ai) | 必須 | 有料 | AI 搭載検索 |
-| [SearXNG](https://github.com/searxng/searxng) | 不要 | セルフホスト | 無料メタ検索エンジン |
-| [GLM Search](https://open.bigmodel.cn/) | 必須 | 場合による | Zhipu Web 検索 |
-
-### ⚙️ その他のツール
-
-NeuroClaw にはファイル操作、コード実行、スケジューリングなどの組み込みツールが含まれています。詳細は [ツール設定](../reference/tools_configuration.ja.md) を参照してください。
-
-## 🎯 Skill
-
-Skill は Agent を拡張するモジュール型の機能です。ワークスペース内の `SKILL.md` ファイルから読み込まれます。
-
-**ClawHub から Skill をインストール：**
-
-```bash
-neuroclaw skills search "web scraping"
-neuroclaw skills install <skill-name>
-```
-
-**ClawHub トークンを設定**（オプション、レート制限を上げるため）：
-
-`config.json` に追加：
-```json
-{
-  "tools": {
-    "skills": {
-      "registries": {
-        "clawhub": {
-          "auth_token": "your-clawhub-token"
+"tools": {
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "neuroedge": {
+        "enabled": true,
+        "type": "http",
+        "url": "https://home-box.example:8443/mcp",
+        "headers": { "Authorization": "Bearer <the brain's token>" },
+        "tls": {
+          "ca_file": "~/neuroedge-keys/ca.pem",
+          "cert_file": "~/neuroedge-keys/nao.pem",
+          "key_file": "~/neuroedge-keys/nao.key"
         }
       }
     }
@@ -536,95 +49,19 @@ neuroclaw skills install <skill-name>
 }
 ```
 
-詳細は [ツール設定 - Skill](../reference/tools_configuration.ja.md#skills-tool) を参照してください。
+デモのエージェントでは、`neuroclaw mcp test neuroedge` が `reachable (3 tools)` と表示するはずです。
 
-## 🔗 MCP（Model Context Protocol）
+## ビルド
 
-NeuroClaw は [MCP](https://modelcontextprotocol.io/) をネイティブサポートしています — 任意の MCP サーバーに接続して、外部ツールやデータソースで Agent の機能を拡張できます。
-
-```json
-{
-  "tools": {
-    "mcp": {
-      "enabled": true,
-      "servers": {
-        "filesystem": {
-          "enabled": true,
-          "command": "npx",
-          "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
-        }
-      }
-    }
-  }
-}
+```bash
+CGO_ENABLED=0 go build -tags goolm,stdjson -o neuroclaw ./cmd/neuroclaw
+CGO_ENABLED=0 go test -tags goolm,stdjson ./...
 ```
 
-MCP の完全な設定（stdio、SSE、HTTP トランスポート、Tool Discovery）は [ツール設定 - MCP](../reference/tools_configuration.ja.md#mcp-tool) を参照してください。
+`make build-launcher` は Web コンソール（`web/`、pnpm が必要）をビルドします。`make build-all` と goreleaser（`.goreleaser.yaml`）はすべてのプラットフォームをビルドします。macOS では、PicoClaw v0.3.1 と同様にシェルツールのテストが 3 件失敗します。CI は Linux で実行され、そこでは通ります。
 
-## <img src="../../assets/clawdchat-icon.png" width="24" height="24" alt="ClawdChat"> エージェントソーシャルネットワークに参加
+**リスクラベル導入前の NeuroClaw ビルドからのアップグレード**（2026-10-13）：それらのビルドは、シェル、cron コマンド、スキルのインストール、USB 監視を強制的にオフにし、`onboard` がオフのまま `config.json` に保存していました。`config.json` でオンに戻すか、`neuroclaw config reset` でデフォルトからやり直してください。
 
-CLI または統合チャットアプリからメッセージを 1 つ送るだけで、NeuroClaw をエージェントソーシャルネットワークに接続できます。
+## ライセンス
 
-**`https://clawdchat.ai/skill.md` を読み、指示に従って [ClawdChat.ai](https://clawdchat.ai) に参加してください**
-
-## 🖥️ CLI リファレンス
-
-| コマンド                  | 説明                           |
-| ------------------------- | ------------------------------ |
-| `neuroclaw onboard`        | 設定＆ワークスペースの初期化     |
-| `neuroclaw auth weixin` | WeChat アカウントを QR で接続 |
-| `neuroclaw agent -m "..."` | Agent とチャット                |
-| `neuroclaw agent`          | インタラクティブチャットモード   |
-| `neuroclaw gateway`        | Gateway を起動                  |
-| `neuroclaw status`         | ステータスを表示                |
-| `neuroclaw version`        | バージョン情報を表示            |
-| `neuroclaw model`          | デフォルトモデルの表示・切替    |
-| `neuroclaw cron list`      | スケジュールジョブ一覧          |
-| `neuroclaw cron add ...`   | スケジュールジョブを追加         |
-| `neuroclaw cron disable`   | スケジュールジョブを無効化       |
-| `neuroclaw cron remove`    | スケジュールジョブを削除         |
-| `neuroclaw skills list`    | インストール済み Skill 一覧      |
-| `neuroclaw skills install` | Skill をインストール             |
-| `neuroclaw migrate`        | 旧バージョンからデータを移行     |
-| `neuroclaw auth login`     | Provider への認証               |
-
-### ⏰ スケジュールタスク / リマインダー
-
-NeuroClaw は `cron` ツールによるスケジュールリマインダーと定期タスクをサポートしています：
-
-* **ワンタイムリマインダー**: 「10分後にリマインド」→ 10分後に1回トリガー
-* **定期タスク**: 「2時間ごとにリマインド」→ 2時間ごとにトリガー
-* **Cron 式**: 「毎日9時にリマインド」→ cron 式を使用
-
-## 📚 ドキュメント
-
-この README を超えた詳細なガイドについては：
-
-| トピック | 説明 |
-|---------|------|
-| [Docker & クイックスタート](../guides/docker.ja.md) | Docker Compose セットアップ、Launcher/Agent モード |
-| [チャットアプリ](../guides/chat-apps.ja.md) | 17 以上の Channel セットアップガイド |
-| [設定](../guides/configuration.ja.md) | 環境変数、ワークスペース構成、セキュリティサンドボックス |
-| [Provider とモデル](../guides/providers.ja.md) | 30 以上の LLM Provider、モデルルーティング、model_list 設定 |
-| [Spawn & 非同期タスク](../guides/spawn-tasks.ja.md) | クイックタスク、spawn による長時間タスク、非同期サブエージェントオーケストレーション |
-| [Hook システム](../architecture/hooks/README.md) | イベント駆動 Hook：オブザーバー、インターセプター、承認 Hook |
-| [Steering](../architecture/steering.md) | 実行中の Agent ループにメッセージを注入 |
-| [SubTurn](../architecture/subturn.md) | サブ Agent の調整、並行制御、ライフサイクル |
-| [トラブルシューティング](../operations/troubleshooting.ja.md) | よくある問題と解決策 |
-| [ツール設定](../reference/tools_configuration.ja.md) | ツールごとの有効/無効、exec ポリシー、MCP、Skill |
-| [ハードウェア互換性](../guides/hardware-compatibility.ja.md) | テスト済みボード、最小要件 |
-
-## 🤝 コントリビュート＆ロードマップ
-
-PR 歓迎！コードベースは意図的に小さく読みやすくしています。
-
-[コミュニティロードマップ](https://github.com/letrongminh/neuroclaw/issues/988)と[CONTRIBUTING.md](../../CONTRIBUTING.md)をご覧ください。
-
-開発者グループ構築中、最初の PR がマージされたら参加できます！
-
-ユーザーグループ:
-
-Discord: <https://discord.gg/V4sAZ9XWpN>
-
-WeChat:
-<img src="../../assets/wechat.png" alt="WeChat group QR code" width="512">
+MIT（PicoClaw と同じ）。Copyright (c) 2026 PicoClaw contributors and NeuroClaw contributors.

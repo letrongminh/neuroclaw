@@ -1,51 +1,51 @@
 ---
-name: picoclaw-agent
-description: "Configure, extend, debug, or contribute to PicoClaw itself. Use when the task is about PicoClaw CLI commands, config.json, gateway, auth, models, skills, MCP servers, cron, routing, sessions, self-evolution, built-in slash commands, or repository internals. Use PicoClaw-native workflows, terminology, paths, and configuration."
+name: neuroclaw-agent
+description: "Configure, extend, debug, or contribute to NeuroClaw itself. Use when the task is about NeuroClaw CLI commands, config.json, gateway, auth, models, skills, MCP servers, cron, routing, sessions, self-evolution, built-in slash commands, or repository internals. Use NeuroClaw-native workflows, terminology, paths, and configuration."
 metadata: {"nanobot":{"emoji":"🦞"}}
 ---
 
-# PicoClaw Agent
+# NeuroClaw Agent
 
-PicoClaw is a lightweight personal AI assistant and agent framework with a native CLI, chat gateway, MCP integration, installable skills, session routing, scheduled jobs, and self-evolution.
+NeuroClaw is a lightweight personal AI assistant and agent framework with a native CLI, chat gateway, MCP integration, installable skills, session routing, scheduled jobs, and self-evolution.
 
-Use this skill when the job is about **PicoClaw itself**: onboarding, configuration, debugging, adding features, extending the CLI, changing routing/session behavior, working on skills or MCP support, or contributing to this repository.
+Use this skill when the job is about **NeuroClaw itself**: onboarding, configuration, debugging, adding features, extending the CLI, changing routing/session behavior, working on skills or MCP support, or contributing to this repository.
 
 ## Operating Stance
 
-When this skill is active, stay fully subordinate to PicoClaw's real architecture:
+When this skill is active, stay fully subordinate to NeuroClaw's real architecture:
 
-- Prefer PicoClaw commands, config keys, workspace layout, and docs.
-- Follow PicoClaw source and docs for behavior, naming, and workflows.
+- Prefer NeuroClaw commands, config keys, workspace layout, and docs.
+- Follow NeuroClaw source and docs for behavior, naming, and workflows.
 - Treat repository code and checked-in docs as the source of truth.
 
 ## Quick Start
 
 ```bash
-# Initialize ~/.picoclaw/config.json and ~/.picoclaw/workspace
-picoclaw onboard
+# Initialize ~/.neuroclaw/config.json and ~/.neuroclaw/workspace
+neuroclaw onboard
 
 # Authenticate a provider
-picoclaw auth login --provider openai
+neuroclaw auth login --provider openai
 
 # Inspect or switch the default model
-picoclaw model
-picoclaw model my-default-model
+neuroclaw model
+neuroclaw model my-default-model
 
 # One-shot prompt
-picoclaw agent -m "Hello"
+neuroclaw agent -m "Hello"
 
 # Interactive CLI chat
-picoclaw agent
+neuroclaw agent
 
 # Start the gateway for chat channels
-picoclaw gateway
+neuroclaw gateway
 
 # Inspect runtime/config health
-picoclaw status
+neuroclaw status
 
 # Explore installed skills and MCP servers
-picoclaw skills list
-picoclaw mcp list
+neuroclaw skills list
+neuroclaw mcp list
 ```
 
 ## Command Surface
@@ -54,120 +54,120 @@ picoclaw mcp list
 ### Core CLI
 
 ```bash
-picoclaw onboard
-picoclaw agent [-m MESSAGE] [--session KEY] [--model MODEL] [--debug]
-picoclaw gateway [--debug] [--no-truncate] [--allow-empty] [--host HOST]
-picoclaw status
-picoclaw version
-picoclaw migrate
+neuroclaw onboard
+neuroclaw agent [-m MESSAGE] [--session KEY] [--model MODEL] [--debug]
+neuroclaw gateway [--debug] [--no-truncate] [--allow-empty] [--host HOST]
+neuroclaw status
+neuroclaw version
+neuroclaw migrate
 ```
 
 ### Configuration and Models
 
 ```bash
 # Show or change the default configured model alias
-picoclaw model
-picoclaw model <model_name>
+neuroclaw model
+neuroclaw model <model_name>
 
 # Add a model from an OpenAI-compatible endpoint
-picoclaw model add --api-base URL --api-key KEY
-picoclaw model add -b http://localhost:8000/v1 -k dummy -m my-model -n local
+neuroclaw model add --api-base URL --api-key KEY
+neuroclaw model add -b http://localhost:8000/v1 -k dummy -m my-model -n local
 
 # Reset config to factory defaults (preserves sensitive keys)
-picoclaw config reset
-picoclaw config reset --force
+neuroclaw config reset
+neuroclaw config reset --force
 ```
 
 Notes:
 
-- There is **no** general `picoclaw config edit` or `picoclaw config set`.
-- Advanced edits are usually done by editing `~/.picoclaw/config.json` directly.
+- There is **no** general `neuroclaw config edit` or `neuroclaw config set`.
+- Advanced edits are usually done by editing `~/.neuroclaw/config.json` directly.
 
 ### Authentication
 
 ```bash
-picoclaw auth login --provider openai
-picoclaw auth login --provider anthropic --setup-token
-picoclaw auth login --provider antigravity --device-code
-picoclaw auth models
-picoclaw auth status
-picoclaw auth logout --provider openai
-picoclaw auth weixin
-picoclaw auth wecom --timeout 10m
+neuroclaw auth login --provider openai
+neuroclaw auth login --provider anthropic --setup-token
+neuroclaw auth login --provider antigravity --device-code
+neuroclaw auth models
+neuroclaw auth status
+neuroclaw auth logout --provider openai
+neuroclaw auth weixin
+neuroclaw auth wecom --timeout 10m
 ```
 
 ### Skills
 
 ```bash
-picoclaw skills list
-picoclaw skills show <name>
-picoclaw skills search "query"
-picoclaw skills install owner/repo/path
-picoclaw skills install --registry clawhub <slug>
-picoclaw skills remove <name>
-picoclaw skills list-builtin
-picoclaw skills install-builtin
+neuroclaw skills list
+neuroclaw skills show <name>
+neuroclaw skills search "query"
+neuroclaw skills install owner/repo/path
+neuroclaw skills install --registry clawhub <slug>
+neuroclaw skills remove <name>
+neuroclaw skills list-builtin
+neuroclaw skills install-builtin
 ```
 
 Skill loading priority is:
 
-1. `~/.picoclaw/workspace/skills`
-2. `~/.picoclaw/skills`
+1. `~/.neuroclaw/workspace/skills`
+2. `~/.neuroclaw/skills`
 3. builtin embedded skills
 
 ### MCP
 
 ```bash
-picoclaw mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /tmp
-picoclaw mcp add --deferred github --env-file .env.github -- npx -y @modelcontextprotocol/server-github
-picoclaw mcp list
-picoclaw mcp list --status
-picoclaw mcp show github
-picoclaw mcp test github
-picoclaw mcp edit
-picoclaw mcp remove github
+neuroclaw mcp add filesystem -- npx -y @modelcontextprotocol/server-filesystem /tmp
+neuroclaw mcp add --deferred github --env-file .env.github -- npx -y @modelcontextprotocol/server-github
+neuroclaw mcp list
+neuroclaw mcp list --status
+neuroclaw mcp show github
+neuroclaw mcp test github
+neuroclaw mcp edit
+neuroclaw mcp remove github
 ```
 
 Notes:
 
-- `picoclaw mcp` is a **configuration manager** for `tools.mcp.servers`.
+- `neuroclaw mcp` is a **configuration manager** for `tools.mcp.servers`.
 - It does **not** keep servers running by itself; the host/gateway loads them later.
 
 ### Cron
 
 ```bash
-picoclaw cron list
-picoclaw cron add --name "Daily summary" --message "Summarize today's logs" --cron "0 18 * * *"
-picoclaw cron add --name "Ping" --message "heartbeat" --every 300 --deliver
-picoclaw cron enable <job-id>
-picoclaw cron disable <job-id>
-picoclaw cron remove <job-id>
+neuroclaw cron list
+neuroclaw cron add --name "Daily summary" --message "Summarize today's logs" --cron "0 18 * * *"
+neuroclaw cron add --name "Ping" --message "heartbeat" --every 300 --deliver
+neuroclaw cron enable <job-id>
+neuroclaw cron disable <job-id>
+neuroclaw cron remove <job-id>
 ```
 
 Notes:
 
-- The current CLI `picoclaw cron add` supports recurring jobs only: `--every` or `--cron`.
+- The current CLI `neuroclaw cron add` supports recurring jobs only: `--every` or `--cron`.
 - One-shot `at_seconds` jobs exist in the cron system, but not as a first-class CLI flag today.
 
 ## Providers
 
-PicoClaw supports 30+ LLM providers through `model_list`.
+NeuroClaw supports 30+ LLM providers through `model_list`.
 
-Credential patterns in PicoClaw are:
+Credential patterns in NeuroClaw are:
 
 - `model_list[].api_keys` for most hosted APIs
-- `picoclaw auth login --provider ...` for the built-in auth helper flows (`openai`, `anthropic`, `antigravity`)
+- `neuroclaw auth login --provider ...` for the built-in auth helper flows (`openai`, `anthropic`, `antigravity`)
 - local or self-hosted endpoints for providers like `ollama`, `lmstudio`, `vllm`, and `litellm`
 - external platform credentials for providers like `bedrock`, `azure`, and `github-copilot`
 
-`picoclaw auth login` does **not** cover every provider. For most providers, the normal path is adding a `model_list` entry with `provider`, `model`, and `api_keys`.
+`neuroclaw auth login` does **not** cover every provider. For most providers, the normal path is adding a `model_list` entry with `provider`, `model`, and `api_keys`.
 
 ### Common Provider Matrix
 
-| Provider | `provider` value | Auth path in PicoClaw |
+| Provider | `provider` value | Auth path in NeuroClaw |
 | --- | --- | --- |
-| OpenAI | `openai` | OAuth helper via `picoclaw auth login --provider openai`, or `model_list[].api_keys` |
-| Anthropic | `anthropic` | API key in `model_list[].api_keys`, or helper flow via `picoclaw auth login --provider anthropic` |
+| OpenAI | `openai` | OAuth helper via `neuroclaw auth login --provider openai`, or `model_list[].api_keys` |
+| Anthropic | `anthropic` | API key in `model_list[].api_keys`, or helper flow via `neuroclaw auth login --provider anthropic` |
 | Anthropic Messages API | `anthropic-messages` | API key in `model_list[].api_keys` |
 | Google Gemini | `gemini` | API key in `model_list[].api_keys` |
 | OpenRouter | `openrouter` | API key in `model_list[].api_keys` |
@@ -183,7 +183,7 @@ Credential patterns in PicoClaw are:
 | Cerebras | `cerebras` | API key in `model_list[].api_keys` |
 | Azure OpenAI | `azure` | `api_key` in `model_list`, or Microsoft Entra ID if built with `azidentity` support |
 | AWS Bedrock | `bedrock` | AWS credentials plus Bedrock-enabled build (`go build -tags bedrock`) |
-| Antigravity | `antigravity` | OAuth helper via `picoclaw auth login --provider antigravity` |
+| Antigravity | `antigravity` | OAuth helper via `neuroclaw auth login --provider antigravity` |
 | GitHub Copilot | `github-copilot` | External Copilot gRPC endpoint, default `localhost:4321` |
 | Ollama | `ollama` | Local endpoint, no API key required |
 | LM Studio | `lmstudio` | Local endpoint, API key optional |
@@ -194,7 +194,7 @@ Credential patterns in PicoClaw are:
 
 ### Additional OpenAI-Compatible Vendors
 
-PicoClaw also carries first-class metadata or routing support for additional vendors such as:
+NeuroClaw also carries first-class metadata or routing support for additional vendors such as:
 
 - `venice`
 - `vivgrid`
@@ -212,7 +212,7 @@ For the full provider matrix, default API bases, protocol families, and vendor-s
 
 ## Built-in Tool Families
 
-PicoClaw tools are configured under `tools` in `config.json` and registered dynamically at runtime.
+NeuroClaw tools are configured under `tools` in `config.json` and registered dynamically at runtime.
 
 Important activation rules:
 
@@ -249,7 +249,7 @@ For per-tool configuration, read `docs/reference/tools_configuration.md`.
 
 ## Specialized Subagents and Spawn
 
-PicoClaw has a first-class subagent model for long-running work, isolated subproblems, and multi-agent specialization.
+NeuroClaw has a first-class subagent model for long-running work, isolated subproblems, and multi-agent specialization.
 
 The core idea is:
 
@@ -310,7 +310,7 @@ skills: [deep-research]
 
 ### Automatic Agent Discovery
 
-When an agent has the `spawn` tool and at least one allowed peer, PicoClaw injects a lightweight agent registry into the system prompt automatically.
+When an agent has the `spawn` tool and at least one allowed peer, NeuroClaw injects a lightweight agent registry into the system prompt automatically.
 
 That means:
 
@@ -366,7 +366,7 @@ Background specialist research:
 
 ```text
 spawn(
-  task="Search the web for the latest PicoClaw MCP integration patterns and summarize them.",
+  task="Search the web for the latest NeuroClaw MCP integration patterns and summarize them.",
   label="mcp-research",
   agent_id="research"
 )
@@ -398,7 +398,7 @@ For live visibility:
 
 ## Voice, Transcription, and TTS
 
-PicoClaw can transcribe inbound audio and synthesize outbound speech, but voice setup is model-driven like the rest of the runtime.
+NeuroClaw can transcribe inbound audio and synthesize outbound speech, but voice setup is model-driven like the rest of the runtime.
 
 The important pattern is:
 
@@ -448,16 +448,16 @@ model_list:
 | --- | --- | --- |
 | Groq Whisper | `groq/whisper-large-v3-turbo` | Fast OpenAI-compatible Whisper transcription and a common default choice |
 | OpenAI Whisper | `openai/whisper-1` | Standard Whisper transcription through the OpenAI-compatible audio endpoint |
-| ElevenLabs Scribe | `provider: elevenlabs`, `model: scribe_v1` | Uses PicoClaw's dedicated ElevenLabs transcription path |
+| ElevenLabs Scribe | `provider: elevenlabs`, `model: scribe_v1` | Uses NeuroClaw's dedicated ElevenLabs transcription path |
 | Audio-capable chat models | `gemini/gemini-2.5-flash`, `openai/gpt-4o-audio-preview` | Multimodal audio transcription path; some model combinations are still evolving |
 
 Detection behavior that matters:
 
 - `voice.model_name` is the preferred and recommended path
-- if it resolves to an ElevenLabs model, PicoClaw uses the ElevenLabs transcriber
-- if it resolves to a Whisper-compatible model, PicoClaw uses the Whisper transcription path
-- if it resolves to an audio-capable multimodal model, PicoClaw can use audio-model transcription
-- if `voice.model_name` is omitted, PicoClaw still performs compatibility scanning across `model_list` for legacy auto-detected ASR entries
+- if it resolves to an ElevenLabs model, NeuroClaw uses the ElevenLabs transcriber
+- if it resolves to a Whisper-compatible model, NeuroClaw uses the Whisper transcription path
+- if it resolves to an audio-capable multimodal model, NeuroClaw can use audio-model transcription
+- if `voice.model_name` is omitted, NeuroClaw still performs compatibility scanning across `model_list` for legacy auto-detected ASR entries
 
 ### TTS (Text -> Voice)
 
@@ -527,22 +527,22 @@ model_list:
 
 | Provider path | Example model | Notes |
 | --- | --- | --- |
-| OpenAI-compatible speech | `openai/tts-1` | Best-supported path; PicoClaw sends an OpenAI-style `/audio/speech` request |
+| OpenAI-compatible speech | `openai/tts-1` | Best-supported path; NeuroClaw sends an OpenAI-style `/audio/speech` request |
 | Xiaomi MiMo | `mimo/mimo-v2-tts` | Dedicated MiMo TTS provider path with MP3 output |
 
 Operational notes:
 
 - the preferred selection path is `voice.tts_model_name`
-- if that is missing, PicoClaw can still scan `model_list` for the first API-backed model whose ID contains `tts`
+- if that is missing, NeuroClaw can still scan `model_list` for the first API-backed model whose ID contains `tts`
 - the current OpenAI-style TTS request defaults to `voice: alloy` and `response_format: opus`
 - you can override `voice` and `response_format` for a specific TTS model through `model_list[].extra_body`
-- if a provider rejects `response_format`, PicoClaw retries once without that field
+- if a provider rejects `response_format`, NeuroClaw retries once without that field
 - `send_tts` is only registered when TTS detection succeeds
 
 
 ## In-Session Slash Commands
 
-PicoClaw's shared slash command registry lives under `pkg/commands`.
+NeuroClaw's shared slash command registry lives under `pkg/commands`.
 
 Use these when helping users inside chat channels:
 
@@ -580,19 +580,19 @@ Telegram auto-registers supported top-level commands like `/start`, `/help`, `/s
 ### Important Files
 
 ```text
-~/.picoclaw/config.json          Main config
-~/.picoclaw/.security.yml       Sensitive values stored outside config.json
-~/.picoclaw/auth.json           OAuth/token store
-~/.picoclaw/workspace/          Default workspace
-~/.picoclaw/workspace/skills/   Workspace skills
-~/.picoclaw/workspace/sessions/ Session history
-~/.picoclaw/workspace/cron/     Scheduled jobs store
+~/.neuroclaw/config.json          Main config
+~/.neuroclaw/.security.yml       Sensitive values stored outside config.json
+~/.neuroclaw/auth.json           OAuth/token store
+~/.neuroclaw/workspace/          Default workspace
+~/.neuroclaw/workspace/skills/   Workspace skills
+~/.neuroclaw/workspace/sessions/ Session history
+~/.neuroclaw/workspace/cron/     Scheduled jobs store
 ```
 
 Default workspace layout:
 
 ```text
-~/.picoclaw/workspace/
+~/.neuroclaw/workspace/
 ├── sessions/
 ├── memory/
 ├── state/
@@ -608,21 +608,21 @@ Default workspace layout:
 ### Important Environment Variables
 
 ```bash
-PICOCLAW_CONFIG=/path/to/config.json
-PICOCLAW_HOME=/path/to/picoclaw-home
-PICOCLAW_BUILTIN_SKILLS=/path/to/custom-builtin-skills
-PICOCLAW_LOG_LEVEL=debug
-PICOCLAW_GATEWAY_HOST=0.0.0.0
+NEUROCLAW_CONFIG=/path/to/config.json
+NEUROCLAW_HOME=/path/to/neuroclaw-home
+NEUROCLAW_BUILTIN_SKILLS=/path/to/custom-builtin-skills
+NEUROCLAW_LOG_LEVEL=debug
+NEUROCLAW_GATEWAY_HOST=0.0.0.0
 ```
 
-Use `PICOCLAW_CONFIG` when the user reports "wrong config file" behavior.
-Use `PICOCLAW_HOME` when the user wants a portable or service-managed install.
+Use `NEUROCLAW_CONFIG` when the user reports "wrong config file" behavior.
+Use `NEUROCLAW_HOME` when the user wants a portable or service-managed install.
 
-## PicoClaw-Native Concepts
+## NeuroClaw-Native Concepts
 
 ### Model Configuration
 
-PicoClaw is model-centric. The key fields are:
+NeuroClaw is model-centric. The key fields are:
 
 - `agents.defaults.model_name`
 - `model_list`
@@ -632,7 +632,7 @@ PicoClaw is model-centric. The key fields are:
 Important behavior:
 
 - `agents.defaults.model_name` must match a `model_name` entry in `model_list`.
-- If `provider` is set, PicoClaw sends `model` to that provider unchanged.
+- If `provider` is set, NeuroClaw sends `model` to that provider unchanged.
 - If `provider` is omitted, legacy `provider/model` parsing is still supported.
 
 ### Sessions and Routing
@@ -672,16 +672,16 @@ Prefer this format:
 workspace/skills/<skill-name>/SKILL.md
 ```
 
-PicoClaw only relies on `name` and `description` frontmatter fields for loading and matching.
+NeuroClaw only relies on `name` and `description` frontmatter fields for loading and matching.
 
 ### MCP Discovery
 
-PicoClaw supports always-loaded and deferred MCP tools.
+NeuroClaw supports always-loaded and deferred MCP tools.
 
 Use:
 
 - `--deferred` when tools should stay hidden until explicitly discovered
-- `picoclaw mcp show <name>` to inspect active tools
+- `neuroclaw mcp show <name>` to inspect active tools
 - `/list mcp` and `/show mcp <server>` from chat channels when debugging live agents
 
 ### Self-Evolution
@@ -706,15 +706,15 @@ Notes:
 
 ## Debugging Workflow
 
-Start with the most PicoClaw-native path:
+Start with the most NeuroClaw-native path:
 
-1. Check `picoclaw status`.
+1. Check `neuroclaw status`.
 2. Confirm which config file is active.
 3. Inspect `agents.defaults.model_name` and `model_list`.
-4. Run `picoclaw gateway --debug` for runtime visibility.
+4. Run `neuroclaw gateway --debug` for runtime visibility.
 5. Add `--no-truncate` only when full prompt or tool payload inspection is necessary.
 6. For skill issues, inspect the skill directory and frontmatter.
-7. For MCP issues, use `picoclaw mcp list`, `show`, and `test`.
+7. For MCP issues, use `neuroclaw mcp list`, `show`, and `test`.
 8. For routing/session issues, inspect `session.dimensions` and `agents.dispatch.rules`.
 
 Useful runtime facts:
@@ -725,50 +725,50 @@ Useful runtime facts:
 
 ### Where to Find Logs
 
-For gateway and runtime debugging, PicoClaw writes logs under its home directory:
+For gateway and runtime debugging, NeuroClaw writes logs under its home directory:
 
 ```text
-~/.picoclaw/logs/gateway.log
-~/.picoclaw/logs/gateway_panic.log
+~/.neuroclaw/logs/gateway.log
+~/.neuroclaw/logs/gateway_panic.log
 ```
 
-If `PICOCLAW_HOME` is overridden, use:
+If `NEUROCLAW_HOME` is overridden, use:
 
 ```text
-$PICOCLAW_HOME/logs/gateway.log
-$PICOCLAW_HOME/logs/gateway_panic.log
+$NEUROCLAW_HOME/logs/gateway.log
+$NEUROCLAW_HOME/logs/gateway_panic.log
 ```
 
 In practice, check these places first:
 
-- `~/.picoclaw/logs/` for persisted gateway logs
-- the terminal running `picoclaw gateway` or `picoclaw agent`
+- `~/.neuroclaw/logs/` for persisted gateway logs
+- the terminal running `neuroclaw gateway` or `neuroclaw agent`
 - Docker stdout/stderr via `docker compose -f docker/docker-compose.yml logs -f`
-- launcher or service logs if PicoClaw is being run under another supervisor
+- launcher or service logs if NeuroClaw is being run under another supervisor
 
 Useful controls:
 
-- `picoclaw gateway --debug` for detailed runtime logs
-- `picoclaw gateway --debug --no-truncate` for full prompt/tool payload inspection
-- `gateway.log_level` or `PICOCLAW_LOG_LEVEL` to raise verbosity to `debug` or `info`
+- `neuroclaw gateway --debug` for detailed runtime logs
+- `neuroclaw gateway --debug --no-truncate` for full prompt/tool payload inspection
+- `gateway.log_level` or `NEUROCLAW_LOG_LEVEL` to raise verbosity to `debug` or `info`
 
 Special case:
 
-- the standalone `picoclaw agent` command uses console logging unless `PICOCLAW_LOG_FILE` is set explicitly
-- process hooks can write JSONL file logs when `PICOCLAW_HOOK_LOG_FILE` is set; this is hook-specific and separate from the main gateway log path
+- the standalone `neuroclaw agent` command uses console logging unless `NEUROCLAW_LOG_FILE` is set explicitly
+- process hooks can write JSONL file logs when `NEUROCLAW_HOOK_LOG_FILE` is set; this is hook-specific and separate from the main gateway log path
 
 ## Repository Map
 
 When contributing code, these paths matter most:
 
-- `cmd/picoclaw/main.go` — root CLI wiring
-- `cmd/picoclaw/internal/agent/` — direct CLI agent command
-- `cmd/picoclaw/internal/gateway/` — gateway startup and flags
-- `cmd/picoclaw/internal/auth/` — auth flows, QR onboarding
-- `cmd/picoclaw/internal/model/` — default model switching and `model add`
-- `cmd/picoclaw/internal/skills/` — install/list/show/remove/search commands
-- `cmd/picoclaw/internal/mcp/` — MCP CLI configuration manager
-- `cmd/picoclaw/internal/cron/` — cron CLI
+- `cmd/neuroclaw/main.go` — root CLI wiring
+- `cmd/neuroclaw/internal/agent/` — direct CLI agent command
+- `cmd/neuroclaw/internal/gateway/` — gateway startup and flags
+- `cmd/neuroclaw/internal/auth/` — auth flows, QR onboarding
+- `cmd/neuroclaw/internal/model/` — default model switching and `model add`
+- `cmd/neuroclaw/internal/skills/` — install/list/show/remove/search commands
+- `cmd/neuroclaw/internal/mcp/` — MCP CLI configuration manager
+- `cmd/neuroclaw/internal/cron/` — cron CLI
 - `pkg/commands/` — shared slash command registry
 - `pkg/agent/` — prompt assembly, sessions, routing, tool execution, hooks
 - `pkg/skills/` — skill loading, metadata, registry installs
@@ -784,7 +784,7 @@ When contributing code, these paths matter most:
 
 ## Contribution Rules
 
-When changing PicoClaw:
+When changing NeuroClaw:
 
 - Prefer extending existing CLI groups and shared registries instead of adding parallel one-off flows.
 - Keep docs aligned with code for CLI flags, slash commands, and config behavior.
@@ -801,7 +801,7 @@ Check that:
 
 - `agents.defaults.model_name` matches a configured `model_name`
 - the target `model_list` entry is enabled
-- the `provider` and `model` fields use PicoClaw's model-centric rules
+- the `provider` and `model` fields use NeuroClaw's model-centric rules
 
 ### OpenRouter `free is not a valid model ID`
 
@@ -838,8 +838,8 @@ Check:
 - `tools.mcp.enabled` is true
 - the server is enabled
 - deferred discovery settings match expectations
-- `picoclaw mcp test <name>` succeeds
-- `/show mcp <server>` or `picoclaw mcp show <name>` exposes tools
+- `neuroclaw mcp test <name>` succeeds
+- `/show mcp <server>` or `neuroclaw mcp show <name>` exposes tools
 
 ### Agent remembers too much or too little
 
@@ -853,8 +853,8 @@ Check:
 
 Check:
 
-- `PICOCLAW_CONFIG`
-- `PICOCLAW_HOME`
+- `NEUROCLAW_CONFIG`
+- `NEUROCLAW_HOME`
 - whether the user edited `config.json` or `.security.yml`
 - whether they are testing the CLI path, gateway path, or both
 
@@ -870,4 +870,4 @@ Read these only when the task needs them:
 - `docs/operations/debug.md` for runtime inspection
 - `docs/operations/troubleshooting.md` for common provider/model mistakes
 
-If the task is code-level rather than user-facing, read the matching package under `cmd/picoclaw/internal/`, `pkg/commands/`, `pkg/agent/`, `pkg/skills/`, or `pkg/mcp/` before proposing behavior changes.
+If the task is code-level rather than user-facing, read the matching package under `cmd/neuroclaw/internal/`, `pkg/commands/`, `pkg/agent/`, `pkg/skills/`, or `pkg/mcp/` before proposing behavior changes.

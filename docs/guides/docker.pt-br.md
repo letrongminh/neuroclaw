@@ -2,6 +2,15 @@
 
 > Voltar ao [README](../project/README.pt-br.md)
 
+## Imagens
+
+| Imagem | Contém | Inicia |
+|---|---|---|
+| `ghcr.io/letrongminh/neuroclaw:<tag>` ou `:latest` | `neuroclaw` | o gateway (primeira execução: `onboard`, depois sai) |
+| `ghcr.io/letrongminh/neuroclaw:<tag>-launcher` ou `:launcher` | `neuroclaw`, `neuroclaw-launcher` | o console web (`-console -public -no-browser`) |
+
+Ambas são publicadas para linux/amd64, arm64 e riscv64. A configuração e o workspace ficam em `/root/.neuroclaw` dentro do contêiner; o arquivo compose monta `docker/data` ali.
+
 ## 🐳 Docker Compose
 
 Você também pode executar o NeuroClaw usando Docker Compose sem instalar nada localmente.
@@ -42,7 +51,7 @@ A imagem `launcher` inclui ambos os binários (`neuroclaw`, `neuroclaw-launcher`
 docker compose -f docker/docker-compose.yml --profile launcher up -d
 ```
 
-Abra http://localhost:18800 no seu navegador. O launcher gerencia o processo do gateway automaticamente.
+Abra http://localhost:18800 no seu navegador (o arquivo compose também publica a porta do gateway, 18790). O launcher gerencia o processo do gateway automaticamente.
 
 > [!WARNING]
 > O console web é protegido por senha de login do dashboard. Não exponha o launcher a redes não confiáveis nem à internet pública.
@@ -67,7 +76,7 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ### 🚀 Início Rápido
 
 > [!TIP]
-> Configure sua chave de API em `~/.neuroclaw/config.json`. Obtenha chaves de API: [Volcengine (CodingPlan)](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). A busca na web é opcional — obtenha gratuitamente uma [API Tavily](https://tavily.com) (1000 consultas gratuitas/mês) ou [API Brave Search](https://brave.com/search/api) (2000 consultas gratuitas/mês).
+> Configure sua chave de API em `~/.neuroclaw/config.json`. Obtenha chaves de API: [Volcengine (CodingPlan)](https://www.volcengine.com) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM). A busca na web é opcional — obtenha gratuitamente uma [API Tavily](https://tavily.com) (1000 consultas gratuitas/mês) ou [API Brave Search](https://brave.com/search/api) (2000 consultas gratuitas/mês).
 
 **1. Inicializar**
 

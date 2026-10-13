@@ -25,7 +25,7 @@ DingTalkはアリババの企業向けコミュニケーションプラットフ
 | enabled       | bool   | はい | DingTalk チャンネルを有効にするかどうか      |
 | client_id     | string | はい | DingTalk アプリケーションの Client ID        |
 | client_secret | string | はい | DingTalk アプリケーションの Client Secret    |
-| allow_from    | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は全ユーザーを許可 |
+| allow_from    | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 
 ## セットアップ手順
 

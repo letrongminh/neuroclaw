@@ -6,6 +6,8 @@
 
 NeuroClaw 支持多种聊天平台，使您的 Agent 能够连接到任何地方，包括 Telegram、Discord、WhatsApp、微信、QQ、钉钉、LINE、企业微信、飞书、Slack、IRC、OneBot、MQTT、MaixCam 等。
 
+> **请在每个渠道都设置 `allow_from`。** `allow_from` 为空时，任何能联系到该 Bot 的人都可以与它对话（网关只会记录警告 `SECURITY: Channel allows EVERYONE`）。请填入你自己的用户 ID，或用 `["*"]` 明确表示有意开放访问。下面有几个示例为简洁起见写了 `"allow_from": []`；对于能够运行工具的 Bot，请不要留空。聊天用户能让 Agent 做什么（shell、定时命令、安装技能），连同风险标签一起列在 [能力说明 §2](../reference/capabilities.md)。
+
 > **注意**: 依赖 HTTP 回调的渠道共用同一个 Gateway HTTP 服务器（`gateway.host`:`gateway.port`，默认 `127.0.0.1:18790`），无需为每个渠道单独配置端口。飞书、钉钉、企业微信这类 Socket/Stream 模式渠道不依赖共享 webhook 服务器来接收入站消息。
 
 ### 核心渠道
@@ -13,7 +15,7 @@ NeuroClaw 支持多种聊天平台，使您的 Agent 能够连接到任何地方
 | 渠道                 | 设置难度    | 特性说明                                  | 文档链接                                                                                                        |
 | -------------------- | ----------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Telegram**         | ⭐ 简单     | 推荐，支持语音转文字，长轮询无需公网      | [查看文档](../channels/telegram/README.zh.md)                                                                 |
-| **Discord**          | ⭐ 简单     | Socket Mode，支持群组/私信，Bot 生态成熟  | [查看文档](../channels/discord/README.zh.md)                                                                  |
+| **Discord**          | ⭐ 简单     | Gateway WebSocket（无需公网 IP），支持群组/私信 | [查看文档](../channels/discord/README.zh.md)                                                                  |
 | **WhatsApp**         | ⭐ 简单     | 原生 (QR 扫码) 或 Bridge URL              | [查看文档](#whatsapp)                                                                 |
 | **微信 (Weixin)**    | ⭐ 简单     | 原生扫码（腾讯 iLink API）                | [查看文档](#weixin)                                                                   |
 | **Slack**            | ⭐ 简单     | **Socket Mode** (无需公网 IP)，企业级支持 | [查看文档](../channels/slack/README.zh.md)                                                                    |
@@ -78,6 +80,9 @@ Telegram 侧保留的是命令菜单注册能力；通用命令的实际执行�
 - `/use <skill>`，然后在下一条消息里发送真正的请求
 - `/use clear`
 - `/btw <question>`，用于发起一个不改动当前会话历史的即时旁支提问；`/btw` 会按一次无工具的直接问答处理，不会进入常规的工具执行流程
+
+**5. 高级格式**
+可以设置 `use_markdown_v2: true` 来启用增强的格式选项。这样 Bot 就能使用 Telegram MarkdownV2 的全部特性，包括嵌套样式、剧透（spoiler）和自定义等宽代码块。
 
 </details>
 
@@ -398,7 +403,7 @@ Bot 将连接到 IRC 服务器并加入指定的频道。
 }
 ```
 
-> `allow_from` 留空表示允许所有用户，或指定钉钉用户 ID 限制访问。
+> 在 `allow_from` 中指定钉钉用户 ID 以限制访问。留空表示允许所有用户；用 `["*"]` 可以明确表达这一点。
 
 **3. 运行**
 
@@ -505,7 +510,7 @@ neuroclaw gateway
 <details>
 <summary><b>企业微信 (WeCom)</b></summary>
 
-NeuroClaw 现在将企业微信统一为一个基于 WebSocket 的 AI Bot 渠道。
+NeuroClaw 将企业微信统一为一个基于 WebSocket 的 AI Bot 渠道。
 它不再需要公网 webhook 回调地址。
 
 完整配置说明和迁移说明请参考 [企业微信配置指南](../channels/wecom/README.zh.md)。
@@ -518,7 +523,7 @@ NeuroClaw 现在将企业微信统一为一个基于 WebSocket 的 AI Bot 渠道
 neuroclaw auth wecom
 ```
 
-该命令会显示二维码，等待你在企业微信里确认，然后把 `bot_id` 和 `secret` 写入 `channels.wecom`。
+该命令会显示二维码，等待你在企业微信里确认，然后把 `bot_id` 和 `secret` 写入 `channel_list` 中的 `wecom` 条目。
 
 **2. 如需手动配置**
 
@@ -545,7 +550,7 @@ neuroclaw auth wecom
 neuroclaw gateway
 ```
 
-> 这个分支中旧的 `wecom_app` 和 `wecom_aibot` 配置已经被统一的 `channels.wecom` 替代。
+> 这个分支中旧的 `wecom_app` 和 `wecom_aibot` 配置已经被 `channel_list` 下统一的 `wecom` 条目替代。
 
 </details>
 

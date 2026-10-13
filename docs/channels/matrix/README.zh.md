@@ -44,7 +44,7 @@
 | access_token         | string   | 是   | 机器人 access token |
 | device_id            | string   | 否   | 设备 ID（可选） |
 | join_on_invite       | bool     | 否   | 是否自动加入邀请房间 |
-| allow_from           | []string | 否   | 白名单用户（Matrix 用户 ID） |
+| allow_from           | []string | 否   | 白名单用户（Matrix 用户 ID）；为空时任何人都能使用（网关会记录警告），请设置或用 `["*"]` 明确允许所有人 |
 | group_trigger        | object   | 否   | 群聊触发策略（支持 `mention_only` / `prefixes`） |
 | placeholder          | object   | 否   | 占位消息配置 |
 | reasoning_channel_id | string   | 否   | 思维链输出目标通道 |

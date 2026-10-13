@@ -11,7 +11,8 @@
 | -------------------- | ---------------------------- | -------------------------------------------------------------------- |
 | `gemini`             | LLM (Gemini 直连)            | [aistudio.google.com](https://aistudio.google.com)                   |
 | `zhipu`              | LLM (智谱直连)               | [bigmodel.cn](https://bigmodel.cn)                                   |
-| `volcengine`         | LLM (火山引擎直连)           | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) |
+| `zai`                | LLM (Z.AI Coding Plan)       | [z.ai](https://z.ai/manage-apikey/apikey-list)                       |
+| `volcengine`         | LLM (火山引擎直连)           | [volcengine.com](https://www.volcengine.com) |
 | `openrouter`         | LLM (推荐，可访问所有模型)   | [openrouter.ai](https://openrouter.ai)                               |
 | `anthropic`          | LLM (Claude 直连)            | [console.anthropic.com](https://console.anthropic.com)               |
 | `openai`             | LLM (GPT 直连)               | [platform.openai.com](https://platform.openai.com)                   |
@@ -32,7 +33,7 @@
 <a id="模型配置-model_list"></a>
 ### 模型配置 (model_list)
 
-> **新功能！** NeuroClaw 现在优先推荐显式 `provider` + 原生 `model` 的配置方式，例如 `"provider": "zhipu", "model": "glm-4.7"`。如果未设置 `provider`，旧的单字段 `provider/model` 写法仍然兼容。
+> NeuroClaw 优先推荐显式 `provider` + 原生 `model` 的配置方式，例如 `"provider": "zhipu", "model": "glm-4.7"`。如果未设置 `provider`，旧的单字段 `provider/model` 写法仍然兼容。
 
 如果你想看 agent 分发和轻量模型路由的完整示例，请看 [路由使用指南](routing-guide.zh.md)。
 
@@ -51,6 +52,7 @@
 | **Venice AI**       | `venice`          | `https://api.venice.ai/api/v1`                      | OpenAI    | [获取密钥](https://venice.ai)                                     |
 | **Anthropic**       | `anthropic`       | `https://api.anthropic.com/v1`                      | Anthropic | [获取密钥](https://console.anthropic.com)                         |
 | **智谱 AI (GLM)**   | `zhipu`           | `https://open.bigmodel.cn/api/paas/v4`              | OpenAI    | [获取密钥](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) |
+| **Z.AI Coding Plan** | `openai`         | `https://api.z.ai/api/coding/paas/v4`               | OpenAI    | [获取密钥](https://z.ai/manage-apikey/apikey-list)                |
 | **DeepSeek**        | `deepseek`        | `https://api.deepseek.com/v1`                       | OpenAI    | [获取密钥](https://platform.deepseek.com)                         |
 | **Google Gemini**   | `gemini`          | `https://generativelanguage.googleapis.com/v1beta`  | Gemini    | [获取密钥](https://aistudio.google.com/api-keys)                  |
 | **Groq**            | `groq`            | `https://api.groq.com/openai/v1`                    | OpenAI    | [获取密钥](https://console.groq.com)                              |
@@ -63,7 +65,7 @@
 | **LiteLLM Proxy**   | `litellm`         | `http://localhost:4000/v1`                          | OpenAI    | 你的 LiteLLM 代理密钥                                             |
 | **VLLM**            | `vllm`            | `http://localhost:8000/v1`                          | OpenAI    | 本地                                                              |
 | **Cerebras**        | `cerebras`        | `https://api.cerebras.ai/v1`                        | OpenAI    | [获取密钥](https://cerebras.ai)                                   |
-| **火山引擎（Doubao）** | `volcengine`   | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [获取密钥](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) |
+| **火山引擎（Doubao）** | `volcengine`   | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [获取密钥](https://www.volcengine.com) |
 | **神算云**          | `shengsuanyun`    | `https://router.shengsuanyun.com/api/v1`            | OpenAI    | -                                                                 |
 | **BytePlus**        | `byteplus`        | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI    | [获取密钥](https://www.byteplus.com)                              |
 | **Vivgrid**         | `vivgrid`         | `https://api.vivgrid.com/v1`                        | OpenAI    | [获取密钥](https://vivgrid.com)                                   |

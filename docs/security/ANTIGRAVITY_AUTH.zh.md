@@ -722,7 +722,7 @@ neuroclaw agent -m "Hello" --model your-model
 
 ```bash
 # 覆盖默认模型
-export NEUROCLAW_AGENTS_DEFAULTS_MODEL=your-model
+export NEUROCLAW_AGENTS_DEFAULTS_MODEL_NAME=your-model
 
 # 覆盖提供商设置
 export NEUROCLAW_MODEL_LIST='[{"model_name":"your-model","model":"your-provider/model-name","api_keys":["..."]}]'

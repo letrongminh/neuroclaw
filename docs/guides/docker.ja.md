@@ -2,6 +2,15 @@
 
 > [README](../project/README.ja.md) に戻る
 
+## イメージ
+
+| イメージ | 含まれるもの | 起動するもの |
+|---|---|---|
+| `ghcr.io/letrongminh/neuroclaw:<tag>` または `:latest` | `neuroclaw` | gateway（初回実行時は `onboard` を実行して終了） |
+| `ghcr.io/letrongminh/neuroclaw:<tag>-launcher` または `:launcher` | `neuroclaw`、`neuroclaw-launcher` | Web コンソール（`-console -public -no-browser`） |
+
+どちらも linux/amd64、arm64、riscv64 向けに公開されています。設定とワークスペースはコンテナ内の `/root/.neuroclaw` にあり、compose ファイルは `docker/data` をそこにマウントします。
+
 ## 🐳 Docker Compose
 
 Docker Compose を使用して NeuroClaw を実行できます。ローカルに何もインストールする必要はありません。
@@ -26,6 +35,9 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 > [!TIP]
 > **Docker ユーザー**: デフォルトでは Gateway は `127.0.0.1` でリッスンしており、コンテナ外からはアクセスできません。ヘルスチェックエンドポイントへのアクセスやポート公開が必要な場合は、環境変数で `NEUROCLAW_GATEWAY_HOST=0.0.0.0` を設定するか、`config.json` を更新してください。
 
+> [!NOTE]
+> `gateway` プロファイルが提供するのは、gateway ポート上の webhook ハンドラー（有効時は Pico を含む）とヘルスチェックエンドポイントのみです。そのため `/chat` や `/a2a` のような汎用の REST チャットエンドポイントは公開されません。Launcher モードでは、ブラウザ UI に加えて `/api/pico/info` と、launcher ポート上の認証付き `/pico/ws` プロキシが追加されます。なお `/pico/ws` は、Pico チャンネルが有効であれば gateway 上でも直接利用できます。
+
 ```bash
 # 5. ログを確認
 docker compose -f docker/docker-compose.yml logs -f neuroclaw-gateway
@@ -42,10 +54,10 @@ docker compose -f docker/docker-compose.yml --profile gateway down
 docker compose -f docker/docker-compose.yml --profile launcher up -d
 ```
 
-ブラウザで http://localhost:18800 を開いてください。Launcher が Gateway プロセスを自動管理します。
+ブラウザで http://localhost:18800 を開いてください（compose ファイルは gateway のポート 18790 も公開します）。Launcher が Gateway プロセスを自動管理します。
 
 > [!WARNING]
-> Web コンソールは dashboard ログインパスワードで保護されます。信頼できないネットワークや公開インターネットには公開しないでください。
+> Web コンソールは dashboard ログインパスワードで保護されます。信頼できないネットワークや公開インターネットには公開しないでください。設定ガイドの [Web ランチャーダッシュボード](configuration.ja.md#web-launcher-dashboard) を参照してください。
 
 ### Agent モード (ワンショット)
 
@@ -69,7 +81,7 @@ docker compose -f docker/docker-compose.yml --profile gateway up -d
 ## 🚀 クイックスタート
 
 > [!TIP]
-> `~/.neuroclaw/config.json` に API Key を設定してください。API Key の取得先: [Volcengine (CodingPlan)](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)。Web 検索は**オプション**です — 無料の [Tavily API](https://tavily.com) (月 1000 回無料) または [Brave Search API](https://brave.com/search/api) (月 2000 回無料) を取得できます。
+> `~/.neuroclaw/config.json` に API Key を設定してください。API Key の取得先: [Volcengine (CodingPlan)](https://www.volcengine.com) (LLM) · [OpenRouter](https://openrouter.ai/keys) (LLM) · [Zhipu](https://open.bigmodel.cn/usercenter/proj-mgmt/apikeys) (LLM)。Web 検索は**オプション**です — 無料の [Tavily API](https://tavily.com) (月 1000 回無料) または [Brave Search API](https://brave.com/search/api) (月 2000 回無料) を取得できます。
 
 **1. 初期化**
 
@@ -93,19 +105,22 @@ neuroclaw onboard
   "model_list": [
     {
       "model_name": "ark-code-latest",
-      "model": "volcengine/ark-code-latest",
+      "provider": "volcengine",
+      "model": "ark-code-latest",
       "api_keys": ["sk-your-api-key"],
       "api_base":"https://ark.cn-beijing.volces.com/api/coding/v3"
     },
     {
       "model_name": "gpt-5.4",
-      "model": "openai/gpt-5.4",
+      "provider": "openai",
+      "model": "gpt-5.4",
       "api_keys": ["your-api-key"],
       "request_timeout": 300
     },
     {
       "model_name": "claude-sonnet-4.6",
-      "model": "anthropic/claude-sonnet-4.6",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4.6",
       "api_keys": ["your-anthropic-key"]
     }
   ],

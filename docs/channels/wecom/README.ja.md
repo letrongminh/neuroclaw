@@ -2,7 +2,7 @@
 
 # WeCom
 
-NeuroClaw は WeCom を公式 WeCom AI Bot WebSocket API に基づく単一の `channels.wecom` チャンネルとして公開します。
+NeuroClaw は WeCom を公式 WeCom AI Bot WebSocket API に基づく単一の `channel_list.wecom` チャンネルとして公開します。
 従来の `wecom`、`wecom_app`、`wecom_aibot` の分割を統一された設定モデルに置き換えました。
 
 > パブリックな Webhook コールバック URL は不要です。NeuroClaw は WeCom へのアウトバウンド WebSocket 接続を確立します。
@@ -40,7 +40,7 @@ neuroclaw auth wecom
 1. WeCom に QR コードをリクエストし、ターミナルに表示します
 2. ターミナルの QR コードがスキャンしにくい場合に備え、ブラウザで開ける **QR コードリンク** も表示します
 3. 確認をポーリングします — スキャン後、**WeCom アプリ内でログインを確認** する必要があります
-4. 成功すると、`bot_id` と `secret` を `channels.wecom` に書き込み、設定を保存します
+4. 成功すると、`bot_id` と `secret` を `channel_list.wecom` に書き込み、設定を保存します
 
 デフォルトのタイムアウトは **5 分** です。`--timeout` で延長できます：
 
@@ -82,7 +82,7 @@ WeCom AI Bot プラットフォームから `bot_id` と `secret` を既にお�
 | `secret` | string | — | WeCom AI Bot シークレット。`.security.yml` に暗号化して保存。有効時に必須。 |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | WeCom WebSocket エンドポイント。 |
 | `send_thinking_message` | bool | `true` | ストリーミング返信の開始前に `Processing...` メッセージを送信する。 |
-| `allow_from` | array | `[]` | 送信者許可リスト。空の場合はすべての送信者を許可。 |
+| `allow_from` | array | `[]` | 送信者許可リスト。空の場合はどの送信者も許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください。 |
 | `reasoning_channel_id` | string | `""` | 推論・思考出力を別の会話にルーティングするためのオプションのチャット ID。 |
 
 ### 環境変数
@@ -117,9 +117,9 @@ WeCom AI Bot プラットフォームから `bot_id` と `secret` を既にお�
 
 | 以前の設定 | 移行方法 |
 | ---------- | -------- |
-| `channels.wecom`（Webhook ボット） | `bot_id` + `secret` を使用する `channels.wecom` に置き換える。 |
-| `channels.wecom_app` | 削除して `channels.wecom` を使用する。 |
-| `channels.wecom_aibot` | `bot_id` と `secret` を `channels.wecom` に移動する。 |
+| `channel_list.wecom`（Webhook ボット） | `bot_id` + `secret` を使用する `channel_list.wecom` に置き換える。 |
+| `channel_list.wecom_app` | 削除して `channel_list.wecom` を使用する。 |
+| `channel_list.wecom_aibot` | `bot_id` と `secret` を `channel_list.wecom` に移動する。 |
 | `token`、`encoding_aes_key`、`webhook_url`、`webhook_path` | 使用されなくなりました。設定から削除してください。 |
 | `corp_id`、`corp_secret`、`agent_id` | 使用されなくなりました。設定から削除してください。 |
 | `welcome_message`、`processing_message`、`max_steps` | WeCom チャンネル設定の一部ではなくなりました。 |
@@ -146,4 +146,4 @@ WeCom AI Bot プラットフォームから `bot_id` と `secret` を既にお�
 ### 返信が届かない
 
 - `allow_from` が送信者をブロックしていないか確認してください。
-- `channels.wecom.bot_id` と `channels.wecom.secret` が設定されており、空でないことを確認してください。
+- `channel_list.wecom.bot_id` と `channel_list.wecom.secret` が設定されており、空でないことを確認してください。

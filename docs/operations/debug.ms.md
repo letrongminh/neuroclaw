@@ -13,6 +13,10 @@ neuroclaw gateway -d
 
 Dalam mod ini, sistem akan memformat log dengan lebih terperinci dan memaparkan pratonton system prompt serta hasil pelaksanaan tool.
 
+## Label Risiko Semasa Permulaan
+
+Sama ada `--debug` ditetapkan atau tidak, `gateway` dan `agent` mencatat satu amaran `NeuroClaw risk=<name>` bagi setiap keupayaan berisiko yang dihidupkan (contohnya `risk=shell`). Semaklah ini dahulu apabila anda perlu tahu apa yang dibenarkan kepada model pada mesin ini. Nama dan maksud: [capabilities.md seksyen 2](../reference/capabilities.md#2-risk-labels).
+
 ## Menyahaktifkan Pemotongan Log (Log Penuh)
 
 Secara lalai, NeuroClaw memotong rentetan yang sangat panjang (seperti *System Prompt* atau hasil output JSON yang besar) dalam log debug supaya konsol kekal mudah dibaca.

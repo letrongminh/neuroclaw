@@ -4,14 +4,16 @@
 
 ## 💬 Applications de Chat
 
-Communiquez avec votre NeuroClaw via Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, Feishu, Slack, IRC, OneBot, MQTT ou MaixCam.
+Communiquez avec votre NeuroClaw via Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, Feishu, Slack, IRC, OneBot, MQTT, MaixCam ou Pico (protocole natif).
 
-> **Note** : Tous les canaux basés sur les webhooks (LINE, WeCom, etc.) sont servis sur un seul serveur HTTP Gateway partagé (`gateway.host`:`gateway.port`, par défaut `127.0.0.1:18790`). Il n'y a pas de ports par canal à configurer. Note : Feishu utilise le mode WebSocket/SDK et n'utilise pas le serveur HTTP webhook partagé.
+> **Note** : Tous les canaux basés sur les webhooks (LINE, WeCom, etc.) sont servis sur un seul serveur HTTP Gateway partagé (`gateway.host`:`gateway.port`, par défaut `127.0.0.1:18790`). Il n'y a pas de ports par canal à configurer. Note : Feishu, DingTalk et WeCom utilisent des modes socket/stream et n'utilisent pas le serveur HTTP webhook partagé pour la réception.
+
+> **Renseignez `allow_from` sur chaque canal.** Un `allow_from` vide laisse entrer toute personne pouvant joindre le bot (la passerelle journalise seulement l'avertissement `SECURITY: Channel allows EVERYONE`). Indiquez votre propre identifiant utilisateur, ou utilisez `["*"]` pour dire explicitement qu'un accès ouvert est voulu. Plusieurs exemples ci-dessous montrent `"allow_from": []` par souci de brièveté ; ne le laissez pas vide sur un bot capable d'exécuter des outils. Ce qu'un utilisateur de chat peut faire faire à l'agent (shell, commandes planifiées, installation de skills) est listé avec ses étiquettes de risque dans [Capabilities §2](../reference/capabilities.md).
 
 | Canal                | Difficulté         | Description                                           | Documentation                                                                                                    |
 | -------------------- | ------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | **Telegram**         | ⭐ Facile          | Recommandé, transcription vocale, long polling (pas d'IP publique requise) | [Documentation](../channels/telegram/README.fr.md)                                                  |
-| **Discord**          | ⭐ Facile          | Socket Mode, groupes/DM, écosystème bot riche         | [Documentation](../channels/discord/README.fr.md)                                                               |
+| **Discord**          | ⭐ Facile          | WebSocket Gateway (pas d'IP publique requise), groupes/DM | [Documentation](../channels/discord/README.fr.md)                                                               |
 | **WhatsApp**         | ⭐ Facile          | Natif (scan QR) ou Bridge URL                         | [Documentation](#whatsapp)                                                                                       |
 | **Weixin**           | ⭐ Facile          | Scan QR natif (API Tencent iLink)                     | [Documentation](#weixin)                                                                                         |
 | **Slack**            | ⭐ Facile          | **Socket Mode** (pas d'IP publique requise), entreprise | [Documentation](../channels/slack/README.fr.md)                                                                |
@@ -19,7 +21,7 @@ Communiquez avec votre NeuroClaw via Telegram, Discord, WhatsApp, Matrix, QQ, Di
 | **QQ**               | ⭐⭐ Moyen         | API bot officielle, communauté chinoise               | [Documentation](../channels/qq/README.fr.md)                                                                    |
 | **DingTalk**         | ⭐⭐ Moyen         | Mode Stream (pas d'IP publique requise), entreprise   | [Documentation](../channels/dingtalk/README.fr.md)                                                              |
 | **LINE**             | ⭐⭐⭐ Avancé      | HTTPS Webhook requis                                  | [Documentation](../channels/line/README.fr.md)                                                                  |
-| **WeCom (企业微信)** | ⭐⭐⭐ Avancé      | Bot groupe (Webhook), app personnalisée (API), AI Bot | [Guide](../channels/wecom/README.fr.md) |
+| **WeCom (企业微信)** | ⭐⭐⭐ Avancé      | AI Bot officiel via WebSocket, streaming + médias     | [Guide](../channels/wecom/README.fr.md) |
 | **Feishu (飞书)**    | ⭐⭐⭐ Avancé      | Collaboration entreprise, fonctionnalités riches      | [Documentation](../channels/feishu/README.fr.md)                                                                |
 | **IRC**              | ⭐⭐ Moyen         | Serveur + configuration TLS                           | [Documentation](#irc) |
 | **OneBot**           | ⭐⭐ Moyen         | Compatible NapCat/Go-CQHTTP, écosystème communautaire | [Documentation](../channels/onebot/README.fr.md)                                                                |
@@ -287,7 +289,7 @@ Si vous préférez créer le bot manuellement :
 }
 ```
 
-> Définissez `allow_from` vide pour autoriser tous les utilisateurs, ou spécifiez des identifiants DingTalk pour restreindre l'accès.
+> Indiquez des identifiants utilisateur DingTalk dans `allow_from` pour restreindre l'accès. Vide autorise tous les utilisateurs ; utilisez `["*"]` pour le rendre explicite.
 
 **3. Lancer**
 
@@ -386,22 +388,22 @@ neuroclaw gateway
 <details>
 <summary><b>WeCom (企业微信)</b></summary>
 
-NeuroClaw prend en charge trois types d'intégration WeCom :
+NeuroClaw expose WeCom comme un seul canal AI Bot via WebSocket.
+Aucune URL de callback webhook publique n'est requise.
 
-**Option 1 : WeCom Bot (Bot)** - Configuration plus facile, prend en charge les discussions de groupe
-**Option 2 : WeCom App (Application personnalisée)** - Plus de fonctionnalités, messagerie proactive, chat privé uniquement
-**Option 3 : WeCom AI Bot (Bot IA)** - Bot IA officiel, réponses en streaming, prend en charge les discussions de groupe et privées
+Voir le [Guide de Configuration WeCom](../channels/wecom/README.fr.md) pour la référence complète de configuration et les notes de migration.
 
-Voir le [Guide de Configuration WeCom](../channels/wecom/README.fr.md) pour les instructions détaillées.
+**Configuration rapide - Recommandée**
 
-**Configuration rapide - WeCom Bot :**
+**1. S'authentifier**
 
-**1. Créer un bot**
+```bash
+neuroclaw auth wecom
+```
 
-* Allez dans la console d'administration WeCom → Discussion de groupe → Ajouter un bot de groupe
-* Copiez l'URL du webhook (format : `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx`)
+Cette commande affiche un QR code, attend l'approbation dans WeCom, puis écrit `bot_id` + `secret` dans l'entrée `wecom` de `channel_list`.
 
-**2. Configurer**
+**2. Configurer manuellement si nécessaire**
 
 ```json
 {
@@ -409,80 +411,12 @@ Voir le [Guide de Configuration WeCom](../channels/wecom/README.fr.md) pour les 
     "wecom": {
       "enabled": true,
       "type": "wecom",
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY",
-      "webhook_path": "/webhook/wecom",
-      "allow_from": []
-    }
-  }
-}
-```
-
-> Le webhook WeCom est servi sur le serveur Gateway partagé (`gateway.host`:`gateway.port`, par défaut `127.0.0.1:18790`).
-
-**Configuration rapide - WeCom App :**
-
-**1. Créer une application**
-
-* Allez dans la console d'administration WeCom → Gestion des applications → Créer une application
-* Copiez **AgentId** et **Secret**
-* Allez sur la page "Mon entreprise", copiez **CorpID**
-
-**2. Configurer la réception des messages**
-
-* Dans les détails de l'application, cliquez sur "Recevoir les messages" → "Configurer l'API"
-* Définissez l'URL à `http://your-server:18790/webhook/wecom-app`
-* Générez **Token** et **EncodingAESKey**
-
-**3. Configurer**
-
-```json
-{
-  "channel_list": {
-    "wecom_app": {
-      "enabled": true,
-      "corp_id": "wwxxxxxxxxxxxxxxxx",
-      "corp_secret": "YOUR_CORP_SECRET",
-      "agent_id": 1000002,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-app",
-      "allow_from": []
-    }
-  }
-}
-```
-
-**4. Lancer**
-
-```bash
-neuroclaw gateway
-```
-
-> **Note** : Les callbacks webhook WeCom sont servis sur le port Gateway (par défaut 18790). Utilisez un reverse proxy pour HTTPS.
-
-**Configuration rapide - WeCom AI Bot :**
-
-**1. Créer un AI Bot**
-
-* Allez dans la console d'administration WeCom → Gestion des applications → AI Bot
-* Dans les paramètres du AI Bot, configurez l'URL de callback : `http://your-server:18790/webhook/wecom-aibot`
-* Copiez **Token** et cliquez sur "Générer aléatoirement" pour **EncodingAESKey**
-
-**2. Configurer**
-
-```json
-{
-  "channel_list": {
-    "wecom_aibot": {
-      "enabled": true,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_43_CHAR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-aibot",
+      "bot_id": "YOUR_BOT_ID",
+      "secret": "YOUR_SECRET",
+      "websocket_url": "wss://openws.work.weixin.qq.com",
+      "send_thinking_message": true,
       "allow_from": [],
-      "welcome_message": "Hello! How can I help you?",
-      "processing_message": "⏳ Processing, please wait. The results will be sent shortly."
+      "reasoning_channel_id": ""
     }
   }
 }
@@ -494,7 +428,7 @@ neuroclaw gateway
 neuroclaw gateway
 ```
 
-> **Note** : WeCom AI Bot utilise le protocole streaming pull — pas de problème de timeout de réponse. Les tâches longues (>30 secondes) basculent automatiquement vers la livraison push via `response_url`.
+> Les anciennes entrées `wecom_app` et `wecom_aibot` sont remplacées par l'entrée unifiée `wecom` sous `channel_list`.
 
 </details>
 

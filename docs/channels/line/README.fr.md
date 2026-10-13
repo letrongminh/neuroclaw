@@ -27,7 +27,7 @@ NeuroClaw prend en charge LINE via l'API LINE Messaging avec des callbacks webho
 | channel_secret       | string | Oui    | Channel Secret de l'API LINE Messaging                                   |
 | channel_access_token | string | Oui    | Channel Access Token de l'API LINE Messaging                             |
 | webhook_path         | string | Non    | Chemin du webhook (par défaut : /webhook/line)                           |
-| allow_from           | array  | Non    | Liste blanche d'ID utilisateurs ; vide signifie tous les utilisateurs    |
+| allow_from           | array  | Non    | Liste blanche d'ID utilisateurs ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Procédure de configuration
 

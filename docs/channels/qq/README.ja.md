@@ -25,7 +25,7 @@ NeuroClaw は QQ オープンプラットフォームの公式 Bot API を通じ
 | enabled    | bool   | はい   | QQ チャンネルを有効にするかどうか                             |
 | app_id     | string | はい   | QQ ボットアプリケーションの App ID                            |
 | app_secret | string | はい   | QQ ボットアプリケーションの App Secret                        |
-| allow_from | array  | いいえ | 許可するユーザーIDのリスト。空の場合はすべてのユーザーを許可 |
+| allow_from | array  | いいえ | 許可するユーザーIDのリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 
 ## セットアップ手順
 

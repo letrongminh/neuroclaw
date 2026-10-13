@@ -25,7 +25,7 @@ NeuroClaw prend en charge QQ via l'API Bot officielle de la plateforme ouverte Q
 | enabled    | bool   | Oui    | Activer ou non le canal QQ                                                  |
 | app_id     | string | Oui    | App ID de l'application bot QQ                                              |
 | app_secret | string | Oui    | App Secret de l'application bot QQ                                          |
-| allow_from | array  | Non    | Liste blanche d'identifiants utilisateur ; vide signifie tous les utilisateurs |
+| allow_from | array  | Non    | Liste blanche d'identifiants utilisateur ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Configuration initiale
 

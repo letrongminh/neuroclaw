@@ -9,16 +9,22 @@
 - `Error creating provider: model "openrouter/free" not found in model_list`
 - OpenRouter が 400 を返す：`"free is not a valid model ID"`
 
-**原因：** `model_list` エントリの `model` フィールドは API に送信される値です。OpenRouter では省略形ではなく、**完全な**モデル ID を使用する必要があります。
+**原因：** NeuroClaw は provider/model を 2 段階で解決します：
 
-- **誤り：** `"model": "free"` → OpenRouter は `free` を受け取り、拒否します。
-- **正しい：** `"model": "openrouter/free"` → OpenRouter は `openrouter/free` を受け取ります（自動無料枠ルーティング）。
+- `provider` が設定されている場合、`model` フィールドはそのまま当該プロバイダーに送信されます。
+- `provider` が省略された場合、NeuroClaw は最初の `/` までの部分からプロバイダーを推測し、最初の `/` 以降をすべてランタイムのモデル ID として送信します。
+
+OpenRouter の無料枠ルーティングでは、`provider` を明示する設定が推奨されます。
+
+- **誤り：** `"model": "free"` → OpenRouter プロバイダーが選択されないため、`free` は有効な OpenRouter のモデルルートになりません。
+- **正しい：** `"provider": "openrouter", "model": "free"` → OpenRouter は `free` を受け取ります。
+- **これも可：** `"model": "openrouter/free"` → プロバイダーは `openrouter`、ランタイムのモデル ID は `free` と解決されます。
 
 **修正方法：** `~/.neuroclaw/config.json`（またはお使いの設定パス）で：
 
 1. **agents.defaults.model_name** は `model_list` 内の `model_name` と一致する必要があります（例：`"openrouter-free"`）。
-2. そのエントリの **model** は有効な OpenRouter モデル ID である必要があります。例：
-   - `"openrouter/free"` – 自動無料枠
+2. そのエントリでは **provider** を `openrouter` に設定することを推奨し、**model** は有効な OpenRouter モデル ID にします。例：
+   - `"free"` – 自動無料枠
    - `"google/gemini-2.0-flash-exp:free"`
    - `"meta-llama/llama-3.1-8b-instruct:free"`
 
@@ -34,8 +40,9 @@
   "model_list": [
     {
       "model_name": "openrouter-free",
-      "model": "openrouter/free",
-      "api_key": "sk-or-v1-YOUR_OPENROUTER_KEY",
+      "provider": "openrouter",
+      "model": "free",
+      "api_keys": ["sk-or-v1-YOUR_OPENROUTER_KEY"],
       "api_base": "https://openrouter.ai/api/v1"
     }
   ]

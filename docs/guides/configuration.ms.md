@@ -184,6 +184,7 @@ Walaupun dengan `restrict_to_workspace: false`, tool `exec` menyekat arahan berb
 * Menulis ke `/dev/sd[a-z]` — Tulis terus ke cakera
 * `shutdown`, `reboot`, `poweroff` — Penutupan sistem
 * Fork bomb `:(){ :|:& };:`
+* Antara lain: `sudo`, `chmod`/`chown`, `kill`/`pkill`, `curl ... | sh`, `git push`, `docker run`, pemasangan pakej, dan penggantian arahan (`$(...)`, backtick). Senarai penuh ialah `defaultDenyPatterns` dalam `pkg/tools/shell.go`.
 
 ### Kawalan Akses Fail
 
@@ -196,10 +197,12 @@ Walaupun dengan `restrict_to_workspace: false`, tool `exec` menyekat arahan berb
 
 | Kunci Config                       | Jenis    | Lalai   | Penerangan                                                   |
 | ---------------------------------- | -------- | ------- | ------------------------------------------------------------ |
-| `tools.exec.allow_remote`          | bool     | `false` | Benarkan tool exec dari saluran jauh (Telegram/Discord dll.) |
+| `tools.exec.allow_remote`          | bool     | `true`  | Benarkan tool exec dari saluran jauh (Telegram/Discord dll.). Tetapkan `false` untuk menghadkannya kepada saluran dalaman |
 | `tools.exec.enable_deny_patterns`  | bool     | `true`  | Aktifkan pemintasan arahan berbahaya                         |
 | `tools.exec.custom_deny_patterns`  | string[] | `[]`    | Corak regex tersuai untuk disekat                            |
 | `tools.exec.custom_allow_patterns` | string[] | `[]`    | Corak regex tersuai untuk dibenarkan                         |
+
+> **Label risiko:** `exec` dan arahan shell cron dihidupkan secara lalai dan masing-masing dinamakan semasa permulaan (`NeuroClaw risk=shell`, `NeuroClaw risk=cron_shell`). Pemasangan skill dan tool bas perkakasan juga mempunyai label. Lihat [Keupayaan §2](../reference/capabilities.md) untuk senarai, apa yang dibenarkan kepada model, dan cara mematikannya. Gandingkan `exec` dengan `allow_from` yang tidak kosong pada setiap saluran ([Aplikasi Sembang](chat-apps.ms.md)).
 
 > **Nota Keselamatan:** Perlindungan symlink diaktifkan secara lalai — semua laluan fail akan diselesaikan melalui `filepath.EvalSymlinks` sebelum dipadankan dengan whitelist, bagi mengelakkan serangan melarikan diri melalui symlink.
 

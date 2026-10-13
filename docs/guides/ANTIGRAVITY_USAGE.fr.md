@@ -50,7 +50,7 @@ neuroclaw agent -m "Hello" --model claude-opus-4-6-thinking
 Si vous déployez via Coolify ou Docker, suivez ces étapes pour tester :
 
 1.  **Variables d'environnement** :
-    *   `NEUROCLAW_AGENTS_DEFAULTS_MODEL=gemini-flash`
+    *   `NEUROCLAW_AGENTS_DEFAULTS_MODEL_NAME=gemini-flash`
 2.  **Persistance de l'authentification** :
     Si vous vous êtes connecté localement, vous pouvez copier vos identifiants vers le serveur :
     ```bash

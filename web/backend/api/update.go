@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/sipeed/picoclaw/pkg/updater"
+	"github.com/letrongminh/neuroclaw/pkg/updater"
 )
 
 // registerUpdateRoutes registers the self-update endpoint.

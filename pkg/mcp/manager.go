@@ -374,12 +374,20 @@ func connectServer(
 			DisableStandaloneSSE: disableStandaloneSSE,
 		}
 
+		base, err := mcpHTTPTransport(cfg.URL, cfg.TLS)
+		if err != nil {
+			return nil, fmt.Errorf("server %s: %w", name, err)
+		}
+		if cfg.TLS != nil {
+			sseTransport.HTTPClient = &http.Client{Transport: base}
+		}
+
 		// Add custom headers if provided
 		if len(cfg.Headers) > 0 {
 			// Create a custom HTTP client with header-injecting transport
 			sseTransport.HTTPClient = &http.Client{
 				Transport: &headerTransport{
-					base:    http.DefaultTransport,
+					base:    base,
 					headers: cfg.Headers,
 				},
 			}

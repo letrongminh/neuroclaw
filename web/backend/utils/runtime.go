@@ -9,12 +9,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
 )
 
 // GetPicoclawHome returns the picoclaw home directory.
-// Priority: $PICOCLAW_HOME > ~/.neuroclaw
+// Priority: $NEUROCLAW_HOME > ~/.neuroclaw
 func GetPicoclawHome() string {
 	return config.GetHome()
 }
@@ -29,7 +29,7 @@ func GetDefaultConfigPath() string {
 
 // FindPicoclawBinary locates the picoclaw executable.
 // Search order:
-//  1. PICOCLAW_BINARY environment variable (explicit override)
+//  1. NEUROCLAW_BINARY environment variable (explicit override)
 //  2. Same directory as the current executable
 //  3. Falls back to "picoclaw" and relies on $PATH
 func FindPicoclawBinary() string {

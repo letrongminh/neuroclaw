@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
 )
 
 func TestHandlePatchConfig_PreservesTurnProfile(t *testing.T) {
@@ -766,13 +766,13 @@ func setupPicoEnabledEnv(t *testing.T) (string, func()) {
 
 	tmp := t.TempDir()
 	oldHome := os.Getenv("HOME")
-	oldPicoHome := os.Getenv("PICOCLAW_HOME")
+	oldPicoHome := os.Getenv("NEUROCLAW_HOME")
 
 	if err := os.Setenv("HOME", tmp); err != nil {
 		t.Fatalf("set HOME: %v", err)
 	}
-	if err := os.Setenv("PICOCLAW_HOME", filepath.Join(tmp, ".neuroclaw")); err != nil {
-		t.Fatalf("set PICOCLAW_HOME: %v", err)
+	if err := os.Setenv("NEUROCLAW_HOME", filepath.Join(tmp, ".neuroclaw")); err != nil {
+		t.Fatalf("set NEUROCLAW_HOME: %v", err)
 	}
 
 	cfg := config.DefaultConfig()
@@ -799,9 +799,9 @@ func setupPicoEnabledEnv(t *testing.T) (string, func()) {
 	cleanup := func() {
 		_ = os.Setenv("HOME", oldHome)
 		if oldPicoHome == "" {
-			_ = os.Unsetenv("PICOCLAW_HOME")
+			_ = os.Unsetenv("NEUROCLAW_HOME")
 		} else {
-			_ = os.Setenv("PICOCLAW_HOME", oldPicoHome)
+			_ = os.Setenv("NEUROCLAW_HOME", oldPicoHome)
 		}
 	}
 	return configPath, cleanup

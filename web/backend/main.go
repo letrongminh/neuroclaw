@@ -26,14 +26,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/logger"
-	"github.com/sipeed/picoclaw/pkg/netbind"
-	"github.com/sipeed/picoclaw/web/backend/api"
-	"github.com/sipeed/picoclaw/web/backend/dashboardauth"
-	"github.com/sipeed/picoclaw/web/backend/launcherconfig"
-	"github.com/sipeed/picoclaw/web/backend/middleware"
-	"github.com/sipeed/picoclaw/web/backend/utils"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/netbind"
+	"github.com/letrongminh/neuroclaw/web/backend/api"
+	"github.com/letrongminh/neuroclaw/web/backend/dashboardauth"
+	"github.com/letrongminh/neuroclaw/web/backend/launcherconfig"
+	"github.com/letrongminh/neuroclaw/web/backend/middleware"
+	"github.com/letrongminh/neuroclaw/web/backend/utils"
 )
 
 const (
@@ -542,7 +542,7 @@ func main() {
 	}
 
 	if !explicitHost && hostOverrideActive {
-		logger.InfoC("web", "Using launcher host from environment PICOCLAW_LAUNCHER_HOST")
+		logger.InfoC("web", "Using launcher host from environment NEUROCLAW_LAUNCHER_HOST")
 	}
 
 	if hostOverrideActive && explicitPublic {

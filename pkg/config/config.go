@@ -1244,6 +1244,20 @@ type MCPServerConfig struct {
 	URL string `json:"url,omitempty"`
 	// Headers are HTTP headers to send with requests (sse/http only)
 	Headers map[string]string `json:"headers,omitempty"`
+	// TLS presents a client certificate and pins the server's CA (sse/http only).
+	// NeuroClaw: a NeuroEdge home box requires mutual TLS (mcp serve --http).
+	TLS *MCPTLSConfig `json:"tls,omitempty"`
+}
+
+// MCPTLSConfig is mutual TLS for an HTTP MCP server. Paths may start with "~".
+type MCPTLSConfig struct {
+	// CAFile is the CA that signed the server certificate (PEM). Empty: system roots.
+	CAFile string `json:"ca_file,omitempty"`
+	// CertFile and KeyFile are this client's certificate and private key (PEM).
+	CertFile string `json:"cert_file,omitempty"`
+	KeyFile  string `json:"key_file,omitempty"`
+	// ServerName overrides the name checked in the server certificate.
+	ServerName string `json:"server_name,omitempty"`
 }
 
 // MCPConfig defines configuration for all MCP servers

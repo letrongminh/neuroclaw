@@ -16,10 +16,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/fileutil"
-	"github.com/sipeed/picoclaw/pkg/skills"
-	"github.com/sipeed/picoclaw/pkg/utils"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/fileutil"
+	"github.com/letrongminh/neuroclaw/pkg/skills"
+	"github.com/letrongminh/neuroclaw/pkg/utils"
 )
 
 const defaultInstallSkillRegistry = "github"

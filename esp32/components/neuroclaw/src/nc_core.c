@@ -4,6 +4,7 @@
  * approval moved from "the page at home" to the button sent in Telegram.
  */
 #include "nc_core.h"
+#include "nc_utf8.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -140,6 +141,7 @@ static void copy(char *out, size_t cap, const char *text)
     if (n >= cap) n = cap - 1;
     if (n > 0) memcpy(out, text, n);
     out[n] = '\0';
+    nc_utf8_trim(out);
 }
 
 /* A Telegram id as digits; false when it is not an integer. */
@@ -178,12 +180,12 @@ int nc_telegram_parse(const char *body, const char *owner_id, nc_event *events, 
     const cJSON *update = NULL;
     cJSON_ArrayForEach(update, result)
     {
+        if (count >= max) break; /* the rest come again with the next getUpdates */
         const cJSON *update_id = cJSON_GetObjectItemCaseSensitive(update, "update_id");
         if (cJSON_IsNumber(update_id)) {
             const int64_t next = id_value(update_id) + 1;
             if (next > *next_offset) *next_offset = next;
         }
-        if (count >= max) continue; /* the offset still moves past it */
         nc_event *e = &events[count];
         memset(e, 0, sizeof *e);
         e->kind = NC_EVENT_IGNORED;
@@ -378,6 +380,59 @@ static bool is_role(const cJSON *message, const char *role)
 {
     const cJSON *r = cJSON_GetObjectItemCaseSensitive(message, "role");
     return cJSON_IsString(r) && strcmp(r->valuestring, role) == 0;
+}
+
+int nc_history_overflow(const cJSON *messages, int keep)
+{
+    if (!cJSON_IsArray(messages) || keep < 1) return 0;
+    const int size = cJSON_GetArraySize(messages);
+    int drop = size - 1 > keep ? size - 1 - keep : 0;
+    while (1 + drop < size && is_role(cJSON_GetArrayItem(messages, 1 + drop), "tool")) drop++;
+    return drop;
+}
+
+const char *const NC_SUMMARY_INSTRUCTION =
+    "Summarize this conversation between a home's owner and its assistant for the assistant's "
+    "own later use: requests, decisions, what the home allowed or refused, facts about the "
+    "owner. Keep the previous summary's still-relevant points. At most 120 words, in the "
+    "owner's language. Output the summary only.";
+
+char *nc_summary_input(const char *previous, const cJSON *messages, int count)
+{
+    size_t cap = 512 + (size_t)(count > 0 ? count : 0) * 340 + (previous ? strlen(previous) : 0);
+    char *out = malloc(cap);
+    if (out == NULL) return NULL;
+    size_t n = 0;
+    if (previous != NULL && previous[0] != '\0') {
+        n += (size_t)snprintf(out + n, cap - n, "Previous summary:\n%s\n\n", previous);
+    }
+    n += (size_t)snprintf(out + n, cap - n, "Conversation:\n");
+    for (int i = 1; i <= count && i < cJSON_GetArraySize(messages); i++) {
+        const cJSON *m = cJSON_GetArrayItem(messages, i);
+        const cJSON *role = cJSON_GetObjectItemCaseSensitive(m, "role");
+        const cJSON *content = cJSON_GetObjectItemCaseSensitive(m, "content");
+        const cJSON *calls = cJSON_GetObjectItemCaseSensitive(m, "tool_calls");
+        char line[300];
+        if (cJSON_IsString(content)) {
+            snprintf(line, sizeof line, "%s", content->valuestring);
+        } else if (cJSON_IsArray(calls)) {
+            const cJSON *fn = cJSON_GetObjectItemCaseSensitive(cJSON_GetArrayItem(calls, 0),
+                                                               "function");
+            const cJSON *name = cJSON_GetObjectItemCaseSensitive(fn, "name");
+            snprintf(line, sizeof line, "(called %s)",
+                     cJSON_IsString(name) ? name->valuestring : "a tool");
+        } else {
+            continue;
+        }
+        nc_utf8_trim(line);
+        for (char *c = line; *c; c++) {
+            if (*c == '\n' || *c == '\r') *c = ' ';
+        }
+        n += (size_t)snprintf(out + n, cap - n, "%s: %s\n",
+                              cJSON_IsString(role) ? role->valuestring : "?", line);
+        if (n >= cap) break;
+    }
+    return out;
 }
 
 void nc_history_trim(cJSON *messages, int keep)

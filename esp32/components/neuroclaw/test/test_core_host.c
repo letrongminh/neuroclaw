@@ -83,17 +83,18 @@ static int check_telegram(void)
     CHECK(nc_telegram_parse(body, NULL, events, NC_MAX_EVENTS, &offset) == 8);
     CHECK(events[0].kind == NC_EVENT_IGNORED);
 
-    /* More updates than room: the offset still moves past all of them. */
+    /* More updates than room: the offset stops after the last one returned, so
+     * the rest come again instead of being lost. */
     offset = 0;
     CHECK(nc_telegram_parse(body, OWNER, events, 2, &offset) == 2);
-    CHECK(offset == 18);
+    CHECK(offset == 12);
 
     /* Not a Telegram reply. */
     CHECK(nc_telegram_parse("{\"ok\":false,\"description\":\"x\"}", OWNER, events, 8, &offset) ==
           -1);
     CHECK(nc_telegram_parse("not json", OWNER, events, 8, &offset) == -1);
     CHECK(nc_telegram_parse("{\"ok\":true,\"result\":[]}", OWNER, events, 8, &offset) == 0);
-    CHECK(offset == 18);
+    CHECK(offset == 12);
 
     /* A user id that is a prefix of the owner's is not the owner. */
     offset = 0;
@@ -284,6 +285,30 @@ static int check_llm(void)
                  "system") == 0);
     CHECK(strcmp(cJSON_GetObjectItem(cJSON_GetArrayItem(messages, 1), "role")->valuestring,
                  "user") == 0);
+
+    /* What the summary would fold: as much as trimming would drop. */
+    cJSON *h = cJSON_Parse("[{\"role\":\"system\",\"content\":\"s\"},"
+                           "{\"role\":\"user\",\"content\":\"nhớ giúp: đèn vàng\"},"
+                           "{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"a\","
+                           "\"function\":{\"name\":\"append_file\",\"arguments\":\"{}\"}}]},"
+                           "{\"role\":\"tool\",\"tool_call_id\":\"a\",\"content\":\"ok\"},"
+                           "{\"role\":\"assistant\",\"content\":\"Xong.\\nĐã nhớ\"},"
+                           "{\"role\":\"user\",\"content\":\"bật đèn\"}]");
+    CHECK(nc_history_overflow(h, 10) == 0);
+    CHECK(nc_history_overflow(h, 3) == 3); /* user, assistant(call), and its tool result */
+    CHECK(nc_history_overflow(h, 4) == 1);
+    char *in = nc_summary_input("Chủ nhà tên Minh.", h, 4);
+    CHECK(in != NULL);
+    CHECK(strstr(in, "Previous summary:\nChủ nhà tên Minh.") != NULL);
+    CHECK(strstr(in, "user: nhớ giúp: đèn vàng\n") != NULL);
+    CHECK(strstr(in, "assistant: (called append_file)\n") != NULL);
+    CHECK(strstr(in, "assistant: Xong. Đã nhớ\n") != NULL); /* one line per message */
+    CHECK(strstr(in, "bật đèn") == NULL); /* not folded */
+    free(in);
+    in = nc_summary_input(NULL, h, 1);
+    CHECK(in != NULL && strncmp(in, "Conversation:\n", 14) == 0);
+    free(in);
+    cJSON_Delete(h);
     cJSON_Delete(messages);
     return 0;
 }

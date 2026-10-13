@@ -10,7 +10,8 @@ menu "NeuroClaw-ESP"
         default 16
         range 4 64
         help
-            The conversation lives in RAM only and is gone after a reboot.
+            The conversation is saved to sessions/telegram.json of the
+            workspace after every turn and read back at boot.
 
     config NEUROCLAW_MAX_ROUNDS
         int "LLM rounds per owner message"
@@ -19,6 +20,15 @@ menu "NeuroClaw-ESP"
         help
             A round is one LLM call; tool calls start another. After this many
             the owner is told the request was not finished.
+
+    config NEUROCLAW_HEARTBEAT_MIN
+        int "Heartbeat interval (minutes, 0 = off)"
+        default 30
+        range 0 1440
+        help
+            As the Go NeuroClaw's heartbeat (default 30): every so often the
+            brain reads HEARTBEAT.md of its workspace and, if it lists tasks,
+            checks them; a reply of HEARTBEAT_OK is not sent to the owner.
 
     config NEUROCLAW_POLL_S
         int "Telegram long-poll timeout (s)"

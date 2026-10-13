@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Build and run NeuroClaw-ESP's host tests (nc_core.c) with AddressSanitizer and
+# Build and run NeuroClaw-ESP's host tests (nc_core.c; nc_workspace.c and nc_cron.c
+# on a temporary directory) with AddressSanitizer and
 # UBSan. cJSON v1.7.18 — the version ESP-IDF v5.4 ships — is fetched once into
 # esp32/.cache/ and checked against its SHA-256 (the same bytes as
 # $IDF_PATH/components/json/cJSON/ in espressif/idf:v5.4).
@@ -32,3 +33,17 @@ san=(-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-poin
   "$component/src/nc_core.c" "$component/test/test_core_host.c" "$out/cJSON.o" \
   -o "$out/test_core_host"
 "$out/test_core_host"
+
+"$cc" -std=c99 -Wall -Wextra -Wpedantic -Werror -O1 -g "${san[@]}" \
+  -I "$component/include" -I "$cache" \
+  "$component/src/nc_workspace.c" "$component/src/nc_cron.c" \
+  "$component/test/test_memory_host.c" "$out/cJSON.o" \
+  -o "$out/test_memory_host"
+mkdir "$out/ws"
+"$out/test_memory_host" "$out/ws"
+
+"$cc" -std=c99 -Wall -Wextra -Wpedantic -Werror -O1 -g "${san[@]}" \
+  -I "$component/include" -I "$cache" \
+  "$component/src/nc_web.c" "$component/test/test_web_host.c" "$out/cJSON.o" \
+  -o "$out/test_web_host"
+"$out/test_web_host"

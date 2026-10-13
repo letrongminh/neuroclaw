@@ -3,9 +3,15 @@
  *
  * The same promises as the Go NeuroClaw, on a chip with no Linux and no cloud:
  *
- *   1. The only way to a device is the gate. The brain has no tool of its own:
- *      the tools the model sees are the ones `nc_gate.tools` lists, and every
- *      call goes to `nc_gate.call`. There is no shell, no GPIO, no I2C here.
+ *   1. The only way to a device is the gate. Every device tool the model sees
+ *      is one `nc_gate.tools` lists, and every call to it goes to
+ *      `nc_gate.call`. The brain's own tools touch only its workspace on flash
+ *      (memory, notes), its schedule and the public web — the Go NeuroClaw's
+ *      read_file, write_file, append_file, edit_file, list_dir, cron,
+ *      web_search and web_fetch. There is no shell, no GPIO, no I2C here; a
+ *      scheduled job is a message to the brain, never a command; and web_fetch
+ *      refuses the home's own network (nc_web.h), so it is no way around the
+ *      gate either.
  *   2. Only the owner is heard. Telegram messages and button presses from any
  *      other user are dropped before they reach the model.
  *   3. When the gate asks the owner, the model is told plainly that nothing ran
@@ -74,6 +80,12 @@ typedef struct {
     const char *llm_key;      /* may be empty for a local model */
     const char *llm_model;
     const char *system_prompt; /* NULL: the built-in NeuroClaw prompt */
+    const char *workspace;     /* a mounted directory (LittleFS) for memory, sessions, cron */
+    const char *tz;            /* POSIX TZ for reminders and notes, e.g. "<+07>-7"; NULL: UTC */
+    const char *search_provider; /* "searxng" or "brave"; NULL: no web_search tool */
+    const char *search_url;      /* SearXNG base URL */
+    const char *search_key;      /* Brave API key */
+    const char *fetch_allow;     /* comma-separated private hosts web_fetch may reach anyway */
 } nc_config;
 
 /* Copy the configuration and start the brain task. ESP_ERR_INVALID_ARG when a

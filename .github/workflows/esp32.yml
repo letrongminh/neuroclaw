@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: esp32/scripts/host_test.sh
   qemu:
-    name: Telegram → LLM → gate → owner's button, on QEMU
+    name: Telegram, LLM, gate, memory, cron, web, heartbeat — two boots on QEMU
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container: espressif/idf:v5.4
@@ -43,4 +43,4 @@ jobs:
         if: always()
         with:
           name: esp32-qemu-uart
-          path: esp32/examples/qemu/build/e2e-uart.log
+          path: esp32/examples/qemu/build/e2e-uart-*.log

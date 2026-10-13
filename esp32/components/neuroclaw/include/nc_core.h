@@ -57,7 +57,8 @@ typedef struct {
  * `owner_id`, and a press of one of our approval buttons by `owner_id`.
  * Everything else is NC_EVENT_IGNORED, with `from` set when known.
  * `*next_offset` is the offset for the next getUpdates (update_id + 1 of the
- * last update, kept when there is none). Returns the number of events, or -1
+ * last update returned in `events`, kept when there is none): updates beyond
+ * `max` are not skipped, they come again. Returns the number of events, or -1
  * when the body is not a Telegram reply with ok=true.
  */
 int nc_telegram_parse(const char *body, const char *owner_id, nc_event *events, int max,
@@ -100,6 +101,17 @@ extern const char *const NC_SYSTEM_PROMPT;
 /* Keep the system message and at most `keep` messages after it, never starting
  * the kept part on a tool message (its call would be gone). */
 void nc_history_trim(cJSON *messages, int keep);
+
+/* How many messages after the system one nc_history_trim(messages, keep) would
+ * drop (0 when none). */
+int nc_history_overflow(const cJSON *messages, int keep);
+
+/* The instruction and the text of a summary request, as the Go NeuroClaw keeps
+ * a CONTEXT_SUMMARY of what no longer fits: the previous summary (may be NULL)
+ * and messages[1 .. 1+count) as "role: content" lines, each cut to 300 bytes.
+ * malloc'd. */
+extern const char *const NC_SUMMARY_INSTRUCTION;
+char *nc_summary_input(const char *previous, const cJSON *messages, int count);
 
 #ifdef __cplusplus
 }

@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "cJSON.h"
+#include "esp_littlefs.h"
 #include "esp_eth.h"
 #include "esp_eth_mac_openeth.h"
 #include "esp_event.h"
@@ -125,8 +126,20 @@ static void eth_up(void)
     ESP_LOGI(TAG, "network up");
 }
 
+/* The workspace: LittleFS on the `ws` partition, kept across reboots. */
+static void workspace_up(void)
+{
+    const esp_vfs_littlefs_conf_t conf = {
+        .base_path = "/ws",
+        .partition_label = "ws",
+        .format_if_mount_failed = true,
+    };
+    ESP_ERROR_CHECK(esp_vfs_littlefs_register(&conf));
+}
+
 void app_main(void)
 {
+    workspace_up();
     eth_up();
     char llm_url[128];
     snprintf(llm_url, sizeof llm_url, "%s/v1/chat/completions", CONFIG_EXAMPLE_CLOUD);
@@ -137,6 +150,12 @@ void app_main(void)
         .llm_url = llm_url,
         .llm_key = "sk-qemu-only-not-a-real-key",
         .llm_model = "fake",
+        .workspace = "/ws",
+        .tz = "<+07>-7",
+        .search_provider = "searxng",
+        .search_url = CONFIG_EXAMPLE_CLOUD,
+        /* Test only: the fake cloud lives on QEMU's host address, which is private. */
+        .fetch_allow = "10.0.2.2",
     };
     const nc_gate gate = {NULL, stub_tools, stub_call, stub_answer};
     ESP_ERROR_CHECK(neuroclaw_start(&config, &gate));

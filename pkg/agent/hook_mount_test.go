@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"path/filepath"
 	"slices"
 	"testing"
@@ -119,7 +120,7 @@ func TestAgentLoop_ProcessDirectWithChannel_AutoMountsBuiltinHook(t *testing.T) 
 	}
 }
 
-func TestAgentLoop_ProcessDirectWithChannel_AutoMountsProcessHook(t *testing.T) {
+func TestAgentLoop_ProcessDirectWithChannel_NeverMountsAProcessHook(t *testing.T) {
 	provider := &llmHookTestProvider{}
 	eventLog := filepath.Join(t.TempDir(), "events.log")
 
@@ -145,18 +146,14 @@ func TestAgentLoop_ProcessDirectWithChannel_AutoMountsProcessHook(t *testing.T) 
 	if err != nil {
 		t.Fatalf("ProcessDirectWithChannel failed: %v", err)
 	}
-	if resp != "provider content|ipc" {
-		t.Fatalf("expected process-hooked content, got %q", resp)
+	// NeuroClaw lockdown: a configured process hook is never mounted, so the provider
+	// answers alone and the hook program never starts.
+	if resp != "provider content" {
+		t.Fatalf("a process hook ran: got %q", resp)
 	}
-
-	provider.mu.Lock()
-	lastModel := provider.lastModel
-	provider.mu.Unlock()
-	if lastModel != "process-model" {
-		t.Fatalf("expected process model, got %q", lastModel)
+	if _, err := os.Stat(eventLog); err == nil {
+		t.Fatal("the process hook wrote its event log")
 	}
-
-	waitForFileContains(t, eventLog, "agent.turn.end")
 }
 
 func TestProcessHookObserveKindsFromConfigAcceptsRuntimeNames(t *testing.T) {
@@ -176,25 +173,5 @@ func TestProcessHookObserveKindsFromConfigAcceptsRuntimeNames(t *testing.T) {
 	want := []string{"agent.tool.exec_start", "agent.tool.exec_end", "gateway.ready", "mcp.server.failed"}
 	if !slices.Equal(kinds, want) {
 		t.Fatalf("observe kinds = %v, want %v", kinds, want)
-	}
-}
-
-func TestAgentLoop_ProcessDirectWithChannel_InvalidConfiguredHookFails(t *testing.T) {
-	provider := &llmHookTestProvider{}
-	al := newConfiguredHookLoop(t, provider, config.HooksConfig{
-		Enabled: true,
-		Processes: map[string]config.ProcessHookConfig{
-			"bad-hook": {
-				Enabled:   true,
-				Command:   processHookHelperCommand(),
-				Intercept: []string{"not_supported"},
-			},
-		},
-	})
-	defer al.Close()
-
-	_, err := al.ProcessDirectWithChannel(context.Background(), "hello", "session-1", "cli", "direct")
-	if err == nil {
-		t.Fatal("expected invalid configured hook error")
 	}
 }

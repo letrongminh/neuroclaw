@@ -110,79 +110,6 @@ func addTestCronJob(t *testing.T, tool *CronTool, name, channel, chatID, command
 }
 
 // TestCronTool_CommandBlockedFromRemoteChannel verifies command scheduling is restricted by default.
-func TestCronTool_CommandBlockedFromRemoteChannel(t *testing.T) {
-	tool := newTestCronTool(t)
-	ctx := WithToolContext(context.Background(), "telegram", "chat-1")
-	result := tool.Execute(ctx, map[string]any{
-		"action":          "add",
-		"message":         "check disk",
-		"command":         "df -h",
-		"command_confirm": true,
-		"at_seconds":      float64(60),
-	})
-
-	if !result.IsError {
-		t.Fatal("expected command scheduling to be blocked from remote channel")
-	}
-	if !strings.Contains(result.ForLLM, "restricted to internal channels or configured remote channels") {
-		t.Errorf("expected remote restriction message, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandAllowedFromRemoteChannelAllowlist(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.CommandAllowedRemotes = []string{"telegram"}
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "telegram", "chat-1")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if result.IsError {
-		t.Fatalf("expected command scheduling from allowed remote channel to succeed, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandAllowedFromRemoteChatIDAllowlist(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.CommandAllowedRemotes = []string{" telegram:1234567890 "}
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "telegram", "1234567890")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if result.IsError {
-		t.Fatalf("expected command scheduling from allowed remote chat to succeed, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandAllowedFromRemoteWildcardAllowlist(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.CommandAllowedRemotes = []string{"*"}
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "telegram", "chat-1")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if result.IsError {
-		t.Fatalf("expected wildcard allowlist to allow remote command scheduling, got: %s", result.ForLLM)
-	}
-}
-
 func TestCronTool_CommandAllowedRemoteWildcardRequiresNonEmptyChannel(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Tools.Cron.CommandAllowedRemotes = []string{"*"}
@@ -201,135 +128,6 @@ func TestCronTool_CommandAllowedRemoteWildcardRequiresNonEmptyChannel(t *testing
 	}
 	if !strings.Contains(result.ForLLM, "no session context") {
 		t.Errorf("expected session context error, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandBlockedFromDifferentRemoteChatID(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.CommandAllowedRemotes = []string{"telegram:1234567890"}
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "telegram", "other-chat")
-	result := tool.Execute(ctx, map[string]any{
-		"action":          "add",
-		"message":         "check disk",
-		"command":         "df -h",
-		"command_confirm": true,
-		"at_seconds":      float64(60),
-	})
-
-	if !result.IsError {
-		t.Fatal("expected command scheduling from non-allowlisted remote chat to fail")
-	}
-	if !strings.Contains(result.ForLLM, "restricted to internal channels or configured remote channels") {
-		t.Errorf("expected remote restriction message, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandAllowedRemoteRequiresConfirmWhenAllowCommandDisabled(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.AllowCommand = false
-	cfg.Tools.Cron.CommandAllowedRemotes = []string{"telegram"}
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "telegram", "chat-1")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if !result.IsError {
-		t.Fatal("expected allowlisted remote command scheduling to require confirm when allow_command is disabled")
-	}
-	if !strings.Contains(result.ForLLM, "command_confirm=true") {
-		t.Errorf("expected command_confirm requirement message, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_AllowCommandDoesNotBypassRemoteAllowlist(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.AllowCommand = true
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "telegram", "chat-1")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if !result.IsError {
-		t.Fatal("expected allow_command=true not to bypass remote allowlist")
-	}
-	if !strings.Contains(result.ForLLM, "restricted to internal channels or configured remote channels") {
-		t.Errorf("expected remote restriction message, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandDoesNotRequireConfirmByDefault(t *testing.T) {
-	tool := newTestCronTool(t)
-	ctx := WithToolContext(context.Background(), "cli", "direct")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if result.IsError {
-		t.Fatalf("expected command scheduling without confirm to succeed by default, got: %s", result.ForLLM)
-	}
-	if !strings.Contains(result.ForLLM, "Cron job added") {
-		t.Errorf("expected 'Cron job added', got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandRequiresConfirmWhenAllowCommandDisabled(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.AllowCommand = false
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "cli", "direct")
-	result := tool.Execute(ctx, map[string]any{
-		"action":     "add",
-		"message":    "check disk",
-		"command":    "df -h",
-		"at_seconds": float64(60),
-	})
-
-	if !result.IsError {
-		t.Fatal("expected command scheduling to require confirm when allow_command is disabled")
-	}
-	if !strings.Contains(result.ForLLM, "command_confirm=true") {
-		t.Errorf("expected command_confirm requirement message, got: %s", result.ForLLM)
-	}
-}
-
-func TestCronTool_CommandAllowedWithConfirmWhenAllowCommandDisabled(t *testing.T) {
-	cfg := config.DefaultConfig()
-	cfg.Tools.Cron.AllowCommand = false
-
-	tool := newTestCronToolWithConfig(t, cfg)
-	ctx := WithToolContext(context.Background(), "cli", "direct")
-	result := tool.Execute(ctx, map[string]any{
-		"action":          "add",
-		"message":         "check disk",
-		"command":         "df -h",
-		"command_confirm": true,
-		"at_seconds":      float64(60),
-	})
-
-	if result.IsError {
-		t.Fatalf(
-			"expected command scheduling with confirm to succeed when allow_command is disabled, got: %s",
-			result.ForLLM,
-		)
-	}
-	if !strings.Contains(result.ForLLM, "Cron job added") {
-		t.Errorf("expected 'Cron job added', got: %s", result.ForLLM)
 	}
 }
 
@@ -356,26 +154,6 @@ func TestCronTool_CommandBlockedWhenExecDisabled(t *testing.T) {
 }
 
 // TestCronTool_CommandAllowedFromInternalChannel verifies command scheduling works from internal channels
-func TestCronTool_CommandAllowedFromInternalChannel(t *testing.T) {
-	tool := newTestCronTool(t)
-	ctx := WithToolContext(context.Background(), "cli", "direct")
-	result := tool.Execute(ctx, map[string]any{
-		"action":          "add",
-		"message":         "check disk",
-		"command":         "df -h",
-		"command_confirm": true,
-		"at_seconds":      float64(60),
-	})
-
-	if result.IsError {
-		t.Fatalf("expected command scheduling to succeed from internal channel, got: %s", result.ForLLM)
-	}
-	if !strings.Contains(result.ForLLM, "Cron job added") {
-		t.Errorf("expected 'Cron job added', got: %s", result.ForLLM)
-	}
-}
-
-// TestCronTool_AddJobRequiresSessionContext verifies fail-closed when channel/chatID missing
 func TestCronTool_AddJobRequiresSessionContext(t *testing.T) {
 	tool := newTestCronTool(t)
 	result := tool.Execute(context.Background(), map[string]any{
@@ -1006,93 +784,6 @@ func TestCronTool_WildcardRemoteCanManageOwnCommandJob(t *testing.T) {
 	}
 }
 
-func TestCronTool_CommandUpdateSafetyGates(t *testing.T) {
-	t.Run("exec disabled", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-		cfg.Tools.Exec.Enabled = false
-		tool := newTestCronToolWithConfig(t, cfg)
-		ctx := WithToolContext(context.Background(), "cli", "direct")
-		job, err := tool.cronService.AddJob(
-			"job",
-			cron.CronSchedule{Kind: "cron", Expr: "0 8 * * *"},
-			"message",
-			"cli",
-			"direct",
-		)
-		if err != nil {
-			t.Fatalf("AddJob() error: %v", err)
-		}
-
-		result := tool.Execute(ctx, map[string]any{
-			"action":          "update",
-			"job_id":          job.ID,
-			"command":         "df -h",
-			"command_confirm": true,
-		})
-
-		if !result.IsError || !strings.Contains(result.ForLLM, "command execution is disabled") {
-			t.Fatalf("expected exec disabled error, got: %+v", result)
-		}
-	})
-
-	t.Run("confirm required", func(t *testing.T) {
-		cfg := config.DefaultConfig()
-		cfg.Tools.Cron.AllowCommand = false
-		tool := newTestCronToolWithConfig(t, cfg)
-		ctx := WithToolContext(context.Background(), "cli", "direct")
-		job, err := tool.cronService.AddJob(
-			"job",
-			cron.CronSchedule{Kind: "cron", Expr: "0 8 * * *"},
-			"message",
-			"cli",
-			"direct",
-		)
-		if err != nil {
-			t.Fatalf("AddJob() error: %v", err)
-		}
-
-		result := tool.Execute(ctx, map[string]any{
-			"action":  "update",
-			"job_id":  job.ID,
-			"command": "df -h",
-		})
-
-		if !result.IsError || !strings.Contains(result.ForLLM, "command_confirm=true") {
-			t.Fatalf("expected confirm error, got: %+v", result)
-		}
-
-		result = tool.Execute(ctx, map[string]any{
-			"action":          "update",
-			"job_id":          job.ID,
-			"command":         "df -h",
-			"command_confirm": true,
-		})
-
-		if result.IsError {
-			t.Fatalf("expected confirmed command update to succeed, got: %s", result.ForLLM)
-		}
-		updated, _ := tool.cronService.GetJob(job.ID)
-		if updated.Payload.Command != "df -h" {
-			t.Fatalf("command not updated: %+v", updated.Payload)
-		}
-
-		result = tool.Execute(ctx, map[string]any{
-			"action":          "update",
-			"job_id":          job.ID,
-			"command":         "",
-			"command_confirm": true,
-		})
-
-		if result.IsError {
-			t.Fatalf("expected empty command update to clear command, got: %s", result.ForLLM)
-		}
-		updated, _ = tool.cronService.GetJob(job.ID)
-		if updated.Payload.Command != "" {
-			t.Fatalf("command not cleared: %+v", updated.Payload)
-		}
-	})
-}
-
 func TestCronTool_InternalCanAccessCommandJobFromAnyChannel(t *testing.T) {
 	tool := newTestCronTool(t)
 	ctx := WithToolContext(context.Background(), "cli", "direct")
@@ -1235,31 +926,6 @@ func TestCronTool_ExecuteJobSkipsWhenMessageToolAlreadySent(t *testing.T) {
 	}
 }
 
-func TestCronTool_ExecuteJobRunsCommand(t *testing.T) {
-	tool := newTestCronToolWithConfig(t, config.DefaultConfig())
-	job := &cron.CronJob{}
-	job.Payload.Channel = "cli"
-	job.Payload.To = "direct"
-	job.Payload.Command = "echo cron-test-ok"
-
-	if got := tool.ExecuteJob(context.Background(), job); got != "ok" {
-		t.Fatalf("ExecuteJob() = %q, want ok", got)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	var msg bus.OutboundMessage
-	select {
-	case msg = <-tool.msgBus.OutboundChan():
-	case <-ctx.Done():
-		t.Fatal("timeout waiting for outbound message")
-	}
-	if !strings.Contains(msg.Content, "cron-test-ok") {
-		t.Fatalf("expected command output containing 'cron-test-ok', got: %s", msg.Content)
-	}
-}
-
 func TestCronTool_ExecuteJobReturnsErrorWithoutPublish(t *testing.T) {
 	executor := &stubJobExecutor{
 		response: "this response must not be published",
@@ -1279,5 +945,45 @@ func TestCronTool_ExecuteJobReturnsErrorWithoutPublish(t *testing.T) {
 
 	if executor.publishedResp != "" {
 		t.Fatalf("unexpected publish on error path: %q", executor.publishedResp)
+	}
+}
+
+// NeuroClaw lockdown: even a config built in code with exec and cron commands on — past the
+// loader's lockdown — never schedules or runs a shell command.
+func TestCronTool_NeuroClawNeverRunsACommandWhateverTheConfig(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Tools.Exec.Enabled = true
+	cfg.Tools.Cron.AllowCommand = true
+	cfg.Tools.Cron.CommandAllowedRemotes = []string{"*"}
+
+	tool := newTestCronToolWithConfig(t, cfg)
+	for _, channel := range []string{"cli", "telegram"} {
+		ctx := WithToolContext(context.Background(), channel, "direct")
+		result := tool.Execute(ctx, map[string]any{
+			"action":          "add",
+			"message":         "check disk",
+			"command":         "df -h",
+			"command_confirm": true,
+			"at_seconds":      float64(60),
+		})
+		if !result.IsError {
+			t.Fatalf("%s: a command job was scheduled", channel)
+		}
+	}
+
+	job := &cron.CronJob{}
+	job.Payload.Channel = "cli"
+	job.Payload.To = "direct"
+	job.Payload.Command = "echo cron-ran-a-command"
+	tool.ExecuteJob(context.Background(), job)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	select {
+	case msg := <-tool.msgBus.OutboundChan():
+		if strings.Contains(msg.Content, "cron-ran-a-command") {
+			t.Fatalf("the command ran: %s", msg.Content)
+		}
+	case <-ctx.Done():
 	}
 }

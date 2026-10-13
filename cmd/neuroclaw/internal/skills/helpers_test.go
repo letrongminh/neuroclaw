@@ -14,7 +14,7 @@ import (
 	"github.com/letrongminh/neuroclaw/pkg/config"
 )
 
-func TestSkillsInstallFromRegistryWritesOriginMetadata(t *testing.T) {
+func TestSkillsInstallFromRegistryIsRefusedWhileRegistriesAreLocked(t *testing.T) {
 	workspace := t.TempDir()
 	cfg := config.DefaultConfig()
 	cfg.Agents.Defaults.Workspace = workspace
@@ -45,57 +45,13 @@ func TestSkillsInstallFromRegistryWritesOriginMetadata(t *testing.T) {
 	cfg.Tools.Skills.Registries.Set("github", githubRegistry)
 
 	target := server.URL + "/foo/bar/tree/master/.agents/skills/pr-review"
-	require.NoError(t, skillsInstallFromRegistry(cfg, "github", target))
-
-	metaPath := filepath.Join(workspace, "skills", "pr-review", ".skill-origin.json")
-	data, err := os.ReadFile(metaPath)
-	require.NoError(t, err)
-
-	var meta installedSkillOriginMeta
-	require.NoError(t, json.Unmarshal(data, &meta))
-	assert.Equal(t, "third_party", meta.OriginKind)
-	assert.Equal(t, "github", meta.Registry)
-	assert.Equal(t, "foo/bar/.agents/skills/pr-review", meta.Slug)
-	assert.Equal(t, server.URL+"/foo/bar/tree/master/.agents/skills/pr-review", meta.RegistryURL)
-	assert.Equal(t, "master", meta.InstalledVersion)
-	assert.NotZero(t, meta.InstalledAt)
-}
-
-func TestSkillsInstallFromRegistryRejectsInvalidSkillArchive(t *testing.T) {
-	workspace := t.TempDir()
-	cfg := config.DefaultConfig()
-	cfg.Agents.Defaults.Workspace = workspace
-
-	var server *httptest.Server
-	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case "/api/v3/repos/foo/bar":
-			require.NoError(t, json.NewEncoder(w).Encode(map[string]any{"default_branch": "master"}))
-		case "/api/v3/repos/foo/bar/contents/.agents/skills/pr-review":
-			require.NoError(t, json.NewEncoder(w).Encode([]map[string]any{{
-				"type":         "file",
-				"name":         "SKILL.md",
-				"download_url": server.URL + "/raw/foo/bar/master/.agents/skills/pr-review/SKILL.md",
-			}}))
-		case "/raw/foo/bar/master/.agents/skills/pr-review/SKILL.md":
-			_, _ = w.Write([]byte("---\nname: bad_skill\ndescription: Invalid skill name\n---\n# Invalid\n"))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer server.Close()
-
-	githubRegistry, ok := cfg.Tools.Skills.Registries.Get("github")
-	require.True(t, ok)
-	githubRegistry.BaseURL = server.URL
-	cfg.Tools.Skills.Registries.Set("github", githubRegistry)
-
-	target := server.URL + "/foo/bar/tree/master/.agents/skills/pr-review"
+	// NeuroClaw lockdown: skill registries are off, so nothing is fetched or written.
+	// Skills come with the binary or are copied into the workspace by the operator.
 	err := skillsInstallFromRegistry(cfg, "github", target)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "is not a valid skill")
+	assert.Contains(t, err.Error(), "not enabled")
 	_, statErr := os.Stat(filepath.Join(workspace, "skills", "pr-review"))
-	assert.True(t, os.IsNotExist(statErr))
+	assert.True(t, os.IsNotExist(statErr), "a skill was written to the workspace")
 }
 
 func TestSkillsRemoveFromWorkspaceRejectsDotTarget(t *testing.T) {

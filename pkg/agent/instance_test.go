@@ -267,7 +267,7 @@ func TestNewAgentInstance_PreservesConfigIdentityForExplicitProviderModelRef(t *
 	}
 }
 
-func TestNewAgentInstance_AllowsMediaTempDirForReadListAndExec(t *testing.T) {
+func TestNewAgentInstance_AllowsMediaTempDirForReadListNeverExec(t *testing.T) {
 	workspace := t.TempDir()
 	mediaDir := media.TempDir()
 	if err := os.MkdirAll(mediaDir, 0o700); err != nil {
@@ -333,20 +333,9 @@ func TestNewAgentInstance_AllowsMediaTempDirForReadListAndExec(t *testing.T) {
 		t.Fatalf("list_dir output missing media file: %s", listResult.ForLLM)
 	}
 
-	execTool, ok := agent.Tools.Get("exec")
-	if !ok {
-		t.Fatal("exec tool not registered")
-	}
-	execResult := execTool.Execute(context.Background(), map[string]any{
-		"action":  "run",
-		"command": "cat " + filepath.Base(mediaPath),
-		"cwd":     mediaDir,
-	})
-	if execResult.IsError {
-		t.Fatalf("exec should allow media temp dir, got: %s", execResult.ForLLM)
-	}
-	if !strings.Contains(execResult.ForLLM, "attachment content") {
-		t.Fatalf("exec output missing media content: %s", execResult.ForLLM)
+	// NeuroClaw lockdown: exec stays unregistered even when the config enables it.
+	if _, ok := agent.Tools.Get("exec"); ok {
+		t.Fatal("exec tool registered in NeuroClaw")
 	}
 }
 

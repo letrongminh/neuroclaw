@@ -318,12 +318,12 @@ func TestSkillsRegistriesConfigUnmarshalJSONPreservesDefaultRegistries(t *testin
 
 	clawhub, ok := registries.Get("clawhub")
 	assert.True(t, ok)
-	assert.True(t, clawhub.Enabled)
+	assert.False(t, clawhub.Enabled) // NeuroClaw lockdown: registries are off
 	assert.Equal(t, "https://clawhub.example.com", clawhub.BaseURL)
 
 	github, ok := registries.Get("github")
 	assert.True(t, ok)
-	assert.True(t, github.Enabled)
+	assert.False(t, github.Enabled) // NeuroClaw lockdown: registries are off
 	assert.Equal(t, "https://github.com", github.BaseURL)
 	assert.Empty(t, github.Param)
 }
@@ -341,12 +341,12 @@ func TestSkillsRegistriesConfigUnmarshalJSONListPreservesDefaultRegistries(t *te
 
 	clawhub, ok := registries.Get("clawhub")
 	assert.True(t, ok)
-	assert.True(t, clawhub.Enabled)
+	assert.False(t, clawhub.Enabled) // NeuroClaw lockdown: registries are off
 	assert.Equal(t, "https://clawhub.example.com", clawhub.BaseURL)
 
 	github, ok := registries.Get("github")
 	assert.True(t, ok)
-	assert.True(t, github.Enabled)
+	assert.False(t, github.Enabled) // NeuroClaw lockdown: registries are off
 	assert.Equal(t, "https://github.com", github.BaseURL)
 	assert.Empty(t, github.Param)
 }
@@ -397,7 +397,7 @@ func TestSkillsRegistriesConfigUnmarshalYAMLRetainsDefaultsForOmittedFields(t *t
 
 	github, ok := registries.Get("github")
 	assert.True(t, ok)
-	assert.True(t, github.Enabled)
+	assert.False(t, github.Enabled) // NeuroClaw lockdown: registries are off
 	assert.Equal(t, "https://github.com", github.BaseURL)
 	assert.Equal(t, "registry-token", github.AuthToken.String())
 	assert.Empty(t, github.Param)

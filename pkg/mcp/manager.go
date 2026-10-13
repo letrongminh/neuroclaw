@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -400,57 +399,8 @@ func connectServer(
 
 		transport = sseTransport
 	case "stdio":
-		if cfg.Command == "" {
-			return nil, fmt.Errorf("command is required for stdio transport")
-		}
-		logger.DebugCF("mcp", "Using stdio transport",
-			map[string]any{
-				"server":  name,
-				"command": cfg.Command,
-			})
-		// Create command with context
-		cmd := exec.CommandContext(ctx, expandHomeCommandPath(cfg.Command), cfg.Args...)
-
-		// Build environment variables with proper override semantics
-		// Use a map to ensure config variables override file variables
-		envMap := make(map[string]string)
-
-		// Start with parent process environment
-		for _, e := range cmd.Environ() {
-			if idx := strings.Index(e, "="); idx > 0 {
-				envMap[e[:idx]] = e[idx+1:]
-			}
-		}
-
-		// Load environment variables from file if specified
-		if cfg.EnvFile != "" {
-			envVars, err := loadEnvFile(cfg.EnvFile)
-			if err != nil {
-				return nil, fmt.Errorf("failed to load env file %s: %w", cfg.EnvFile, err)
-			}
-			for k, v := range envVars {
-				envMap[k] = v
-			}
-			logger.DebugCF("mcp", "Loaded environment variables from file",
-				map[string]any{
-					"server":    name,
-					"envFile":   cfg.EnvFile,
-					"var_count": len(envVars),
-				})
-		}
-
-		// Environment variables from config override those from file
-		for k, v := range cfg.Env {
-			envMap[k] = v
-		}
-
-		// Convert map to slice
-		env := make([]string, 0, len(envMap))
-		for k, v := range envMap {
-			env = append(env, fmt.Sprintf("%s=%s", k, v))
-		}
-		cmd.Env = env
-		transport = &isolatedCommandTransport{Command: cmd}
+		// NeuroClaw lockdown: a stdio MCP server is a command NeuroClaw would start.
+		return nil, fmt.Errorf("server %s: stdio MCP servers are disabled in NeuroClaw; use an http server", name)
 	default:
 		return nil, fmt.Errorf(
 			"unsupported transport type: %s (supported: stdio, sse, http, streamable-http)",

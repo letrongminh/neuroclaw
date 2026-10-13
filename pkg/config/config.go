@@ -1289,7 +1289,7 @@ func LoadConfig(path string) (*Config, error) {
 				"config file not found, using default config",
 				map[string]any{"path": path},
 			)
-			return DefaultConfig(), nil
+			return DefaultConfig(), nil // DefaultConfig is locked down
 		}
 		return nil, err
 	}
@@ -1305,7 +1305,7 @@ func LoadConfig(path string) (*Config, error) {
 	}
 	if len(data) <= 10 {
 		logger.Warn(fmt.Sprintf("content is [%s]", string(data)))
-		return DefaultConfig(), nil
+		return DefaultConfig(), nil // DefaultConfig is locked down
 	}
 
 	// Load config based on detected version
@@ -1537,6 +1537,7 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Session.ApplyDmScope()
 	cfg.Session.DeriveDmScope()
 
+	applyLockdownAndWarn(cfg, path)
 	return cfg, nil
 }
 
@@ -1849,6 +1850,9 @@ func expandMultiKeyModels(models []*ModelConfig) []*ModelConfig {
 }
 
 func (t *ToolsConfig) IsToolEnabled(name string) bool {
+	if LockedTools[name] {
+		return false // NeuroClaw lockdown (lockdown.go)
+	}
 	switch name {
 	case "web":
 		return t.Web.Enabled

@@ -99,7 +99,7 @@ func earlyColorDisabled() bool {
 
 func NewPicoclawCommand() *cobra.Command {
 	short := fmt.Sprintf("%s NeuroClaw — the brain of a NeuroEdge home", internal.Logo)
-	long := fmt.Sprintf(`%s PicoClaw is a lightweight personal AI assistant.
+	long := fmt.Sprintf(`%s NeuroClaw is a lightweight personal AI assistant.
 
 Version: %s`, internal.Logo, config.FormatVersion())
 

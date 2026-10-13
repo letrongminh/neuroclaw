@@ -120,14 +120,14 @@ This means a leaked config file alone is not sufficient to recover the API key, 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEUROCLAW_KEY_PASSPHRASE` | Yes (for `enc://`) | Passphrase used for key derivation |
-| `NEUROCLAW_SSH_KEY_PATH` | No | Path to SSH private key. If not set, auto-detects from `~/.ssh/neuroclaw_ed25519.key` |
+| `NEUROCLAW_SSH_KEY_PATH` | No | Path to SSH private key. If not set, auto-detects from `~/.ssh/picoclaw_ed25519.key` |
 
 ### SSH Key Auto-Detection
 
-If `NEUROCLAW_SSH_KEY_PATH` is not set, NeuroClaw looks for the neuroclaw-specific key:
+If `NEUROCLAW_SSH_KEY_PATH` is not set, NeuroClaw looks for a dedicated key file (the file name is inherited from PicoClaw v0.3.1; the code has not renamed it):
 
 ```
-~/.ssh/neuroclaw_ed25519.key
+~/.ssh/picoclaw_ed25519.key
 ```
 
 This dedicated file avoids conflicts with the user's existing SSH keys.

@@ -63,7 +63,14 @@ General settings for fetching and processing webpage content.
 
 | Config        | Type | Default | Description               |
 |---------------|------|---------|---------------------------|
-| `enabled`     | bool | true    | Enable DuckDuckGo search  |
+| `enabled`     | bool | false   | Enable DuckDuckGo search  |
+| `max_results` | int  | 5       | Maximum number of results |
+
+### Sogou
+
+| Config        | Type | Default | Description               |
+|---------------|------|---------|---------------------------|
+| `enabled`     | bool | true    | Enable Sogou search       |
 | `max_results` | int  | 5       | Maximum number of results |
 
 ### Gemini Google Search
@@ -101,7 +108,7 @@ Baidu Search uses the [Qianfan AI Search API](https://cloud.baidu.com/doc/qianfa
 | `enabled`     | bool   | false                                                  | Enable Baidu Search       |
 | `api_key`     | string | -                                                      | Qianfan API key           |
 | `base_url`    | string | `https://qianfan.baidubce.com/v2/ai_search/web_search` | Baidu Search API URL      |
-| `max_results` | int    | 5                                                      | Maximum number of results |
+| `max_results` | int    | 10                                                     | Maximum number of results |
 
 ```json
 {
@@ -178,7 +185,7 @@ Kagi API usage may be billed or limited separately from a normal Kagi subscripti
 | Config        | Type   | Default                 | Description               |
 |---------------|--------|-------------------------|---------------------------|
 | `enabled`     | bool   | false                   | Enable SearXNG search     |
-| `base_url`    | string | `http://localhost:8888` | SearXNG instance URL      |
+| `base_url`    | string | -                       | SearXNG instance URL (for example `http://localhost:8888`) |
 | `max_results` | int    | 5                       | Maximum number of results |
 
 ### GLM Search
@@ -195,6 +202,8 @@ Kagi API usage may be billed or limited separately from a normal Kagi subscripti
 
 | Config                   | Type     | Default | Description                                                    |
 |--------------------------|----------|---------|----------------------------------------------------------------|
+| `provider`               | string   | `auto`  | Search provider to use; `auto` picks among the enabled engines |
+| `proxy`                  | string   | `""`    | Proxy for web tools                                            |
 | `prefer_native`          | bool     | true    | Prefer provider's native search over configured search engines |
 | `private_host_whitelist` | string[] | `[]`    | Private/internal hosts allowed for web fetching                |
 
@@ -227,9 +236,12 @@ The exec tool is used to execute shell commands.
 
 | Config                 | Type  | Default | Description                                |
 |------------------------|-------|---------|--------------------------------------------|
-| `enabled`              | bool  | true    | Enable the exec tool                        |
-| `enable_deny_patterns` | bool  | true    | Enable default dangerous command blocking  |
-| `custom_deny_patterns` | array | []      | Custom deny patterns (regular expressions) |
+| `enabled`               | bool  | true    | Enable the exec tool. On, it is reported at startup as `risk=shell` |
+| `enable_deny_patterns`  | bool  | true    | Enable default dangerous command blocking  |
+| `custom_deny_patterns`  | array | []      | Custom deny patterns (regular expressions) |
+| `custom_allow_patterns` | array | []      | Custom allow patterns (regular expressions) |
+| `allow_remote`          | bool  | true    | Allow exec calls that originate from remote channels (chat apps); `false` limits exec to internal channels |
+| `timeout_seconds`       | int   | 60      | Per-command timeout in seconds; `0` uses the default (60) |
 
 ### Disabling the Exec Tool
 
@@ -257,6 +269,8 @@ NEUROCLAW_TOOLS_EXEC_ENABLED=false
 
 - **`enable_deny_patterns`**: Set to `false` to completely disable the default dangerous command blocking patterns
 - **`custom_deny_patterns`**: Add custom deny regex patterns; commands matching these will be blocked
+- **`custom_allow_patterns`**: Add allow regex patterns; matching commands are exempt from the deny patterns
+- **`allow_remote`**: Set to `false` to refuse exec calls coming from remote channels
 
 ### Default Blocked Command Patterns
 
@@ -314,11 +328,29 @@ The cron tool is used for scheduling periodic tasks.
 | Config                    | Type     | Default | Description                                                    |
 |---------------------------|----------|---------|----------------------------------------------------------------|
 | `enabled`                 | bool     | true    | Register the agent-facing cron tool                            |
-| `allow_command`           | bool     | true    | Allow command jobs without extra confirmation                  |
+| `allow_command`           | bool     | true    | Allow command jobs without extra confirmation. With `exec` on, it is reported at startup as `risk=cron_shell` |
 | `command_allowed_remotes` | string[] | []      | Remote channels or `channel:chat_id` values allowed for command jobs; `*` allows every channel and is dangerous unless all remote channels are trusted |
 | `exec_timeout_minutes`    | int      | 5       | Execution timeout in minutes, 0 means no limit                 |
 
 For schedule types, execution modes (`deliver`, agent turn, and command jobs), persistence, and the current command-security gates, see [Scheduled Tasks and Cron Jobs](cron.md).
+
+## Per-Tool Switches
+
+Every other tool has its own `enabled` switch under `tools.<name>` (environment variable `NEUROCLAW_TOOLS_<NAME>_ENABLED`). The defaults are those of `pkg/config/defaults.go`:
+
+| Tool | Default | Notes |
+|------|---------|-------|
+| `read_file`, `write_file`, `append_file`, `edit_file`, `list_dir` | on | `read_file` also has `mode` (`bytes` or `lines`, default `bytes`) and `max_read_file_size` (default 65536) |
+| `load_image`, `send_file`, `web_fetch` | on | |
+| `message` | on | `media_enabled` is off by default |
+| `spawn`, `subagent` | on | |
+| `spawn_status` | off | |
+| `find_skills`, `install_skill` | on | Take effect only with `tools.skills.enabled`; reported as `risk=skill_install` |
+| `send_tts` | off | |
+| `i2c`, `spi`, `serial` | off | Hardware tools; `i2c` and `spi` are Linux only. Reported as `risk=hardware_bus` when on |
+| `media_cleanup` | on | `max_age_minutes` 30, `interval_minutes` 5 |
+
+The risk labels and what each one means are in [What NeuroClaw can do, section 2](capabilities.md#2-risk-labels).
 
 ## MCP Tool
 
@@ -371,20 +403,67 @@ and injected into the context for a configured number of turns (`ttl`).
 |------------|---------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `enabled`  | bool    | yes      | Enable this MCP server                                                                                                                                          |
 | `deferred` | bool    | no       | Override deferred mode for this server only. `true` = tools are hidden and discoverable via search; `false` = tools are always visible in context. When omitted, the global `discovery.enabled` value applies. |
-| `type`     | string  | no       | Transport type: `stdio`, `sse`, `http`                                                                                                                          |
+| `type`     | string  | no       | Transport type: `stdio`, `sse`, `http` (`streamable-http` is accepted as an alias of `http`)                                                                    |
 | `command`  | string  | stdio    | Executable command for stdio transport                                                                                                                          |
 | `args`     | array   | no       | Command arguments for stdio transport                                                                                                                           |
 | `env`      | object  | no       | Environment variables for stdio process                                                                                                                         |
 | `env_file` | string  | no       | Path to environment file for stdio process                                                                                                                      |
 | `url`      | string  | sse/http | Endpoint URL for `sse`/`http` transport                                                                                                                         |
 | `headers`  | object  | no       | HTTP headers for `sse`/`http` transport                                                                                                                         |
+| `tls`      | object  | no       | NeuroClaw: mutual TLS for `sse`/`http` transport (see below)                                                                                                    |
+
+### Mutual TLS (`tls`)
+
+NeuroClaw addition. A NeuroEdge home box started with `mcp serve --http` refuses any client without a certificate it signed. Set `tls` on an `http` or `sse` server so the brain presents a client certificate and trusts only the box's CA, with no TLS bridge beside it.
+
+| Config        | Type   | Description |
+|---------------|--------|-------------|
+| `ca_file`     | string | PEM file of the CA that signed the server certificate. Empty: system roots |
+| `cert_file`   | string | PEM file of this client's certificate. Set together with `key_file`, or neither |
+| `key_file`    | string | PEM file of this client's private key |
+| `server_name` | string | Overrides the name checked in the server certificate |
+
+Paths may start with `~`. Rules, from `pkg/mcp/tls.go`:
+
+- `url` must be `https://`; otherwise the server fails to connect with `tls is set but url ... is not https`.
+- The connection uses TLS 1.3 at minimum.
+- Without `tls`, the default HTTP transport is used, as in PicoClaw.
+- `tls` is ignored by `stdio` servers.
+- `neuroclaw mcp add` has no flag for `tls`; add it by editing `config.json` (`neuroclaw mcp edit`). Re-running `mcp add` on the same name replaces the entry and drops the `tls` block.
+
+```json
+{
+  "tools": {
+    "mcp": {
+      "enabled": true,
+      "servers": {
+        "home": {
+          "enabled": true,
+          "type": "http",
+          "url": "https://neuroedge-box.local:8443/mcp",
+          "tls": {
+            "ca_file": "~/.neuroclaw/pki/ca.pem",
+            "cert_file": "~/.neuroclaw/pki/brain.pem",
+            "key_file": "~/.neuroclaw/pki/brain.key",
+            "server_name": "neuroedge-box.local"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+See the [NeuroEdge guide](../guides/neuroedge.md) for the home box side.
 
 ### Transport Behavior
 
 - If `type` is omitted, transport is auto-detected:
     - `url` is set → `sse`
     - `command` is set → `stdio`
-- `http` and `sse` both use `url` + optional `headers`.
+- `http` and `sse` both use `url` + optional `headers` + optional `tls`.
+- `neuroclaw mcp add` defaults to `stdio` (see [MCP Server CLI](mcp-cli.md)); this auto-detection applies only to hand-written entries.
+- A `stdio` server that is enabled is reported at startup as `risk=stdio_mcp`.
 - `env` and `env_file` are only applied to `stdio` servers.
 
 ### Configuration Examples

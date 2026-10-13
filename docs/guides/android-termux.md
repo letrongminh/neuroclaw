@@ -2,7 +2,7 @@
 
 > Back to [Guides](README.md)
 
-This guide covers running the NeuroClaw terminal binary on an ARM64 Android phone with Termux. Use the APK from [picoclaw.io](https://picoclaw.io/download/) if you want the Android app experience; use Termux when you want a lightweight command-line install on an older or resource-constrained device.
+This guide covers running the NeuroClaw terminal binary on an ARM64 Android phone with Termux. NeuroClaw has no Android app. Use Termux for a lightweight command-line install on an older or resource-constrained device. If you want an app, the PicoClaw Android APK from [picoclaw.io](https://picoclaw.io/download/) is PicoClaw's, not NeuroClaw's. The release asset `neuroclaw-android-universal.zip` holds JNI libraries for app builders and cannot be run directly.
 
 ## Requirements
 

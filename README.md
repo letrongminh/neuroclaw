@@ -9,7 +9,7 @@ chat (a shell, hardware buses, skill installs, hooks, stdio MCP servers) is on o
 configure it, and each one that is on is named at startup (`risk=…`).
 
 Run it on a Linux board, a server (NeuroEdge Cloud), a Mac or a Windows PC; releases cover the same
-platforms as PicoClaw.
+platforms as PicoClaw. Install: [docs/guides/install.md](docs/guides/install.md).
 
 Or on the chip itself: [`esp32/`](esp32/) is **NeuroClaw-ESP**, the same brain rewritten in C as an
 ESP-IDF component for one ESP32-S3 — Telegram, the LLM (with a fallback), memory, reminders,
@@ -41,6 +41,8 @@ are in [`docs/`](docs/) ([original README](docs/project/PICOCLAW_README.md)); re
 is on by default, what each risk label means, and what is known to be wrong.
 
 ## Connect it to a NeuroEdge box
+
+Guide: [docs/guides/neuroedge.md](docs/guides/neuroedge.md).
 
 The box runs `neuroedge mcp serve --http --ui …`; its keys come from NeuroEdge's
 `demo/i2f-chat-den-cua/tao-khoa.py`. In `~/.neuroclaw/config.json`:

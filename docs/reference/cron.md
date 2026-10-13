@@ -96,6 +96,8 @@ If you disable `tools.cron`, users can no longer create or manage jobs through t
 
 `tools.cron.exec_timeout_minutes` sets the timeout used for scheduled command execution. Default: `5`. Set `0` for no timeout.
 
+When `tools.exec.enabled` and `tools.cron.allow_command` are both on, NeuroClaw logs `NeuroClaw risk=cron_shell` at startup: scheduled jobs can run shell commands. See [What NeuroClaw can do, section 2](capabilities.md#2-risk-labels).
+
 ### `tools.exec`
 
 Scheduled command jobs depend on `tools.exec.enabled`. Default: `true`.

@@ -95,7 +95,7 @@ Consumer products, routers, and industrial devices that have been tested with Ne
 
 ### Android Phones (via Termux)
 
-Any ARM64 Android phone (2015+) with 1GB+ RAM. Install [Termux](https://github.com/termux/termux-app), use `proot` to run NeuroClaw.
+Any ARM64 Android phone (2015+) with 1GB+ RAM. Install [Termux](https://github.com/termux/termux-app) and run NeuroClaw through `termux-chroot` (from `proot`).
 
 > See the [Android Termux Guide](android-termux.md) for setup instructions.
 
@@ -106,7 +106,7 @@ Any ARM64 Android phone (2015+) with 1GB+ RAM. Install [Termux](https://github.c
 | x86_64 Linux | Native binary, no dependencies |
 | x86_64 Windows | Native binary |
 | macOS (Intel / Apple Silicon) | Native binary |
-| Docker (any platform) | `docker compose` one-liner, see [Docker Guide](docker.md) |
+| Docker | `ghcr.io/letrongminh/neuroclaw` for linux/amd64, arm64 and riscv64; see [Docker Guide](docker.md) |
 | OpenWrt routers | MIPS/ARM builds, requires >32MB free RAM |
 | FreeBSD / NetBSD | x86_64 and arm64 builds available |
 
@@ -138,7 +138,7 @@ tar xzf neuroclaw_Linux_arm64.tar.gz
 ./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-Available builds: `linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+Release archives are named `neuroclaw_<OS>_<arch>`: `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`, `Linux_armv6`, `Linux_riscv64`, `Linux_loong64`, `Linux_mipsle` (soft-float), `Linux_s390x`. See the [install guide](install.md) for every platform.
 
 ### Add Your Hardware
 

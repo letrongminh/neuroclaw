@@ -25,7 +25,7 @@ Slack is a leading enterprise instant messaging platform. NeuroClaw uses Slack's
 | enabled    | bool   | Yes      | Whether to enable the Slack channel                                      |
 | bot_token  | string | Yes      | Bot User OAuth Token for the Slack bot (starts with xoxb-)               |
 | app_token  | string | Yes      | Socket Mode App Level Token for the Slack app (starts with xapp-)        |
-| allow_from | array  | No       | User ID whitelist; empty means all users are allowed                     |
+| allow_from | array  | No       | User ID whitelist; empty lets anyone in (the gateway logs a warning); set it, or use `["*"]` to allow everyone on purpose                     |
 
 ## Setup
 

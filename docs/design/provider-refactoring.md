@@ -1,5 +1,6 @@
 # Provider Architecture Refactoring Design
 
+> Upstream PicoClaw history: the numbers below are sipeed/picoclaw issues, discussions and PRs, not NeuroClaw ones.
 > Issue: #283
 > Discussion: #122
 > Branch: feat/refactor-provider-by-protocol
@@ -29,7 +30,7 @@ type ProvidersConfig struct {
 
 ### 1.2 Code Bloat Trend
 
-Recent PRs demonstrate this issue:
+Recent upstream PicoClaw PRs demonstrate this issue:
 
 | PR | Provider | Code Changes |
 |----|----------|--------------|
@@ -331,4 +332,4 @@ func (c *Config) GetModelConfig(modelName string) (*ModelConfig, error) {
 
 - [LiteLLM Config Documentation](https://docs.litellm.ai/docs/proxy/configs)
 - [One-API GitHub](https://github.com/songquanpeng/one-api)
-- Discussion #122: Refactor Provider Architecture
+- Upstream PicoClaw discussion #122: Refactor Provider Architecture

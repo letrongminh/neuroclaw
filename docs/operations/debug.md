@@ -13,6 +13,10 @@ neuroclaw gateway -d
 
 In this mode, the system will format the logs extensively and display previews of system prompts and tool execution results.
 
+## Risk Labels at Startup
+
+Whether or not `--debug` is set, `gateway` and `agent` log one warning `NeuroClaw risk=<name>` for each risky capability that is enabled (for example `risk=shell`). Look for them first when you need to know what the model is allowed to do on this machine. Names and meanings: [capabilities.md section 2](../reference/capabilities.md#2-risk-labels).
+
 ## Disabling Log Truncation (Full Logs)
 
 By default, NeuroClaw truncates very long strings (such as the *System Prompt* or large JSON output results) in the debug logs to keep the console readable.

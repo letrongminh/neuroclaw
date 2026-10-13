@@ -8,10 +8,12 @@ Talk to your neuroclaw through Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk
 
 > **Note**: Channels that rely on HTTP callbacks share a single Gateway HTTP server (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`). Socket/stream-based channels such as Feishu, DingTalk, and WeCom do not rely on the shared webhook server for inbound delivery.
 
+> **Set `allow_from` on every channel.** An empty `allow_from` lets anyone who can reach the bot talk to it (the gateway only logs the warning `SECURITY: Channel allows EVERYONE`). List your own user ID, or use `["*"]` to say explicitly that open access is intended. Several of the examples below show `"allow_from": []` for brevity; do not leave it empty on a bot that can run tools. What a chat user can make the agent do (shell, scheduled commands, skill installs) is listed with its risk labels in [Capabilities §2](../reference/capabilities.md).
+
 | Channel              | Difficulty         | Description                                           | Documentation                                                                                                    |
 | -------------------- | ------------------ | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | **Telegram**         | ⭐ Easy            | Recommended, voice-to-text, long polling (no public IP needed) | [Docs](../channels/telegram/README.md)                                                                  |
-| **Discord**          | ⭐ Easy            | Socket Mode, group/DM support, rich bot ecosystem     | [Docs](../channels/discord/README.md)                                                                           |
+| **Discord**          | ⭐ Easy            | Gateway WebSocket (no public IP needed), group/DM support     | [Docs](../channels/discord/README.md)                                                                           |
 | **WhatsApp**         | ⭐ Easy            | Native (QR scan) or Bridge URL                        | [Docs](#whatsapp)                                                                                                |
 | **Weixin**           | ⭐ Easy            | Native QR scan (Tencent iLink API)                    | [Docs](#weixin)                                                                            |
 | **Slack**            | ⭐ Easy            | **Socket Mode** (no public IP needed), enterprise     | [Docs](../channels/slack/README.md)                                                                             |
@@ -63,7 +65,7 @@ neuroclaw gateway
 
 **4. Telegram command menu (auto-registered at startup)**
 
-NeuroClaw now keeps command definitions in one shared registry. On startup, Telegram will automatically register supported bot commands (for example `/start`, `/help`, `/show`, `/list`, `/use`, `/btw`) so command menu and runtime behavior stay in sync.
+NeuroClaw keeps command definitions in one shared registry. On startup, Telegram will automatically register supported bot commands (for example `/start`, `/help`, `/show`, `/list`, `/use`, `/btw`) so command menu and runtime behavior stay in sync.
 Telegram command menu registration remains channel-local discovery UX; generic command execution is handled centrally in the agent loop via the commands executor.
 
 If command registration fails (network/API transient errors), the channel still starts and NeuroClaw retries registration in the background.
@@ -78,7 +80,7 @@ You can also inspect skills and MCP servers directly from Telegram:
 - `/use clear`
 - `/btw <question>` to ask an immediate side question without changing the active session history; `/btw` is handled as a no-tool query and does not enter the normal tool-execution flow
 
-**4. Advanced Formatting**
+**5. Advanced Formatting**
 You can set use_markdown_v2: true to enable enhanced formatting options. This allows the bot to utilize the full range of Telegram MarkdownV2 features, including nested styles, spoilers, and custom fixed-width blocks.
 
 </details>
@@ -293,7 +295,7 @@ If you prefer to create the bot manually:
 }
 ```
 
-> Set `allow_from` to empty to allow all users, or specify DingTalk user IDs to restrict access.
+> Specify DingTalk user IDs in `allow_from` to restrict access. Empty allows all users; use `["*"]` to make that explicit.
 
 **3. Run**
 
@@ -392,7 +394,7 @@ neuroclaw gateway
 <details>
 <summary><b>WeCom (企业微信)</b></summary>
 
-NeuroClaw now exposes WeCom as a single AI Bot channel over WebSocket.
+NeuroClaw exposes WeCom as a single AI Bot channel over WebSocket.
 No public webhook callback URL is required.
 
 See [WeCom Configuration Guide](../channels/wecom/README.md) for the full configuration reference and migration notes.
@@ -405,7 +407,7 @@ See [WeCom Configuration Guide](../channels/wecom/README.md) for the full config
 neuroclaw auth wecom
 ```
 
-This command shows a QR code, waits for approval in WeCom, and writes `bot_id` + `secret` into `channels.wecom`.
+This command shows a QR code, waits for approval in WeCom, and writes `bot_id` + `secret` into the `wecom` entry of `channel_list`.
 
 **2. Configure manually if needed**
 
@@ -432,7 +434,7 @@ This command shows a QR code, waits for approval in WeCom, and writes `bot_id` +
 neuroclaw gateway
 ```
 
-> Legacy `wecom_app` and `wecom_aibot` entries are replaced by the unified `channels.wecom` config in this branch.
+> Legacy `wecom_app` and `wecom_aibot` entries are replaced by the unified `wecom` entry under `channel_list`.
 
 </details>
 

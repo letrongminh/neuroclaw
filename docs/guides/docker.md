@@ -2,6 +2,15 @@
 
 > Back to [README](../README.md)
 
+## Images
+
+| Image | Holds | Starts |
+|---|---|---|
+| `ghcr.io/letrongminh/neuroclaw:<tag>` or `:latest` | `neuroclaw` | the gateway (first run: `onboard`, then exit) |
+| `ghcr.io/letrongminh/neuroclaw:<tag>-launcher` or `:launcher` | `neuroclaw`, `neuroclaw-launcher` | the web console (`-console -public -no-browser`) |
+
+Both are published for linux/amd64, arm64 and riscv64. Config and workspace live in `/root/.neuroclaw` inside the container; the compose file mounts `docker/data` there.
+
 ## 🐳 Docker Compose
 
 You can also run NeuroClaw using Docker Compose without installing anything locally.
@@ -45,7 +54,7 @@ The `launcher` image includes both binaries (`neuroclaw`, `neuroclaw-launcher`) 
 docker compose -f docker/docker-compose.yml --profile launcher up -d
 ```
 
-Open http://localhost:18800 in your browser. The launcher manages the gateway process automatically.
+Open http://localhost:18800 in your browser (the compose file also publishes the gateway port 18790). The launcher manages the gateway process automatically.
 
 > [!WARNING]
 > The web console is protected by dashboard password login. **Do not** expose the launcher to untrusted networks or the public internet. See [Web launcher dashboard](configuration.md#web-launcher-dashboard) in the Configuration Guide.

@@ -212,6 +212,13 @@ Overwrite behavior:
 
 - if `<name>` already exists, NeuroClaw asks for confirmation
 - use `--force` to skip the prompt
+- the entry is rebuilt from the flags, so fields the CLI cannot set (such as `tls`) are dropped from the old entry
+
+Mutual TLS (`tls`):
+
+- `neuroclaw mcp add` has no `tls` flag. For a server that needs a client certificate, such as a NeuroEdge home box, add the entry with `--transport http https://...` and then run `neuroclaw mcp edit` to add the `tls` block (`ca_file`, `cert_file`, `key_file`, `server_name`). Fields and an example: [Tools Configuration](tools_configuration.md#mutual-tls-tls)
+- `mcp show` and `mcp list` do not print the `tls` block; read it in `config.json`
+- `mcp test` and `mcp show` connect with the same `tls` settings as the gateway
 
 Local path validation:
 

@@ -2,7 +2,7 @@
 
 # WeCom
 
-NeuroClaw exposes WeCom as a single `channels.wecom` channel built on the official WeCom AI Bot WebSocket API.
+NeuroClaw exposes WeCom as a single `channel_list.wecom` channel built on the official WeCom AI Bot WebSocket API.
 This replaces the legacy `wecom`, `wecom_app`, and `wecom_aibot` split with one unified configuration model.
 
 > No public webhook callback URL is required. NeuroClaw opens an outbound WebSocket connection to WeCom.
@@ -40,7 +40,7 @@ The command:
 1. Requests a QR code from WeCom and prints it in the terminal
 2. Also prints a **QR Code Link** you can open in a browser if the terminal QR is hard to scan
 3. Polls for confirmation — after scanning, you must also **confirm the login inside the WeCom app**
-4. On success, writes `bot_id` and `secret` into `channels.wecom` and saves the config
+4. On success, writes `bot_id` and `secret` into `channel_list.wecom` and saves the config
 
 The default timeout is **5 minutes**. Use `--timeout` to extend it:
 
@@ -82,7 +82,7 @@ If you already have a `bot_id` and `secret` from the WeCom AI Bot platform, conf
 | `secret` | string | — | WeCom AI Bot secret. Stored encrypted in `.security.yml`. Required when enabled. |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | WeCom WebSocket endpoint. |
 | `send_thinking_message` | bool | `true` | Send a `Processing...` message before the streamed reply begins. |
-| `allow_from` | array | `[]` | Sender allowlist. Empty means allow all senders. |
+| `allow_from` | array | `[]` | Sender allowlist. Empty lets any sender in (the gateway logs a warning); set it, or use `["*"]` to allow everyone on purpose. |
 | `reasoning_channel_id` | string | `""` | Optional chat ID to route reasoning/thinking output to a separate conversation. |
 
 ### Environment Variables
@@ -117,9 +117,9 @@ All fields can be overridden via environment variables with the prefix `NEUROCLA
 
 | Previous config | Migration |
 | --------------- | --------- |
-| `channels.wecom` (webhook bot) | Replace with `channels.wecom` using `bot_id` + `secret`. |
-| `channels.wecom_app` | Remove. Use `channels.wecom` instead. |
-| `channels.wecom_aibot` | Move `bot_id` and `secret` to `channels.wecom`. |
+| `channel_list.wecom` (webhook bot) | Replace with `channel_list.wecom` using `bot_id` + `secret`. |
+| `channel_list.wecom_app` | Remove. Use `channel_list.wecom` instead. |
+| `channel_list.wecom_aibot` | Move `bot_id` and `secret` to `channel_list.wecom`. |
 | `token`, `encoding_aes_key`, `webhook_url`, `webhook_path` | No longer used. Remove from config. |
 | `corp_id`, `corp_secret`, `agent_id` | No longer used. Remove from config. |
 | `welcome_message`, `processing_message`, `max_steps` | No longer part of the WeCom channel config. |
@@ -146,4 +146,4 @@ All fields can be overridden via environment variables with the prefix `NEUROCLA
 ### Replies do not arrive
 
 - Check whether `allow_from` is blocking the sender.
-- Check that `channels.wecom.bot_id` and `channels.wecom.secret` are set and non-empty.
+- Check that `channel_list.wecom.bot_id` and `channel_list.wecom.secret` are set and non-empty.

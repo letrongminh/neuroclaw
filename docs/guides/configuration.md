@@ -393,6 +393,7 @@ Even with `restrict_to_workspace: false`, the `exec` tool blocks these dangerous
 * Writing to `/dev/sd[a-z]` — Direct disk writes
 * `shutdown`, `reboot`, `poweroff` — System shutdown
 * Fork bomb `:(){ :|:& };:`
+* Among others: `sudo`, `chmod`/`chown`, `kill`/`pkill`, `curl ... | sh`, `git push`, `docker run`, package installs, and command substitution (`$(...)`, backticks). The full list is `defaultDenyPatterns` in `pkg/tools/shell.go`.
 
 ### File Access Control
 
@@ -466,10 +467,12 @@ Use `mode = lines` when:
 
 | Config Key | Type | Default | Description |
 |------------|------|---------|-------------|
-| `tools.exec.allow_remote` | bool | `false` | Allow exec tool from remote channels (Telegram/Discord etc.) |
+| `tools.exec.allow_remote` | bool | `true` | Allow the exec tool from remote channels (Telegram/Discord etc.). Set `false` to limit it to internal channels |
 | `tools.exec.enable_deny_patterns` | bool | `true` | Enable dangerous command interception |
 | `tools.exec.custom_deny_patterns` | string[] | `[]` | Custom regex patterns to block |
 | `tools.exec.custom_allow_patterns` | string[] | `[]` | Custom regex patterns to allow |
+
+> **Risk labels:** `exec` and cron shell commands are on by default and are each named at startup (`NeuroClaw risk=shell`, `NeuroClaw risk=cron_shell`). Skill installation and the hardware bus tools have labels too. See [Capabilities §2](../reference/capabilities.md) for the list, what each lets the model do, and how to turn it off. Pair `exec` with a non-empty `allow_from` on every channel ([Chat apps](chat-apps.md)).
 
 > **Security Note:** Symlink protection is enabled by default — all file paths are resolved through `filepath.EvalSymlinks` before whitelist matching, preventing symlink escape attacks.
 
@@ -624,7 +627,7 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 | ------------ | --------------------------------------- | ------------------------------------------------------------ |
 | `gemini`     | LLM (Gemini direct)                     | [aistudio.google.com](https://aistudio.google.com)           |
 | `zhipu`      | LLM (Zhipu direct)                      | [bigmodel.cn](https://bigmodel.cn)                           |
-| `volcengine` | LLM (Volcengine direct)                 | [volcengine.com](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) |
+| `volcengine` | LLM (Volcengine direct)                 | [volcengine.com](https://www.volcengine.com) |
 | `openrouter` | LLM (recommended, access to all models) | [openrouter.ai](https://openrouter.ai)                       |
 | `anthropic`  | LLM (Claude direct)                     | [console.anthropic.com](https://console.anthropic.com)       |
 | `openai`     | LLM (GPT direct)                        | [platform.openai.com](https://platform.openai.com)           |
@@ -636,7 +639,7 @@ The subagent has access to tools (message, web_search, etc.) and can communicate
 
 ### Model Configuration (model_list)
 
-> **What's New?** NeuroClaw now prefers explicit `provider` + native `model` configuration (for example `"provider": "zhipu", "model": "glm-4.7"`). The legacy single-field `provider/model` form remains supported for compatibility when `provider` is omitted.
+> NeuroClaw prefers explicit `provider` + native `model` configuration (for example `"provider": "zhipu", "model": "glm-4.7"`). The legacy single-field `provider/model` form remains supported for compatibility when `provider` is omitted.
 
 This design also enables **multi-agent support** with flexible provider selection:
 
@@ -667,7 +670,7 @@ model_list:
   claude-sonnet-4.6:
     api_keys:
       - "sk-ant-your-actual-anthropic-key"
-channels:
+channel_list:
   telegram:
     token: "your-telegram-bot-token"
 web:
@@ -731,7 +734,7 @@ For complete documentation, see [`../security/security_configuration.md`](../sec
 | **LiteLLM Proxy**       | `litellm`         | `http://localhost:4000/v1`                          | OpenAI    | Your LiteLLM proxy key                                           |
 | **VLLM**                | `vllm`            | `http://localhost:8000/v1`                          | OpenAI    | Local                                                            |
 | **Cerebras**            | `cerebras`        | `https://api.cerebras.ai/v1`                        | OpenAI    | [Get Key](https://cerebras.ai)                                   |
-| **VolcEngine (Doubao)** | `volcengine`      | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [Get Key](https://www.volcengine.com/activity/codingplan?utm_campaign=NeuroClaw&utm_content=NeuroClaw&utm_medium=devrel&utm_source=OWO&utm_term=NeuroClaw) |
+| **VolcEngine (Doubao)** | `volcengine`      | `https://ark.cn-beijing.volces.com/api/v3`          | OpenAI    | [Get Key](https://www.volcengine.com) |
 | **神算云**              | `shengsuanyun`    | `https://router.shengsuanyun.com/api/v1`            | OpenAI    | —                                                                |
 | **BytePlus**            | `byteplus`        | `https://ark.ap-southeast.bytepluses.com/api/v3`    | OpenAI    | [Get Key](https://www.byteplus.com)                              |
 | **Vivgrid**             | `vivgrid`         | `https://api.vivgrid.com/v1`                        | OpenAI    | [Get Key](https://vivgrid.com)                                   |
@@ -772,7 +775,7 @@ For complete documentation, see [`../security/security_configuration.md`](../sec
   ],
   "agents": {
     "defaults": {
-      "model": "gpt-5.4"
+      "model_name": "gpt-5.4"
     }
   }
 }
@@ -1164,7 +1167,7 @@ NeuroClaw supports cron-style scheduled tasks via the `cron` tool. The agent can
 
 Scheduled tasks persist across restarts and are stored in `~/.neuroclaw/workspace/cron/`.
 
-Command cron jobs can execute shell commands. By default, remote channels cannot schedule command jobs. To allow specific remote channels, set `command_allowed_remotes` to entries such as `"telegram"` or `"telegram:1234567890"`; use `"*"` only if every non-empty channel should be allowed. The `"*"` wildcard is potentially dangerous because any remote channel that can talk to NeuroClaw can schedule shell commands. This does not bypass `allow_command`, `command_confirm`, or exec safety checks.
+Command cron jobs can execute shell commands (`allow_command` is `true` by default and is reported at startup as `NeuroClaw risk=cron_shell`; see [Capabilities §2](../reference/capabilities.md)). By default, remote channels cannot schedule command jobs. To allow specific remote channels, set `command_allowed_remotes` to entries such as `"telegram"` or `"telegram:1234567890"`; use `"*"` only if every non-empty channel should be allowed. The `"*"` wildcard is potentially dangerous because any remote channel that can talk to NeuroClaw can schedule shell commands. This does not bypass `allow_command` (when it is `false`, a job needs `command_confirm: true`) or the exec safety checks.
 
 ### Advanced Topics
 

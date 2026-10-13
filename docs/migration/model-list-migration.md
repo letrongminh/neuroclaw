@@ -264,4 +264,4 @@ api_key or api_base is required for HTTP-based protocol "xxx"
 ## Need Help?
 
 - [GitHub Issues](https://github.com/letrongminh/neuroclaw/issues)
-- [Discussion #122](https://github.com/letrongminh/neuroclaw/discussions/122): Original proposal
+- [Upstream PicoClaw discussion #122](https://github.com/sipeed/picoclaw/discussions/122): original proposal (PicoClaw history, not a NeuroClaw issue)

@@ -125,9 +125,9 @@ skills:
 
 ### Step 1: Create .security.yml
 
-Create or copy the security file:
+Create `~/.neuroclaw/.security.yml` and start from the complete example above (the repository ships no `security.example.yml`):
 ```bash
-cp security.example.yml ~/.neuroclaw/.security.yml
+touch ~/.neuroclaw/.security.yml && chmod 600 ~/.neuroclaw/.security.yml
 ```
 
 ### Step 2: Fill in your actual values
@@ -599,7 +599,7 @@ cp ~/.neuroclaw/config.json ~/.neuroclaw/config.json.backup
 ### Step 2: Create .security.yml
 
 ```bash
-cp security.example.yml ~/.neuroclaw/.security.yml
+touch ~/.neuroclaw/.security.yml  # then fill it using the example above
 ```
 
 ### Step 3: Fill in your API keys

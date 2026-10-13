@@ -2,6 +2,8 @@
 
 Task-oriented guides for setup, configuration, and common NeuroClaw workflows.
 
+- [Install NeuroClaw](install.md): download, verify, first run and service setup for each platform.
+- [NeuroClaw with NeuroEdge](neuroedge.md): connect to a home box over mutual TLS, risk labels, and a closed config.
 - [Docker & Quick Start Guide](docker.md): install and run NeuroClaw with Docker or the launcher.
 - [Android Termux Guide](android-termux.md): run the NeuroClaw terminal binary on an ARM64 Android phone.
 - [Configuration Guide](configuration.md): environment variables, workspace layout, routing, and sandbox settings.

@@ -6,11 +6,28 @@ This file describes the recommended documentation layout, how translated files s
 
 These conventions are intended as contributor guidance for new or moved docs. Existing docs may still have historical exceptions, and `make lint-docs` only checks a common subset of the patterns described here.
 
+## Start here
+
+Pick your environment. Every path ends with `neuroclaw onboard`, then `neuroclaw gateway` or `neuroclaw agent`. Full steps are in the [install guide](guides/install.md).
+
+| Where it runs | Go to |
+|:---|:---|
+| Linux server or cloud VM | [Install: Linux](guides/install.md#linux), including systemd |
+| Raspberry Pi and other boards | [Install](guides/install.md#pick-a-file) (pick the arm64, armv7, armv6 or riscv64 archive), [hardware list](guides/hardware-compatibility.md) |
+| Docker | [Docker guide](guides/docker.md) |
+| macOS | [Install: macOS](guides/install.md#macos) |
+| Windows | [Install: Windows](guides/install.md#windows) |
+| Android | [Termux guide](guides/android-termux.md) |
+| As the brain of a NeuroEdge home | [NeuroClaw with NeuroEdge](guides/neuroedge.md) |
+| On one ESP32-S3 | [esp32/README.md](../esp32/README.md) |
+
+What NeuroClaw can do, and what each risk label means: [capabilities](reference/capabilities.md).
+
 ## Reader Navigation
 
 If you are browsing docs rather than reorganizing them, start with these directory indexes:
 
-- [Guides](guides/README.md): setup, configuration, provider, and workflow guides.
+- [Guides](guides/README.md): install, setup, configuration, provider, and workflow guides.
 - [Reference](reference/README.md): precise configuration and behavior reference.
 - [Operations](operations/README.md): debugging and troubleshooting material.
 - [Security](security/README.md): security-focused guides and controls.
@@ -18,6 +35,8 @@ If you are browsing docs rather than reorganizing them, start with these directo
 - [Migration](migration/README.md): upgrade and migration notes.
 
 For channel-specific setup, start with [Chat Apps Configuration](guides/chat-apps.md) and then drill into `docs/channels/<name>/README.md` as needed.
+
+Most of these docs come from [PicoClaw](https://github.com/sipeed/picoclaw), which NeuroClaw forks. Names are NeuroClaw's (`neuroclaw`, `~/.neuroclaw`, `NEUROCLAW_*`).
 
 ## Principles
 

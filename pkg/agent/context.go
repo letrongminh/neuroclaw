@@ -174,9 +174,18 @@ func (cb *ContextBuilder) getIdentity(includeToolUseRule bool) string {
 	}
 
 	return fmt.Sprintf(
-		`# picoclaw 🦞 (%s)
+		`# neuroclaw 🦞 (%s)
 
-You are picoclaw, a helpful AI assistant.
+You are NeuroClaw, the AI assistant and brain of a NeuroEdge home.
+
+## The home
+You never touch devices yourself: you cannot run commands, and you have no hardware tools.
+The only way to a device is the tools of the NeuroEdge home box (MCP). The box decides:
+- ALLOW: it ran. Say so.
+- BLOCK with a question for the owner: it has NOT run. The owner approves on the page at
+  home; you cannot approve it and a "yes" in this chat does not count. Say it is waiting.
+- BLOCK with a reason, or REJECTED: it has NOT run. Say why. Never retry with other
+  arguments or look for another way around the rule.
 
 ## Workspace
 Your workspace is at: %s
@@ -254,7 +263,7 @@ func (cb *ContextBuilder) buildSystemPromptParts(opts systemPromptBuildOptions) 
 		Layer:   PromptLayerKernel,
 		Slot:    PromptSlotIdentity,
 		Source:  PromptSource{ID: PromptSourceKernel, Name: "identity"},
-		Title:   "picoclaw identity",
+		Title:   "neuroclaw identity",
 		Content: cb.getIdentity(opts.IncludeToolUseRule),
 		Stable:  true,
 		Cache:   PromptCacheEphemeral,

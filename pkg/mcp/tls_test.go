@@ -31,7 +31,11 @@ type testPKI struct {
 	rogueCa string
 }
 
-func issue(t *testing.T, template, parent *x509.Certificate, parentKey *ecdsa.PrivateKey) (*x509.Certificate, *ecdsa.PrivateKey, []byte, []byte) {
+func issue(
+	t *testing.T,
+	template, parent *x509.Certificate,
+	parentKey *ecdsa.PrivateKey,
+) (*x509.Certificate, *ecdsa.PrivateKey, []byte, []byte) {
 	t.Helper()
 	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
@@ -67,7 +71,7 @@ func newTestPKI(t *testing.T) testPKI {
 		IsCA: true, BasicConstraintsValid: true, KeyUsage: x509.KeyUsageCertSign,
 	}
 	ca, caKey, caPEM, _ := issue(t, caTemplate, nil, nil)
-	_, _, roguePEM, _ := issue(t, &x509.Certificate{
+	_, _, roguePEM, _ := issue(t, &x509.Certificate{ //nolint:dogsled // only the PEM of a rogue CA is needed
 		SerialNumber: big.NewInt(9), Subject: pkix.Name{CommonName: "rogue CA"},
 		NotBefore: now.Add(-time.Hour), NotAfter: now.Add(time.Hour),
 		IsCA: true, BasicConstraintsValid: true, KeyUsage: x509.KeyUsageCertSign,
@@ -171,9 +175,12 @@ func TestMCPTLS_ConfigurationMistakesAreRefusedBeforeConnecting(t *testing.T) {
 		url string
 		cfg *config.MCPTLSConfig
 	}{
-		"plain http":            {"http://127.0.0.1:1/mcp", &config.MCPTLSConfig{CAFile: pki.ca}},
-		"certificate, no key":   {"https://127.0.0.1:1/mcp", &config.MCPTLSConfig{CertFile: pki.cert}},
-		"missing CA file":       {"https://127.0.0.1:1/mcp", &config.MCPTLSConfig{CAFile: filepath.Join(pki.dir, "absent.pem")}},
+		"plain http":          {"http://127.0.0.1:1/mcp", &config.MCPTLSConfig{CAFile: pki.ca}},
+		"certificate, no key": {"https://127.0.0.1:1/mcp", &config.MCPTLSConfig{CertFile: pki.cert}},
+		"missing CA file": {
+			"https://127.0.0.1:1/mcp",
+			&config.MCPTLSConfig{CAFile: filepath.Join(pki.dir, "absent.pem")},
+		},
 		"CA file that is a key": {"https://127.0.0.1:1/mcp", &config.MCPTLSConfig{CAFile: pki.key}},
 	}
 	for label, c := range cases {

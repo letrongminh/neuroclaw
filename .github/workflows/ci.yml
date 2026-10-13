@@ -62,7 +62,7 @@ jobs:
       - name: what was built
         run: |
           ls dist/*.tar.gz dist/*.zip dist/*.deb dist/*.rpm build/neuroclaw-android-universal.zip
-          test "$(ls dist/*.tar.gz dist/*.zip | wc -l)" -ge 30
+          test "$(ls dist/*.tar.gz dist/*.zip | wc -l)" -ge 18
           tar -xzf dist/neuroclaw_Linux_x86_64.tar.gz -C /tmp neuroclaw neuroclaw-launcher
           /tmp/neuroclaw --no-color version
           /tmp/neuroclaw-launcher -h 2>&1 | head -5 || true

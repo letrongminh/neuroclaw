@@ -317,7 +317,10 @@ func TestDownloadAndExtractRelease_NeuroClawReleaseAssets(t *testing.T) {
 				TagName: "v0.1.0",
 				Assets: []testReleaseAsset{
 					{Name: "neuroclaw_darwin_arm64.tar.gz", BrowserDownloadURL: server.URL + "/assets/darwin"},
-					{Name: "neuroclaw_linux_amd64.tar.gz", BrowserDownloadURL: server.URL + "/assets/neuroclaw_linux_amd64.tar.gz"},
+					{
+						Name:               "neuroclaw_linux_amd64.tar.gz",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_linux_amd64.tar.gz",
+					},
 					{Name: "neuroclaw_linux_arm64.tar.gz", BrowserDownloadURL: server.URL + "/assets/arm64"},
 					{Name: "SHA256SUMS", BrowserDownloadURL: server.URL + "/assets/SHA256SUMS"},
 				},

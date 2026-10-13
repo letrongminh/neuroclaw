@@ -7,16 +7,17 @@ import (
 )
 
 func riskNames(cfg *Config) []string {
-	var names []string
-	for _, label := range RiskLabels(cfg) {
+	labels := RiskLabels(cfg)
+	names := make([]string, 0, len(labels))
+	for _, label := range labels {
 		names = append(names, label.Name)
 	}
 	return names
 }
 
 // The defaults are PicoClaw's: the model has a shell, scheduled shell
-// commands, skill installs and USB monitoring, and each is labelled.
-func TestRiskLabels_DefaultsArePicoClawsAndLabelled(t *testing.T) {
+// commands, skill installs and USB monitoring, and each is labeled.
+func TestRiskLabels_DefaultsArePicoClawsAndLabeled(t *testing.T) {
 	got := riskNames(DefaultConfig())
 	want := []string{"cron_shell", "shell", "skill_install"}
 	if !reflect.DeepEqual(got, want) {
@@ -104,9 +105,12 @@ func TestRiskLabels_EachCapability(t *testing.T) {
 			cfg := quiet()
 			tc.turnOn(cfg)
 			labels := RiskLabels(cfg)
-			var got []string
+			got := make([]string, 0, len(labels))
 			for _, label := range labels {
 				got = append(got, label.Name)
+			}
+			if len(got) == 0 {
+				got = nil
 			}
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Fatalf("labels = %v, want %v", got, tc.want)

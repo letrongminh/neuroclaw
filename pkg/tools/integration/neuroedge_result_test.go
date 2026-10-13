@@ -14,8 +14,10 @@ func TestNeuroEdgeGuidance_AQuestionForTheOwnerIsNotDone(t *testing.T) {
 			"expires_in_ms": 10000.0, "who": "owner",
 		},
 	})
-	for _, want := range []string{"did NOT do this yet", "page at home", "about 10 seconds",
-		"you cannot approve it", "Do not call the tool again", "Bộ não xin mở cửa"} {
+	for _, want := range []string{
+		"did NOT do this yet", "page at home", "about 10 seconds",
+		"you cannot approve it", "Do not call the tool again", "Bộ não xin mở cửa",
+	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("missing %q in %q", want, got)
 		}

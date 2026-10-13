@@ -13,6 +13,7 @@ import (
 	"github.com/letrongminh/neuroclaw/pkg/config"
 	"github.com/letrongminh/neuroclaw/pkg/constants"
 	"github.com/letrongminh/neuroclaw/pkg/cron"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
 	"github.com/letrongminh/neuroclaw/pkg/utils"
 )
 
@@ -22,6 +23,12 @@ type JobExecutor interface {
 	// PublishResponseIfNeeded sends response to the outbound bus only when the
 	// agent did not already deliver content through the message tool in this round.
 	PublishResponseIfNeeded(ctx context.Context, channel, chatID, sessionKey, response string)
+}
+
+// llmBudgetGate is implemented by executors that enforce the hourly/daily
+// LLM budget; cron jobs that need the model are skipped while it is used up.
+type llmBudgetGate interface {
+	LLMBudgetBlocked() error
 }
 
 // CronTool provides scheduling capabilities for the agent
@@ -639,6 +646,18 @@ func (t *CronTool) ExecuteJob(ctx context.Context, job *cron.CronJob) string {
 			Content: output,
 		})
 		return "ok"
+	}
+
+	if gate, ok := t.executor.(llmBudgetGate); ok {
+		if err := gate.LLMBudgetBlocked(); err != nil {
+			logger.WarnCF("cron", "NeuroClaw llm_budget", map[string]any{
+				"source": "cron",
+				"action": "skipped",
+				"job_id": job.ID,
+				"reason": err.Error(),
+			})
+			return "skipped: " + err.Error()
+		}
 	}
 
 	sessionKey := fmt.Sprintf("agent:cron-%s-%s", job.ID, uuid.New().String())

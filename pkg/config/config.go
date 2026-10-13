@@ -447,6 +447,14 @@ type AgentDefaults struct {
 	TurnProfile               TurnProfileConfig  `json:"turn_profile,omitempty"`
 	MaxLLMRetries             int                `json:"max_llm_retries,omitempty"        env:"NEUROCLAW_AGENTS_DEFAULTS_MAX_LLM_RETRIES"`
 	LLMRetryBackoffSecs       int                `json:"llm_retry_backoff_secs,omitempty" env:"NEUROCLAW_AGENTS_DEFAULTS_LLM_RETRY_BACKOFF_SECS"`
+	LLMBudget                 LLMBudgetConfig    `json:"llm_budget,omitempty"`
+}
+
+// LLMBudgetConfig caps LLM calls per clock hour and per calendar day, across
+// all models (0 = no limit). See docs/reference/rate-limiting.md.
+type LLMBudgetConfig struct {
+	MaxCallsPerHour int `json:"max_calls_per_hour,omitempty" env:"NEUROCLAW_AGENTS_DEFAULTS_LLM_BUDGET_MAX_CALLS_PER_HOUR"`
+	MaxCallsPerDay  int `json:"max_calls_per_day,omitempty"  env:"NEUROCLAW_AGENTS_DEFAULTS_LLM_BUDGET_MAX_CALLS_PER_DAY"`
 }
 
 const DefaultMaxMediaSize = 20 * 1024 * 1024 // 20 MB
@@ -1101,6 +1109,7 @@ type ToolsConfig struct {
 	AppendFile      ToolConfig         `json:"append_file"       yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_APPEND_FILE_"`
 	EditFile        ToolConfig         `json:"edit_file"         yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_EDIT_FILE_"`
 	FindSkills      ToolConfig         `json:"find_skills"       yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_FIND_SKILLS_"`
+	GetDiagnostics  ToolConfig         `json:"get_diagnostics"   yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_GET_DIAGNOSTICS_"`
 	I2C             ToolConfig         `json:"i2c"               yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_I2C_"`
 	InstallSkill    ToolConfig         `json:"install_skill"     yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_INSTALL_SKILL_"`
 	ListDir         ToolConfig         `json:"list_dir"          yaml:"-"                                                        envPrefix:"NEUROCLAW_TOOLS_LIST_DIR_"`
@@ -1866,6 +1875,8 @@ func (t *ToolsConfig) IsToolEnabled(name string) bool {
 		return t.EditFile.Enabled
 	case "find_skills":
 		return t.FindSkills.Enabled
+	case "get_diagnostics":
+		return t.GetDiagnostics.Enabled
 	case "i2c":
 		return t.I2C.Enabled
 	case "install_skill":

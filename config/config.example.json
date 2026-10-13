@@ -14,6 +14,10 @@
       "split_on_marker": false,
       "max_llm_retries": 2,
       "llm_retry_backoff_secs": 2,
+      "llm_budget": {
+        "max_calls_per_hour": 0,
+        "max_calls_per_day": 0
+      },
       "tool_feedback": {
         "enabled": false,
         "max_args_length": 300,
@@ -498,6 +502,9 @@
       "enabled": true
     },
     "find_skills": {
+      "enabled": true
+    },
+    "get_diagnostics": {
       "enabled": true
     },
     "i2c": {

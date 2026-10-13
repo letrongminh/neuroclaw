@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -436,7 +437,7 @@ func setupAndStartServices(
 		cfg.Heartbeat.Enabled,
 	)
 	runningServices.HeartbeatService.SetBus(msgBus)
-	runningServices.HeartbeatService.SetHandler(createHeartbeatHandler(agentLoop))
+	runningServices.HeartbeatService.SetHandler(NewHeartbeatHandler(agentLoop))
 	if err = runningServices.HeartbeatService.Start(); err != nil {
 		return nil, fmt.Errorf("error starting heartbeat service: %w", err)
 	}
@@ -684,7 +685,7 @@ func restartServices(
 		cfg.Heartbeat.Enabled,
 	)
 	runningServices.HeartbeatService.SetBus(msgBus)
-	runningServices.HeartbeatService.SetHandler(createHeartbeatHandler(al))
+	runningServices.HeartbeatService.SetHandler(NewHeartbeatHandler(al))
 	if err = runningServices.HeartbeatService.Start(); err != nil {
 		return fmt.Errorf("error restarting heartbeat service: %w", err)
 	}
@@ -866,13 +867,19 @@ func setupCronTool(
 	return cronService, nil
 }
 
-func createHeartbeatHandler(agentLoop *agent.AgentLoop) func(prompt, channel, chatID string) *tools.ToolResult {
+// NewHeartbeatHandler runs heartbeat prompts through agentLoop. Used by the
+// gateway's heartbeat service and by `neuroclaw heartbeat run`.
+func NewHeartbeatHandler(agentLoop *agent.AgentLoop) func(prompt, channel, chatID string) *tools.ToolResult {
 	return func(prompt, channel, chatID string) *tools.ToolResult {
 		if channel == "" || chatID == "" {
 			channel, chatID = "cli", "direct"
 		}
 
 		response, err := agentLoop.ProcessHeartbeat(context.Background(), prompt, channel, chatID)
+		var budgetErr *providers.LLMBudgetExceededError
+		if errors.As(err, &budgetErr) {
+			return tools.SilentResult("Heartbeat skipped: " + budgetErr.Error())
+		}
 		if err != nil {
 			return tools.ErrorResult(fmt.Sprintf("Heartbeat error: %v", err))
 		}

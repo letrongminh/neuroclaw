@@ -56,6 +56,14 @@ func NewFallbackChain(cooldown *CooldownTracker, rl *RateLimiterRegistry) *Fallb
 	return &FallbackChain{cooldown: cooldown, rl: rl}
 }
 
+// Cooldown returns the chain's cooldown tracker (nil-safe).
+func (fc *FallbackChain) Cooldown() *CooldownTracker {
+	if fc == nil {
+		return nil
+	}
+	return fc.cooldown
+}
+
 // ResolveCandidates parses model config into a deduplicated candidate list.
 func ResolveCandidates(cfg ModelConfig, defaultProvider string) []FallbackCandidate {
 	return ResolveCandidatesWithLookup(cfg, defaultProvider, nil)

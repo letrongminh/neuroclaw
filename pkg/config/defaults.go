@@ -448,6 +448,9 @@ func DefaultConfig() *Config {
 			FindSkills: ToolConfig{
 				Enabled: true,
 			},
+			GetDiagnostics: ToolConfig{
+				Enabled: true,
+			},
 			I2C: ToolConfig{
 				Enabled: false, // Hardware tool - Linux only
 			},

@@ -266,6 +266,12 @@ func (p *Pipeline) CallLLM(
 		backoffSecs = 2
 	}
 	for retry := 0; retry <= maxRetries; retry++ {
+		// Every attempt, retries included, counts against the hourly/daily
+		// LLM budget; the user is told plainly when it is used up.
+		if budgetErr := al.acquireLLMBudget("turn", ts.agent.ID); budgetErr != nil {
+			cancelConfiguredStreamingLLM(turnCtx, exec)
+			return ControlBreak, budgetErr
+		}
 		exec.response, err = callLLM(exec.callMessages, exec.providerToolDefs)
 		if err == nil {
 			break
@@ -452,6 +458,7 @@ func (p *Pipeline) CallLLM(
 	}
 
 	if err != nil {
+		al.recordLLMError(err)
 		al.emitEvent(
 			runtimeevents.KindAgentError,
 			ts.eventMeta("runTurn", "turn.error"),

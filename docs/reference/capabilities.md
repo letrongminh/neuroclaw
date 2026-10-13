@@ -115,6 +115,9 @@ Model selection and resilience:
 - Optional routing sends easy turns to a lighter model (`routing.light_model`, threshold 0.35).
 - A failing model cools down 1 min → 5 → 25 → 1 h. A billing error cools it down 5 h, doubling to 24 h.
 - Calls are retried twice, 2 s apart.
+- An optional LLM call budget (`agents.defaults.llm_budget.max_calls_per_hour` / `max_calls_per_day`,
+  off by default) stops calling the model when used up, tells the user when it resets, and skips cron
+  and heartbeat turns until then.
 
 More in the [providers guide](../guides/providers.md) and [rate limiting](rate-limiting.md).
 `neuroclaw auth login -p openai|anthropic|antigravity` does OAuth sign-in.
@@ -138,6 +141,7 @@ Defaults from [`pkg/config/defaults.go`](../../pkg/config/defaults.go); configur
 | `cron` | on | Reminders, scheduled agent runs and, with `exec` and `allow_command`, shell commands (section 8) |
 | `spawn`, `subagent` | on | Run a task in a subagent, in the background or waiting for it ([spawn tasks](../guides/spawn-tasks.md)) |
 | `spawn_status` | off | Ask how a spawned task is doing |
+| `get_diagnostics` | on | Report NeuroClaw's own health: version, uptime, memory, free disk, enabled channels, model cooldowns, LLM budget, risk labels, last LLM error; no secrets |
 | `delegate` | when there is more than one agent | Hand a turn to another configured agent |
 | MCP tools | off until a server is configured | Tools of remote MCP servers (section 6) |
 | `tool_search_tool_bm25`, `tool_search_tool_regex` | off | Find deferred MCP tools when there are many |
@@ -221,6 +225,7 @@ or applies new *skills* under `state/evolution`. It improves skills, not chat me
   listed there.
 - An answer of `HEARTBEAT_OK` means nothing to report and is not sent. Anything else goes to the last
   active chat.
+- `neuroclaw heartbeat run` runs one heartbeat turn now and prints the answer in the terminal.
 
 ## 9. Skills
 
@@ -262,6 +267,8 @@ tools that NeuroClaw locks.
 | `auth login\|logout\|status\|models\|weixin\|wecom` | Sign-in for providers and QR-code channels |
 | `model [name]`, `model add` | Show or set the default model; add an OpenAI-compatible endpoint |
 | `cron …`, `mcp …`, `skills …` | Sections 6, 8, 9 |
+| `session list`, `session clear <key>\|--all` | List the stored conversations; clear one or all, as `/clear` does (refused while the gateway runs) |
+| `heartbeat run` | Run one heartbeat turn now and print the answer (section 8) |
 | `migrate --from openclaw` | Import an OpenClaw config and workspace |
 | `config reset` | Back to defaults |
 | `update` | Replace the binary with the latest release of this repository, checked against its checksums; `-u` for another release URL |

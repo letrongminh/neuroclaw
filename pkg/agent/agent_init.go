@@ -64,11 +64,15 @@ func NewAgentLoop(
 	}
 
 	al := &AgentLoop{
-		bus:               msgBus,
-		cfg:               cfg,
-		registry:          registry,
-		state:             stateManager,
-		fallback:          fallbackChain,
+		bus:      msgBus,
+		cfg:      cfg,
+		registry: registry,
+		state:    stateManager,
+		fallback: fallbackChain,
+		llmBudget: providers.NewLLMBudget(
+			cfg.Agents.Defaults.LLMBudget.MaxCallsPerHour,
+			cfg.Agents.Defaults.LLMBudget.MaxCallsPerDay,
+		),
 		cmdRegistry:       commands.NewRegistry(commands.BuiltinDefinitions()),
 		evolution:         bridge,
 		steering:          newSteeringQueue(parseSteeringMode(cfg.Agents.Defaults.SteeringMode)),
@@ -252,6 +256,10 @@ func registerSharedTools(
 
 		if ttsProvider != nil {
 			agent.Tools.Register(tools.NewSendTTSTool(ttsProvider, nil))
+		}
+
+		if cfg.Tools.IsToolEnabled("get_diagnostics") {
+			agent.Tools.Register(tools.NewDiagnosticsTool(agent.Workspace, al.diagnosticsRuntimeInfo))
 		}
 
 		if cfg.Tools.IsToolEnabled("load_image") {

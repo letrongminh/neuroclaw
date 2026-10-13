@@ -8,6 +8,7 @@ package heartbeat
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -216,6 +217,29 @@ func (hs *HeartbeatService) executeHeartbeat() {
 	}
 
 	hs.logInfof("Heartbeat completed: %s", result.ForLLM)
+}
+
+// ErrNoHeartbeatTasks means HEARTBEAT.md has no tasks, so there is nothing to run.
+var ErrNoHeartbeatTasks = errors.New("no heartbeat tasks in HEARTBEAT.md")
+
+// RunNow runs one heartbeat turn immediately, whether or not the service is
+// started or enabled, and returns the handler's result instead of sending it
+// to a channel. `neuroclaw heartbeat run` uses it.
+func (hs *HeartbeatService) RunNow() (*tools.ToolResult, error) {
+	hs.mu.RLock()
+	handler := hs.handler
+	hs.mu.RUnlock()
+	if handler == nil {
+		return nil, errors.New("heartbeat handler not configured")
+	}
+
+	prompt := hs.buildPrompt()
+	if prompt == "" {
+		return nil, ErrNoHeartbeatTasks
+	}
+	channel, chatID := hs.parseLastChannel(hs.state.GetLastChannel())
+	hs.logInfof("Manual heartbeat run (channel: %s, chatID: %s)", channel, chatID)
+	return handler(prompt, channel, chatID), nil
 }
 
 // buildPrompt builds the heartbeat prompt from HEARTBEAT.md

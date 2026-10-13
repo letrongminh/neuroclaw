@@ -266,6 +266,25 @@ Add `topic` when the channel provides one:
 That is normal during migration.
 NeuroClaw keeps compatibility with older `agent:...` session keys while moving runtime storage to opaque canonical keys.
 
+## Listing and Clearing Stored Sessions
+
+Sessions are stored per agent in `<workspace>/sessions/` (see
+[capabilities](../reference/capabilities.md#7-memory-conversation-and-identity)). From a terminal:
+
+```bash
+neuroclaw session list                 # key, agent, message count, last update
+neuroclaw session clear <key>          # one session (a key or one of its aliases)
+neuroclaw session clear --all          # every session of every configured agent
+```
+
+`session clear` empties the history and summary, as `/clear` does in the chat, and also clears the
+session in `sessions/seahorse.db` when the seahorse context manager has one.
+
+The gateway reads and appends to the same files while it runs, so a clear made from outside could be
+written over in the middle of a turn. `session clear` therefore refuses to run while a gateway is
+running (it checks the gateway's PID file): stop the gateway first, or send `/clear` in the chat.
+`session list` only reads and works at any time.
+
 ## Related Guides
 
 - [Configuration Guide](configuration.md)

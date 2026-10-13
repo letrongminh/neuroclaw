@@ -88,6 +88,59 @@ The bucket starts **full** (burst = RPM). For `rpm: 3`, the first 3 requests fir
 
 To reduce burstiness for strict APIs, set a lower `rpm` and rely on the steady-state refill.
 
+## LLM call budget
+
+`rpm` smooths how fast one model is called. The LLM call budget caps how many calls NeuroClaw makes
+in total, across every model, per hour and per day. It is off by default:
+
+```json
+{
+  "agents": {
+    "defaults": {
+      "llm_budget": {
+        "max_calls_per_hour": 60,
+        "max_calls_per_day": 500
+      }
+    }
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `max_calls_per_hour` | `int` | `0` | LLM calls allowed per clock hour. `0` means no limit. |
+| `max_calls_per_day` | `int` | `0` | LLM calls allowed per calendar day. `0` means no limit. |
+
+Environment variables: `NEUROCLAW_AGENTS_DEFAULTS_LLM_BUDGET_MAX_CALLS_PER_HOUR`,
+`NEUROCLAW_AGENTS_DEFAULTS_LLM_BUDGET_MAX_CALLS_PER_DAY`.
+
+**What counts.** Every request an agent turn sends to a model counts (subagent turns too), retries
+included, and so does a `/btw` side question. A request that walks a fallback chain counts once, whichever candidate answers.
+Background LLM work that is not a turn (history summarization, seahorse compaction, evolution) is not
+counted.
+
+**Windows.** Both windows are fixed and follow local time: the hourly window resets at the top of each
+hour (14:00, 15:00, …), the daily one at midnight. A fixed window is simple to explain ("resets at
+15:00") but can let up to twice the hourly limit through around a boundary.
+
+**When the budget is used up:**
+
+- The model is not called. The user gets a plain reply instead of an error, for example
+  `The hourly LLM call budget is used up (60 of 60 calls), so I am not calling the model now. It resets at 15:00 (local time).`
+  A turn that runs out in the middle of its tool loop stops there with the same reply.
+- NeuroClaw logs a warning `NeuroClaw llm_budget` with `window`, `used`, `limit` and `resets_at`.
+- Cron jobs that run an agent turn, and heartbeat turns, are skipped before they start, with the same
+  log line (`action=skipped`, `source=cron|heartbeat`). Cron jobs that run a shell command do not use
+  the model and still run.
+
+**Counters** are kept in memory. They restart from zero when the process restarts, and every process
+has its own: `neuroclaw agent` or `neuroclaw heartbeat run` in a terminal does not share the
+gateway's counters. A config reload keeps the counts and applies the new limits. `get_diagnostics`
+shows the current counts and reset times.
+
+The budget is global. There is no per-model budget: use `rpm` on a `model_list` entry to slow one
+model down.
+
 ## Files changed
 
 | File | What |
@@ -97,3 +150,6 @@ To reduce burstiness for strict APIs, set a lower `rpm` and rely on the steady-s
 | `pkg/providers/fallback.go` | `FallbackCandidate.RPM` field; `FallbackChain.rl`; `Wait()` call in `Execute`/`ExecuteImage` |
 | `pkg/agent/model_resolution.go` | Resolves candidates from `model_list`, preserving stable config identity and propagating `RPM` into `FallbackCandidate` |
 | `pkg/agent/loop.go` | Build `RateLimiterRegistry`, register all agents' candidates, pass to `NewFallbackChain` |
+| `pkg/providers/llm_budget.go` | `LLMBudget`: hourly and daily call budget, `LLMBudgetExceededError` |
+| `pkg/agent/llm_budget.go` | Budget checks for turns, `/btw`, heartbeat; the `NeuroClaw llm_budget` log line |
+| `pkg/tools/cron.go` | Skip agent-turn cron jobs while the budget is used up |

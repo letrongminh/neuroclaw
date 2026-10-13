@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -1279,5 +1280,38 @@ func TestCronTool_ExecuteJobReturnsErrorWithoutPublish(t *testing.T) {
 
 	if executor.publishedResp != "" {
 		t.Fatalf("unexpected publish on error path: %q", executor.publishedResp)
+	}
+}
+
+type budgetBlockedExecutor struct {
+	stubJobExecutor
+	blocked error
+}
+
+func (b *budgetBlockedExecutor) LLMBudgetBlocked() error { return b.blocked }
+
+func TestCronTool_ExecuteJobSkipsWhenLLMBudgetUsedUp(t *testing.T) {
+	executor := &budgetBlockedExecutor{blocked: errors.New("The daily LLM call budget is used up")}
+	tool := newTestCronToolWithExecutorAndConfig(t, executor, config.DefaultConfig())
+
+	job := &cron.CronJob{ID: "job-budget"}
+	job.Payload.Channel = "telegram"
+	job.Payload.To = "chat-1"
+	job.Payload.Message = "send me a poem"
+
+	got := tool.ExecuteJob(context.Background(), job)
+	if !strings.HasPrefix(got, "skipped: ") {
+		t.Fatalf("ExecuteJob() = %q, want skipped", got)
+	}
+	if executor.lastPrompt != "" || executor.publishedResp != "" {
+		t.Fatalf("agent must not run while the budget is used up: %+v", executor.stubJobExecutor)
+	}
+
+	executor.blocked = nil
+	if got := tool.ExecuteJob(context.Background(), job); got != "ok" {
+		t.Fatalf("ExecuteJob() with budget left = %q, want ok", got)
+	}
+	if executor.lastPrompt != "send me a poem" {
+		t.Fatalf("prompt = %q, want the job message", executor.lastPrompt)
 	}
 }

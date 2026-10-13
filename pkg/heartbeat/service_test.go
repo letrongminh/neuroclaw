@@ -248,3 +248,37 @@ func TestBuildPrompt_UserTasksAfterMarkerProducePrompt(t *testing.T) {
 		t.Fatalf("prompt = %q, want user task content", prompt)
 	}
 }
+
+func TestRunNow_RunsEvenWhenDisabledAndReturnsResult(t *testing.T) {
+	tmpDir := t.TempDir()
+	hs := NewHeartbeatService(tmpDir, 30, false) // disabled and never started
+
+	if _, err := hs.RunNow(); err == nil {
+		t.Fatal("RunNow() without a handler = nil error")
+	}
+
+	called := 0
+	hs.SetHandler(func(prompt, channel, chatID string) *tools.ToolResult {
+		called++
+		return tools.SilentResult("all good")
+	})
+
+	// No HEARTBEAT.md: the template is created and there is nothing to run.
+	if _, err := hs.RunNow(); err != ErrNoHeartbeatTasks {
+		t.Fatalf("RunNow() with no tasks error = %v, want ErrNoHeartbeatTasks", err)
+	}
+	if called != 0 {
+		t.Fatalf("handler called %d times with no tasks", called)
+	}
+
+	if err := os.WriteFile(filepath.Join(tmpDir, "HEARTBEAT.md"), []byte("- check the door"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := hs.RunNow()
+	if err != nil {
+		t.Fatalf("RunNow() error = %v", err)
+	}
+	if called != 1 || result == nil || result.ForLLM != "all good" {
+		t.Fatalf("RunNow() = %+v (handler calls %d), want the handler's result", result, called)
+	}
+}

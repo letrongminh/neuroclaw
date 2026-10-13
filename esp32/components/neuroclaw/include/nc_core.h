@@ -93,6 +93,17 @@ char *nc_llm_request(const char *model, const cJSON *messages, const nc_tool *to
 int nc_llm_parse(const char *body, nc_llm_reply *reply);
 void nc_llm_reply_free(nc_llm_reply *reply);
 
+/* Whether a failed LLM call should go to the other URL, as the Go NeuroClaw's
+ * fallback chain decides (pkg/providers/error_classifier.go): the reason
+ * ("network", "auth", "billing", "timeout", "rate_limit", "transient"), or NULL
+ * for a reply the other model would refuse too (400, an unknown status) and
+ * for success. `status` is the HTTP status, -1 when nothing usable came back. */
+const char *nc_llm_failover(int status);
+
+/* Seconds a failed URL is passed over, as the Go cooldown: 1 min, 5, 25, then
+ * 1 h; for billing 5 h doubling to 24 h. `failures` counts from 1. */
+int64_t nc_llm_cooldown_s(int failures, bool billing);
+
 /* --- the conversation -------------------------------------------------------------------- */
 
 /* The built-in system prompt. */

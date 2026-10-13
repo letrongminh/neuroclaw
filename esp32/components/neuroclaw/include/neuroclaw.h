@@ -86,6 +86,12 @@ typedef struct {
     const char *search_url;      /* SearXNG base URL */
     const char *search_key;      /* Brave API key */
     const char *fetch_allow;     /* comma-separated private hosts web_fetch may reach anyway */
+    /* A second OpenAI-compatible URL, tried when the first fails in a way another
+     * model may not (network, auth, billing, rate limit, overload), as the Go
+     * NeuroClaw's model fallbacks; the first then waits out a cooldown. NULL: none. */
+    const char *llm_fallback_url;
+    const char *llm_fallback_key;   /* may be empty */
+    const char *llm_fallback_model; /* NULL: llm_model */
 } nc_config;
 
 /* Copy the configuration and start the brain task. ESP_ERR_INVALID_ARG when a

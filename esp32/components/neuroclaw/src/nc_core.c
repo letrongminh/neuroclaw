@@ -290,6 +290,40 @@ char *nc_telegram_message(int64_t chat_id, const char *text, const char *confirm
 
 /* --- the LLM ------------------------------------------------------------------------------- */
 
+const char *nc_llm_failover(int status)
+{
+    switch (status) {
+    case -1: return "network";
+    case 401:
+    case 403: return "auth";
+    case 402: return "billing";
+    case 408: return "timeout";
+    case 429: return "rate_limit";
+    case 500:
+    case 502:
+    case 503:
+    case 521:
+    case 522:
+    case 523:
+    case 524:
+    case 529: return "transient";
+    default: return NULL;
+    }
+}
+
+int64_t nc_llm_cooldown_s(int failures, bool billing)
+{
+    const int n = failures < 1 ? 1 : failures;
+    if (billing) {
+        int64_t s = 5 * 3600;
+        for (int i = 1; i < n && s < 24 * 3600; i++) s *= 2;
+        return s > 24 * 3600 ? 24 * 3600 : s;
+    }
+    int64_t s = 60;
+    for (int i = 1; i < n && i <= 3; i++) s *= 5;
+    return s > 3600 ? 3600 : s;
+}
+
 char *nc_llm_request(const char *model, const cJSON *messages, const nc_tool *tools,
                      size_t tool_count)
 {

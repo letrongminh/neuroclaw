@@ -313,12 +313,40 @@ static int check_llm(void)
     return 0;
 }
 
+static int check_failover(void)
+{
+    /* As the Go classifier: these go to the other URL... */
+    const int over[] = {-1, 401, 402, 403, 408, 429, 500, 502, 503, 521, 524, 529};
+    for (size_t i = 0; i < sizeof over / sizeof over[0]; i++) CHECK(nc_llm_failover(over[i]) != NULL);
+    CHECK(strcmp(nc_llm_failover(-1), "network") == 0);
+    CHECK(strcmp(nc_llm_failover(429), "rate_limit") == 0);
+    CHECK(strcmp(nc_llm_failover(402), "billing") == 0);
+    CHECK(strcmp(nc_llm_failover(503), "transient") == 0);
+    /* ...these would fail there too, or are not failures. */
+    const int stay[] = {200, 400, 404, 413, 501, 504};
+    for (size_t i = 0; i < sizeof stay / sizeof stay[0]; i++) CHECK(nc_llm_failover(stay[i]) == NULL);
+    /* Cooldown: 1 min, 5, 25, then 1 h; billing 5 h, 10, 20, then 24 h. */
+    CHECK(nc_llm_cooldown_s(0, false) == 60);
+    CHECK(nc_llm_cooldown_s(1, false) == 60);
+    CHECK(nc_llm_cooldown_s(2, false) == 300);
+    CHECK(nc_llm_cooldown_s(3, false) == 1500);
+    CHECK(nc_llm_cooldown_s(4, false) == 3600);
+    CHECK(nc_llm_cooldown_s(40, false) == 3600);
+    CHECK(nc_llm_cooldown_s(1, true) == 5 * 3600);
+    CHECK(nc_llm_cooldown_s(2, true) == 10 * 3600);
+    CHECK(nc_llm_cooldown_s(3, true) == 20 * 3600);
+    CHECK(nc_llm_cooldown_s(4, true) == 24 * 3600);
+    CHECK(nc_llm_cooldown_s(1000, true) == 24 * 3600);
+    return 0;
+}
+
 int main(void)
 {
     if (check_telegram() != 0) return 1;
     if (check_buttons() != 0) return 1;
     if (check_guidance() != 0) return 1;
     if (check_llm() != 0) return 1;
+    if (check_failover() != 0) return 1;
     printf("NC_CORE OK checks=%u\n", s_checks);
     return 0;
 }

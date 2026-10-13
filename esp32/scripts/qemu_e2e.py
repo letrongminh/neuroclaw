@@ -16,13 +16,22 @@ at 10.0.2.2 through QEMU's OpenCores Ethernet; this script serves both APIs on
           "nhớ giúp…" → memory/MEMORY.md, and the next answer reads it from the
           prompt; writing sessions/ is refused; "nhắc tôi… sau 5 giây" → a cron
           job that, five seconds later, sends the owner the reminder;
+          "gửi tệp ghi nhớ" → send_file streams memory/MEMORY.md to the owner
+          and the turn ends there; a missing file and a message to a stranger
+          are refused; an image goes as a photo, and as a document when
+          Telegram refuses the photo; a reminder that the model delivers with
+          `message` reaches the owner once, its final reply not sent too;
   boot 2  the conversation and the memory survived the reboot, and no old
           message is handled again; what outgrew the kept history was folded
-          by the LLM into a CONTEXT_SUMMARY that the next answers still use; a task in HEARTBEAT.md is checked within a
+          by the LLM into a CONTEXT_SUMMARY that the next answers still use;
+          the web; the configured LLM URL answers 503, the fallback URL (its
+          own key and model) answers, and while the first cools down it is
+          not called again; a task in HEARTBEAT.md is checked within a
           minute, and HEARTBEAT_OK is not sent to the owner.
 
-Throughout, the model is offered exactly the gate's two tools, and the bot
-token and LLM key never appear on the UART. Exit 0 only when all of it held.
+Throughout, the model is offered exactly the brain's tools and the gate's two,
+and the bot token and LLM keys never appear on the UART. Exit 0 only when all
+of it held.
 """
 
 from __future__ import annotations
@@ -42,6 +51,7 @@ OWNER = 123456789
 STRANGER = 555
 TOKEN = "7000000001:AAQemuOnlyNotARealTokenxxxxxxxxxxxx"
 KEY = "sk-qemu-only-not-a-real-key"
+FALLBACK_KEY = "sk-qemu-fallback-not-a-real-key"
 TIMEOUT_S = 120.0
 STACK_FLOOR = 1024  # bytes the brain task must never use, after the deepest turn
 
@@ -60,6 +70,9 @@ class Cloud:
         self.bad_bodies = 0
         self.summaries: list[str] = []
         self.searches: list[dict] = []
+        self.files: list[dict] = []  # sendPhoto / sendDocument
+        self.primary_down = False
+        self.llm_urls: list[str] = []  # "v1" or "v2", per LLM call that got an answer or a 503
 
     def push(self, update: dict) -> None:
         with self.lock:
@@ -87,7 +100,10 @@ class Cloud:
                     "id": f"cb{self.next_id}",
                     "from": {"id": user, "is_bot": False},
                     "data": data,
-                    "message": {"message_id": 1, "chat": {"id": user, "type": "private"}},
+                    "message": {
+                        "message_id": 1,
+                        "chat": {"id": user, "type": "private"},
+                    },
                 }
             }
         )
@@ -120,13 +136,42 @@ class Cloud:
             text = last["content"]
             if text.startswith("# Heartbeat Check"):
                 return _text("HEARTBEAT_OK")
+            if text.startswith("[Scheduled task] Gửi bằng tin nhắn: "):
+                said = text.removeprefix("[Scheduled task] Gửi bằng tin nhắn: ")
+                return _calls(("message", {"content": "💧 " + said}))
             if text.startswith("[Scheduled task] "):
                 return _text("⏰ " + text.removeprefix("[Scheduled task] "))
+            if text.startswith("gửi tệp ghi nhớ"):
+                return _calls(("send_file", {"path": "memory/MEMORY.md"}))
+            if text.startswith("gửi tệp không có"):
+                return _calls(("send_file", {"path": "khong-co.md"}))
+            if text.startswith("gửi ảnh"):
+                name = "hong.png" if "hỏng" in text else "cua.png"
+                return _calls(
+                    ("write_file", {"path": f"photos/{name}", "content": "PNG giả"}),
+                    ("send_file", {"path": f"photos/{name}"}),
+                )
+            if text.startswith("nhắn cho người lạ"):
+                return _calls(("message", {"content": "chào", "chat_id": str(STRANGER)}))
+            if text.startswith("hẹn gửi tin"):
+                return _calls(
+                    (
+                        "cron",
+                        {
+                            "action": "add",
+                            "message": "Gửi bằng tin nhắn: Uống nước",
+                            "at_seconds": 5,
+                        },
+                    )
+                )
             if text.startswith("nhớ giúp"):
                 return _calls(
                     (
                         "append_file",
-                        {"path": "memory/MEMORY.md", "content": "- Chủ nhà thích đèn vàng\n"},
+                        {
+                            "path": "memory/MEMORY.md",
+                            "content": "- Chủ nhà thích đèn vàng\n",
+                        },
                     )
                 )
             if text == "tôi thích đèn gì?":
@@ -136,20 +181,27 @@ class Cloud:
                 return _text("Lúc đầu bạn nhờ tôi nhớ đèn vàng." if known else "Tôi không nhớ.")
             if text == "tôi vừa nhờ gì?":
                 asked = [m["content"] for m in messages if m["role"] == "user"]
-                said = any(a.startswith("nhắc tôi") for a in asked)
-                return _text("Bạn nhờ tôi nhắc uống thuốc." if said else "Tôi không nhớ.")
+                said = any(a.startswith("hẹn gửi tin") for a in asked)
+                return _text("Bạn nhờ tôi nhắn uống nước." if said else "Tôi không nhớ.")
             if text.startswith("nhắc tôi"):
                 return _calls(
                     (
                         "cron",
-                        {"action": "add", "message": "Nhắc chủ nhà uống thuốc", "at_seconds": 5},
+                        {
+                            "action": "add",
+                            "message": "Nhắc chủ nhà uống thuốc",
+                            "at_seconds": 5,
+                        },
                     )
                 )
             if text.startswith("kiểm tra định kỳ"):
                 return _calls(
                     (
                         "write_file",
-                        {"path": "HEARTBEAT.md", "content": "# Việc\n- Cửa trước đã khoá chưa\n"},
+                        {
+                            "path": "HEARTBEAT.md",
+                            "content": "# Việc\n- Cửa trước đã khoá chưa\n",
+                        },
                     )
                 )
             if text.startswith("tìm thời tiết"):
@@ -173,6 +225,10 @@ class Cloud:
                 return _text("Đã tìm: " + content.splitlines()[1].split(". ", 1)[1])
             if "Bản tin" in content and "<" not in content:
                 return _text("Trang viết: " + content[:40])
+            if content.startswith("Message sent to telegram:"):
+                return _text("Đã gửi tin.")  # must not reach the owner: the message did
+            if content.startswith("File ") and content.endswith("sent to user"):
+                return _text("Đã gửi ảnh.")
             if content.startswith("ok:"):
                 return _text("Xong.")
             if content.startswith("error:"):
@@ -226,6 +282,44 @@ def serve(cloud: Cloud) -> ThreadingHTTPServer:
             except (BrokenPipeError, ConnectionResetError):
                 pass  # QEMU stopped mid long-poll
 
+        def _upload(self, method: str) -> None:
+            """sendPhoto / sendDocument: multipart/form-data, read as Telegram would."""
+            ctype = self.headers.get("Content-Type", "")
+            boundary = ctype.split("boundary=", 1)[1].encode() if "boundary=" in ctype else b""
+            data = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+            if not boundary or not data.endswith(b"--" + boundary + b"--\r\n"):
+                cloud.bad_bodies += 1
+                self._reply({"ok": False, "description": "bad multipart"}, 400)
+                return
+            fields: dict[str, dict] = {}
+            for part in data.split(b"--" + boundary)[1:-1]:
+                head, _, value = part.removeprefix(b"\r\n").partition(b"\r\n\r\n")
+                headers = head.decode()
+                name = re.search(r'name="([^"]+)"', headers).group(1)
+                filename = re.search(r'filename="([^"]*)"', headers)
+                fields[name] = {
+                    "value": value.removesuffix(b"\r\n"),
+                    "filename": filename.group(1) if filename else None,
+                    "headers": headers,
+                }
+            key = "photo" if method == "sendPhoto" else "document"
+            if "chat_id" not in fields or key not in fields:
+                self._reply({"ok": False, "description": "missing field"}, 400)
+                return
+            if method == "sendPhoto" and fields[key]["filename"].startswith("hong"):
+                self._reply({"ok": False, "description": "IMAGE_PROCESS_FAILED"}, 400)
+                return
+            cloud.files.append(
+                {
+                    "method": method,
+                    "chat_id": int(fields["chat_id"]["value"]),
+                    "filename": fields[key]["filename"],
+                    "data": fields[key]["value"],
+                    "headers": fields[key]["headers"],
+                }
+            )
+            self._reply({"ok": True, "result": {"message_id": 1000 + len(cloud.files)}})
+
         def _body(self) -> dict | None:
             length = int(self.headers.get("Content-Length", "0"))
             try:
@@ -246,7 +340,10 @@ def serve(cloud: Cloud) -> ThreadingHTTPServer:
                                 "url": "https://weather.example/hn",
                                 "content": "Mưa rào &amp; dông",
                             },
-                            {"title": "Dự báo 3 ngày", "url": "https://weather.example/3d"},
+                            {
+                                "title": "Dự báo 3 ngày",
+                                "url": "https://weather.example/3d",
+                            },
                         ]
                     }
                 )
@@ -278,6 +375,10 @@ def serve(cloud: Cloud) -> ThreadingHTTPServer:
 
         def do_POST(self) -> None:
             url = urlparse(self.path)
+            for method in ("sendPhoto", "sendDocument"):
+                if url.path == f"/bot{TOKEN}/{method}":
+                    self._upload(method)
+                    return
             body = self._body()
             if body is None:
                 self._reply({"ok": False, "description": "bad request body"}, 400)
@@ -288,10 +389,16 @@ def serve(cloud: Cloud) -> ThreadingHTTPServer:
             elif url.path == f"/bot{TOKEN}/answerCallbackQuery":
                 cloud.acks.append(body)
                 self._reply({"ok": True, "result": True})
-            elif url.path == "/v1/chat/completions":
-                if self.headers.get("Authorization") != f"Bearer {KEY}":
+            elif url.path in ("/v1/chat/completions", "/v2/chat/completions"):
+                primary = url.path.startswith("/v1/")
+                key, model = (KEY, "fake") if primary else (FALLBACK_KEY, "fake-backup")
+                if self.headers.get("Authorization") != f"Bearer {key}" or body["model"] != model:
                     cloud.bad_auth += 1
-                    self._reply({"error": {"message": "bad key"}}, 401)
+                    self._reply({"error": {"message": "bad key or model"}}, 401)
+                    return
+                cloud.llm_urls.append("v1" if primary else "v2")
+                if primary and cloud.primary_down:
+                    self._reply({"error": {"message": "overloaded"}}, 503)
                     return
                 self._reply(cloud.llm(body))
             else:
@@ -339,7 +446,15 @@ def wait_for(what: str, check, timeout: float = TIMEOUT_S):
 def boot(flash: Path, log: Path) -> subprocess.Popen:
     log.unlink(missing_ok=True)
     return subprocess.Popen(
-        ["qemu-system-xtensa", "-machine", "esp32s3", "-display", "none", "-monitor", "none"]
+        [
+            "qemu-system-xtensa",
+            "-machine",
+            "esp32s3",
+            "-display",
+            "none",
+            "-monitor",
+            "none",
+        ]
         + ["-drive", f"file={flash},if=mtd,format=raw", "-nic", "user,model=open_eth"]
         + ["-serial", f"file:{log}"],
         stdout=subprocess.DEVNULL,
@@ -380,7 +495,8 @@ def run(build: Path) -> list[str]:
     try:
         # --- boot 1 ---------------------------------------------------------------------------
         evidence.append(uart.expect(r"^NC_SESSION new jobs=0$"))
-        evidence.append(uart.expect(r"^NC_READY tools=10$"))  # workspace 5, cron, web 2, gate 2
+        # workspace 5, cron, web 2, message, send_file, gate 2; one fallback LLM URL
+        evidence.append(uart.expect(r"^NC_READY tools=12 fallback=1$"))
         evidence.append(uart.expect(r"^NC_CLOCK set_from=telegram$"))  # the first poll's Date
 
         # A stranger: dropped before the model.
@@ -403,7 +519,8 @@ def run(build: Path) -> list[str]:
         )
         evidence.append(uart.expect(r"^NC_ASK id=c-1$"))
         ask = wait_for(
-            "the approval buttons", lambda: [m for m in cloud.sent if "reply_markup" in m]
+            "the approval buttons",
+            lambda: [m for m in cloud.sent if "reply_markup" in m],
         )[0]
         row = ask["reply_markup"]["inline_keyboard"][0]
         if [b["callback_data"] for b in row] != ["nc:y:c-1", "nc:n:c-1"]:
@@ -446,6 +563,60 @@ def run(build: Path) -> list[str]:
         reminder = next(m for m in cloud.sent if m["text"] == "⏰ Nhắc chủ nhà uống thuốc")
         if reminder["chat_id"] != OWNER:
             raise Fail("the reminder went to someone other than the owner")
+
+        # send_file: the memory file, streamed to the owner; the file was the answer, so the
+        # turn ends without another LLM call and without a text reply.
+        calls, texts = len(cloud.llm_requests), len(cloud.sent)
+        cloud.message(OWNER, "gửi tệp ghi nhớ")
+        evidence.append(uart.expect(r"^NC_SEND_FILE kind=document bytes=\d+ http=200$"))
+        evidence.append(uart.expect(r"^NC_REPLY skipped=sent_by_tool$"))
+        sent_file = cloud.files[-1]
+        if (sent_file["method"], sent_file["chat_id"], sent_file["filename"]) != (
+            "sendDocument",
+            OWNER,
+            "MEMORY.md",
+        ) or "thích đèn vàng" not in sent_file["data"].decode():
+            raise Fail(f"unexpected file sent: {sent_file}")
+        turns = [r for r in cloud.llm_requests[calls:] if r.get("tools")]  # not summaries
+        if len(turns) != 1 or len(cloud.sent) != texts:
+            raise Fail("after send_file delivered, the LLM was called again or a reply was sent")
+        cloud.message(OWNER, "gửi tệp không có")
+        evidence.append(uart.expect(r"^NC_TOOL name=send_file result=error$"))
+        # An image: a photo; a photo Telegram refuses goes again as a document.
+        cloud.message(OWNER, "gửi ảnh cửa")
+        evidence.append(uart.expect(r"^NC_SEND_FILE kind=photo bytes=\d+ http=200$"))
+        wait_for("the photo reply", sent(cloud, "Đã gửi ảnh."))  # write_file ran too: not quiet
+        if (
+            cloud.files[-1]["method"] != "sendPhoto"
+            or "image/png" not in cloud.files[-1]["headers"]
+        ):
+            raise Fail(f"the image did not go as a photo: {cloud.files[-1]}")
+        cloud.message(OWNER, "gửi ảnh hỏng")
+        evidence.append(uart.expect(r"^NC_SEND_FILE kind=document bytes=\d+ http=200$"))
+        if (cloud.files[-1]["method"], cloud.files[-1]["filename"]) != (
+            "sendDocument",
+            "hong.png",
+        ):
+            raise Fail(f"the refused photo did not go as a document: {cloud.files[-1]}")
+        # message: never to anyone but the owner.
+        cloud.message(OWNER, "nhắn cho người lạ")
+        evidence.append(uart.expect(r"^NC_TOOL name=message result=error$"))
+        if any(m["chat_id"] != OWNER for m in cloud.sent) or any(
+            f["chat_id"] != OWNER for f in cloud.files
+        ):
+            raise Fail("something was sent to someone other than the owner")
+        # A reminder the model delivers itself with `message`: the owner gets it once, and
+        # the model's final words after it are not sent too.
+        cloud.message(OWNER, "hẹn gửi tin uống nước sau 5 giây")
+        evidence.append(uart.expect(r"^NC_TOOL name=cron result=ok$"))
+        evidence.append(uart.expect(r"^NC_CRON_RUN id=j\d+$", timeout=40))
+        evidence.append(uart.expect(r"^NC_MESSAGE chars=\d+ http=200$"))
+        evidence.append(uart.expect(r"^NC_CRON result=sent_by_tool$"))
+        wait_for("the messaged reminder", sent(cloud, "💧 Uống nước"))
+        if sum(m["text"] == "💧 Uống nước" for m in cloud.sent) != 1 or any(
+            m["text"] == "Đã gửi tin." for m in cloud.sent
+        ):
+            raise Fail("the messaged reminder was sent twice, or the final reply too")
         stop(qemu)
 
         # --- boot 2: the same flash ---------------------------------------------------------
@@ -456,16 +627,22 @@ def run(build: Path) -> list[str]:
         evidence.append(restored)
         if int(re.search(r"restored=(\d+)", restored).group(1)) < 10:
             raise Fail("the conversation did not survive the reboot")
-        uart.expect(r"^NC_READY tools=10$")
+        uart.expect(r"^NC_READY tools=12 fallback=1$")
         cloud.message(OWNER, "tôi thích đèn gì?")
         wait_for(
             "the remembered answer after the reboot",
             lambda: sum(m["text"] == "Bạn thích đèn vàng." for m in cloud.sent) == 2,
         )
         cloud.message(OWNER, "tôi vừa nhờ gì?")
-        wait_for("the conversation after the reboot", sent(cloud, "Bạn nhờ tôi nhắc uống thuốc."))
+        wait_for(
+            "the conversation after the reboot",
+            sent(cloud, "Bạn nhờ tôi nhắn uống nước."),
+        )
         cloud.message(OWNER, "lúc đầu tôi nhờ gì?")
-        wait_for("the summary after the reboot", sent(cloud, "Lúc đầu bạn nhờ tôi nhớ đèn vàng."))
+        wait_for(
+            "the summary after the reboot",
+            sent(cloud, "Lúc đầu bạn nhờ tôi nhớ đèn vàng."),
+        )
         handled = [r for r in cloud.llm_requests[before:] if r.get("tools")]
         if len(handled) != 3:
             raise Fail(
@@ -494,6 +671,32 @@ def run(build: Path) -> list[str]:
         cloud.message(OWNER, "đọc 192.168.1.1")
         evidence.append(uart.expect(r"^NC_FETCH refused=private host_len=11$"))
         evidence.append(uart.expect(r"^NC_TOOL name=web_fetch result=error$"))
+
+        # The fallback LLM: the configured URL is down (503); the fallback answers, and
+        # while the first cools down (60 s after one failure) it is not called again.
+        cloud.primary_down = True
+        mark = len(cloud.llm_urls)
+        lights = sum(m["text"] == "Đã bật đèn." for m in cloud.sent)
+        cloud.message(OWNER, "bật đèn lần nữa")
+        evidence.append(
+            uart.expect(r"^NC_LLM_FALLBACK from=primary reason=transient http=503 cooldown_s=60$")
+        )
+        evidence.append(uart.expect(r"^NC_TOOL name=living_light_on status=ALLOW reason=-$"))
+        wait_for(
+            "the light reply through the fallback",
+            lambda: sum(m["text"] == "Đã bật đèn." for m in cloud.sent) == lights + 1,
+        )
+        cloud.message(OWNER, "bật đèn thêm lần nữa")
+        wait_for(
+            "the second light reply",
+            lambda: sum(m["text"] == "Đã bật đèn." for m in cloud.sent) == lights + 2,
+        )
+        urls = cloud.llm_urls[mark:]  # two turns of two rounds, and maybe a summary
+        if urls[0] != "v1" or "v1" in urls[1:] or len(urls) < 5:
+            raise Fail(f"unexpected LLM URLs while the first was down: {urls}")
+        if "NC_LLM_FALLBACK" in uart.text()[uart.pos :]:
+            raise Fail("the cooling URL was tried again")
+        cloud.primary_down = False
 
         # The heartbeat: HEARTBEAT.md gets a task; within a minute it is checked, and
         # HEARTBEAT_OK is not sent to the owner.
@@ -524,7 +727,9 @@ def run(build: Path) -> list[str]:
         "front_door_unlock",
         "list_dir",
         "living_light_on",
+        "message",
         "read_file",
+        "send_file",
         "web_fetch",
         "web_search",
         "write_file",
@@ -534,9 +739,9 @@ def run(build: Path) -> list[str]:
     if cloud.bad_bodies:
         raise Fail(f"{cloud.bad_bodies} request(s) were not valid UTF-8 JSON")
     if cloud.bad_auth:
-        raise Fail("the LLM key was not sent as configured")
+        raise Fail("an LLM key or model was not sent as configured")
     text = "".join(Uart(log).text() for log in logs)
-    for secret in (TOKEN, TOKEN.split(":", 1)[1], KEY):
+    for secret in (TOKEN, TOKEN.split(":", 1)[1], KEY, FALLBACK_KEY):
         if secret in text:
             raise Fail("a secret reached the UART")
     folded = re.findall(r"^NC_SUMMARY folded=(\d+) result=ok$", text, re.MULTILINE)
@@ -553,7 +758,10 @@ def run(build: Path) -> list[str]:
         raise Fail("a press other than the owner's two reached the gate")
     if len(cloud.acks) != 2:
         raise Fail(f"expected the owner's two presses acknowledged, got {len(cloud.acks)}")
-    evidence.append(f"LLM calls: {len(cloud.llm_requests)}; messages sent: {len(cloud.sent)}")
+    evidence.append(
+        f"LLM calls: {len(cloud.llm_requests)}; messages sent: {len(cloud.sent)}; "
+        f"files sent: {len(cloud.files)}"
+    )
     return evidence
 
 

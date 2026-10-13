@@ -2,7 +2,7 @@
  * NeuroClaw-ESP on ESP-IDF (neuroclaw.h): Telegram long polling, the LLM, the
  * workspace (memory, notes, the saved conversation), scheduled jobs and the
  * heartbeat, and the turn loop that sends every device tool call to the gate.
- * Decisions live in nc_core.c, nc_workspace.c and nc_cron.c. Telegram and
+ * Decisions live in nc_core.c, nc_workspace.c, nc_cron.c, nc_web.c and nc_send.c. Telegram and
  * chat-completions clients after zclaw main/telegram.c and main/llm.c
  * (https://github.com/tnm/zclaw, commit e3ad271, MIT, Copyright (c) 2026 Ted
  * Nyman).
@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
 
@@ -24,6 +25,7 @@
 #include "esp_err.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
+#include "esp_random.h"
 #include "esp_timer.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
@@ -31,6 +33,7 @@
 #include "freertos/task.h"
 #include "nc_core.h"
 #include "nc_cron.h"
+#include "nc_send.h"
 #include "nc_web.h"
 #include "nc_utf8.h"
 #include "nc_workspace.h"
@@ -48,6 +51,23 @@ static size_t s_tool_count;
 static int64_t s_owner_chat;
 static const char *s_base_prompt;
 static int64_t s_next_heartbeat_us;
+
+/* The LLM URLs: [0] the configured one, [1] the fallback when there is one. */
+typedef struct {
+    const char *name; /* for the serial log */
+    const char *url;
+    const char *key;
+    const char *model;
+    int failures;     /* in a row, the kind that sends a call to the other URL */
+    int64_t until_us; /* passed over until then */
+} nc_llm_target;
+static nc_llm_target s_llm[2];
+static size_t s_llm_count;
+
+/* This turn: the model sent the owner a message itself (then the final reply
+ * is not sent too, as the Go NeuroClaw), and the last such message. */
+static bool s_turn_messaged;
+static char *s_turn_message;
 
 /* --- HTTP ---------------------------------------------------------------------------------- */
 
@@ -160,7 +180,7 @@ static void telegram_url(char *out, size_t cap, const char *method)
     snprintf(out, cap, "%s/bot%s/%s", s_cfg.telegram_api, s_cfg.telegram_token, method);
 }
 
-static void telegram_post(const char *method, const char *body)
+static int telegram_post(const char *method, const char *body)
 {
     char url[256];
     telegram_url(url, sizeof url, method);
@@ -169,6 +189,62 @@ static void telegram_post(const char *method, const char *body)
     memset(url, 0, sizeof url);
     if (status != 200) printf("NC_TELEGRAM_ERROR method=%s http=%d\n", method, status);
     free(reply);
+    return status;
+}
+
+/* One file to the owner, multipart/form-data streamed from flash in 1 KB
+ * pieces: the file's size is not bounded by RAM. The HTTP status, -1 on a
+ * transport or file error. */
+static int telegram_upload(const nc_file *file, long size)
+{
+    char boundary[40];
+    snprintf(boundary, sizeof boundary, "nc%08" PRIx32 "%08" PRIx32, esp_random(), esp_random());
+    char *head = malloc(512);
+    char *chunk = malloc(1024);
+    char tail[64];
+    const int head_len = head ? nc_multipart_head(head, 512, boundary, s_owner_chat, file) : -1;
+    const int tail_len = nc_multipart_tail(tail, sizeof tail, boundary);
+    FILE *in = fopen(file->path, "rb");
+    int status = -1;
+    if (head_len > 0 && tail_len > 0 && chunk != NULL && in != NULL) {
+        char url[256];
+        telegram_url(url, sizeof url, nc_file_method(file));
+        esp_http_client_config_t config = {
+            .url = url,
+            .method = HTTP_METHOD_POST,
+            .timeout_ms = 60000,
+            .crt_bundle_attach = esp_crt_bundle_attach,
+            .buffer_size = 2048,
+            .buffer_size_tx = 2048,
+        };
+        esp_http_client_handle_t client = esp_http_client_init(&config);
+        memset(url, 0, sizeof url);
+        char type[80];
+        snprintf(type, sizeof type, "multipart/form-data; boundary=%s", boundary);
+        bool ok = client != NULL && esp_http_client_set_header(client, "Content-Type", type) ==
+                                        ESP_OK;
+        ok = ok && esp_http_client_open(client, head_len + (int)size + tail_len) == ESP_OK;
+        ok = ok && esp_http_client_write(client, head, head_len) == head_len;
+        long left = size;
+        while (ok && left > 0) {
+            const size_t n = fread(chunk, 1, left < 1024 ? (size_t)left : 1024u, in);
+            ok = n > 0 && esp_http_client_write(client, chunk, (int)n) == (int)n;
+            left -= (long)n;
+        }
+        ok = ok && esp_http_client_write(client, tail, tail_len) == tail_len;
+        if (ok && esp_http_client_fetch_headers(client) >= 0) {
+            status = esp_http_client_get_status_code(client);
+            esp_http_client_flush_response(client, NULL);
+        }
+        if (client != NULL) {
+            esp_http_client_close(client);
+            esp_http_client_cleanup(client);
+        }
+    }
+    if (in != NULL) fclose(in);
+    free(head);
+    free(chunk);
+    return status;
 }
 
 static void send_text(int64_t chat_id, const char *text, const char *confirmation_id)
@@ -332,7 +408,8 @@ static bool is_builtin(const char *name)
         if (strcmp(name, NC_WS_TOOLS[i]) == 0) return true;
     }
     return strcmp(name, "cron") == 0 || strcmp(name, "web_search") == 0 ||
-           strcmp(name, "web_fetch") == 0;
+           strcmp(name, "web_fetch") == 0 || strcmp(name, "message") == 0 ||
+           strcmp(name, "send_file") == 0;
 }
 
 static char *dup_text(const char *text)
@@ -439,6 +516,70 @@ static char *web_fetch(const cJSON *args)
     return dup_text("error: too many redirects");
 }
 
+/* As the Go message tool: the owner gets it now; the final reply of this turn
+ * is then not sent too. */
+static char *message_tool(const cJSON *args)
+{
+    nc_message message;
+    char err[160];
+    if (nc_message_args(args, s_owner_chat, &message, err, sizeof err) != 0) return dup_text(err);
+    char *body = nc_message_body(s_owner_chat, message.content, message.reply_to);
+    const int status = body ? telegram_post("sendMessage", body) : -1;
+    cJSON_free(body);
+    printf("NC_MESSAGE chars=%u http=%d\n", (unsigned)strlen(message.content), status);
+    if (status != 200) {
+        nc_message_free(&message);
+        snprintf(err, sizeof err, "error: Telegram answered HTTP %d; the owner did not get it",
+                 status);
+        return dup_text(err);
+    }
+    s_turn_messaged = true;
+    free(s_turn_message);
+    s_turn_message = message.content; /* kept for the main conversation */
+    snprintf(err, sizeof err, "Message sent to telegram:%" PRId64, s_owner_chat);
+    return dup_text(err);
+}
+
+/* As the Go send_file: a workspace file to the owner, a photo when it is an
+ * image (a document if Telegram refuses the photo). `*handled` when it went. */
+static char *send_file_tool(const cJSON *args, bool *handled)
+{
+    char err[160];
+    nc_file *file = malloc(sizeof *file);
+    if (file == NULL) return dup_text("error: out of memory");
+    if (nc_send_file_args(s_cfg.workspace, args, file, err, sizeof err) != 0) {
+        free(file);
+        return dup_text(err);
+    }
+    struct stat st;
+    if (stat(file->path, &st) != 0 || !S_ISREG(st.st_mode)) {
+        free(file);
+        return dup_text("error: no such file in the workspace");
+    }
+    if (st.st_size > CONFIG_NEUROCLAW_SEND_FILE_MAX) {
+        snprintf(err, sizeof err, "error: file too large: %ld bytes (max %d)", (long)st.st_size,
+                 CONFIG_NEUROCLAW_SEND_FILE_MAX);
+        free(file);
+        return dup_text(err);
+    }
+    int status = telegram_upload(file, (long)st.st_size);
+    if (status != 200 && file->photo) {
+        file->photo = false;
+        status = telegram_upload(file, (long)st.st_size);
+    }
+    printf("NC_SEND_FILE kind=%s bytes=%ld http=%d\n", file->photo ? "photo" : "document",
+           (long)st.st_size, status);
+    if (status == 200) {
+        *handled = true;
+        snprintf(err, sizeof err, "File \"%s\" sent to user", file->filename);
+    } else {
+        snprintf(err, sizeof err, "error: Telegram answered HTTP %d; the file was not sent",
+                 status);
+    }
+    free(file);
+    return dup_text(err);
+}
+
 static const char CRON_SCHEMA[] =
     "{\"type\":\"object\",\"properties\":{"
     "\"action\":{\"type\":\"string\",\"enum\":[\"add\",\"list\",\"get\",\"update\",\"remove\","
@@ -458,7 +599,7 @@ static void build_tools(void)
     const nc_tool *gate_tools = NULL;
     const size_t gate_count = s_gate.tools(s_gate.ctx, &gate_tools);
     const size_t ws_count = sizeof NC_WS_TOOLS / sizeof NC_WS_TOOLS[0];
-    s_tools = calloc(ws_count + 3 + gate_count, sizeof *s_tools);
+    s_tools = calloc(ws_count + 5 + gate_count, sizeof *s_tools);
     if (s_tools == NULL) return;
     for (size_t i = 0; i < ws_count; i++) {
         s_tools[s_tool_count++] = (nc_tool){NC_WS_TOOLS[i], nc_ws_tool_description(NC_WS_TOOLS[i]),
@@ -482,6 +623,22 @@ static void build_tools(void)
         "Fetch a public web page as text. It cannot reach the home's own network.",
         "{\"type\":\"object\",\"properties\":{\"url\":{\"type\":\"string\"}},"
         "\"required\":[\"url\"]}"};
+    s_tools[s_tool_count++] = (nc_tool){
+        "message",
+        "Send a text message to the owner on Telegram now. Your final reply is then not sent too.",
+        "{\"type\":\"object\",\"properties\":{"
+        "\"content\":{\"type\":\"string\",\"description\":\"The message text\"},"
+        "\"channel\":{\"type\":\"string\",\"description\":\"Optional: telegram\"},"
+        "\"chat_id\":{\"type\":\"string\",\"description\":\"Optional: the owner's chat ID\"},"
+        "\"reply_to_message_id\":{\"type\":\"string\",\"description\":\"Optional: the "
+        "message to reply to\"}},\"required\":[\"content\"]}"};
+    s_tools[s_tool_count++] = (nc_tool){
+        "send_file",
+        "Send a file of the workspace (image, document, etc.) to the owner on Telegram.",
+        "{\"type\":\"object\",\"properties\":{"
+        "\"path\":{\"type\":\"string\",\"description\":\"Path relative to the workspace\"},"
+        "\"filename\":{\"type\":\"string\",\"description\":\"Optional display filename. "
+        "Defaults to the basename of path.\"}},\"required\":[\"path\"]}"};
     for (size_t i = 0; i < gate_count; i++) {
         if (is_builtin(gate_tools[i].name)) {
             printf("NC_TOOL_CONFLICT name=%s\n", gate_tools[i].name);
@@ -491,13 +648,19 @@ static void build_tools(void)
     }
 }
 
-/* One tool call; its result goes into `history`. */
-static void run_tool(cJSON *history, int64_t chat_id, const nc_tool_call *call)
+/* One tool call; its result goes into `history`. True when the call itself
+ * delivered what the owner asked for (send_file), as the Go ResponseHandled. */
+static bool run_tool(cJSON *history, int64_t chat_id, const nc_tool_call *call)
 {
     if (is_builtin(call->name)) {
         cJSON *args = cJSON_Parse(call->arguments);
         char *out = NULL;
-        if (strcmp(call->name, "cron") == 0) {
+        bool handled = false;
+        if (strcmp(call->name, "message") == 0) {
+            out = message_tool(args);
+        } else if (strcmp(call->name, "send_file") == 0) {
+            out = send_file_tool(args, &handled);
+        } else if (strcmp(call->name, "cron") == 0) {
             bool changed = false;
             out = nc_cron_tool(s_jobs, args, now_s(), &changed);
             if (changed) save_jobs();
@@ -513,7 +676,7 @@ static void run_tool(cJSON *history, int64_t chat_id, const nc_tool_call *call)
                out && strncmp(out, "error", 5) == 0 ? "error" : "ok");
         remember_result(history, call->id, out ? out : "error: out of memory");
         free(out);
-        return;
+        return handled;
     }
     nc_tool_result result;
     memset(&result, 0, sizeof result);
@@ -532,6 +695,43 @@ static void run_tool(cJSON *history, int64_t chat_id, const nc_tool_call *call)
     char *content = nc_tool_content(&result);
     remember_result(history, call->id, content ? content : "{\"status\":\"REJECTED\"}");
     free(content);
+    return false;
+}
+
+/* --- the LLM, with its fallback ------------------------------------------------------------ */
+
+/* POST a chat completion. The configured URL first, unless it failed recently
+ * and waits out its cooldown; when one fails in a way the other may not
+ * (nc_llm_failover), the other is tried. The last HTTP status, the reply in
+ * `*out` (malloc'd, may be NULL). */
+static int llm_post(const cJSON *messages, const nc_tool *tools, size_t tool_count, char **out)
+{
+    *out = NULL;
+    const bool primary_cooling = s_llm_count == 2 && esp_timer_get_time() < s_llm[0].until_us;
+    int status = -1;
+    for (size_t k = 0; k < s_llm_count; k++) {
+        nc_llm_target *t = &s_llm[primary_cooling ? 1 - k : k];
+        char *request = nc_llm_request(t->model, messages, tools, tool_count);
+        if (request == NULL) return -1;
+        free(*out);
+        status = http(t->url, t->key, request, 60000, out, NULL, 0);
+        cJSON_free(request);
+        const char *reason = nc_llm_failover(status);
+        if (reason == NULL) {
+            if (status == 200) {
+                t->failures = 0;
+                t->until_us = 0;
+            }
+            return status;
+        }
+        if (s_llm_count < 2) return status;
+        t->failures++;
+        const int64_t cool = nc_llm_cooldown_s(t->failures, strcmp(reason, "billing") == 0);
+        t->until_us = esp_timer_get_time() + cool * 1000000;
+        printf("NC_LLM_FALLBACK from=%s reason=%s http=%d cooldown_s=%" PRId64 "\n", t->name,
+               reason, status, cool);
+    }
+    return status;
 }
 
 /* --- the summary --------------------------------------------------------------------------- */
@@ -552,12 +752,9 @@ static void summarize_overflow(cJSON *history)
     remember(messages, "system", NC_SUMMARY_INSTRUCTION);
     remember(messages, "user", input ? input : "");
     free(input);
-    char *request = nc_llm_request(s_cfg.llm_model, messages, NULL, 0);
-    cJSON_Delete(messages);
     char *body = NULL;
-    const int status =
-        request ? http(s_cfg.llm_url, s_cfg.llm_key, request, 60000, &body, NULL, 0) : -1;
-    cJSON_free(request);
+    const int status = llm_post(messages, NULL, 0, &body);
+    cJSON_Delete(messages);
     nc_llm_reply reply;
     if (status == 200 && nc_llm_parse(body, &reply) == 0 && reply.text != NULL) {
         if (strlen(reply.text) >= NC_BOOTSTRAP_MAX) reply.text[NC_BOOTSTRAP_MAX - 1] = '\0';
@@ -573,20 +770,26 @@ static void summarize_overflow(cJSON *history)
 
 /* --- one turn ------------------------------------------------------------------------------ */
 
+/* As the Go NeuroClaw notes a turn its tools delivered. */
+static const char HANDLED_SUMMARY[] = "Requested output delivered via tool attachment.";
+
 /* The model's final answer for `text` in `history`, malloc'd; NULL when the LLM
- * could not be reached. */
-static char *run_turn(cJSON *history, int64_t chat_id, const char *text)
+ * could not be reached. `*quiet`: the owner already has it (a `message` this
+ * turn, or every tool of the last round delivered, as send_file), so the
+ * answer is not sent again. */
+static char *run_turn(cJSON *history, int64_t chat_id, const char *text, bool *quiet)
 {
+    *quiet = false;
+    s_turn_messaged = false;
+    free(s_turn_message);
+    s_turn_message = NULL;
     remember(history, "user", text);
     if (history == s_history) summarize_overflow(history);
     for (int round = 0; round < CONFIG_NEUROCLAW_MAX_ROUNDS; round++) {
         nc_history_trim(history, CONFIG_NEUROCLAW_HISTORY);
         refresh_system_prompt(history);
-        char *request = nc_llm_request(s_cfg.llm_model, history, s_tools, s_tool_count);
-        if (request == NULL) break;
         char *body = NULL;
-        const int status = http(s_cfg.llm_url, s_cfg.llm_key, request, 60000, &body, NULL, 0);
-        cJSON_free(request);
+        const int status = llm_post(history, s_tools, s_tool_count, &body);
         nc_llm_reply reply;
         const int parsed = status == 200 ? nc_llm_parse(body, &reply) : -1;
         free(body);
@@ -599,19 +802,33 @@ static char *run_turn(cJSON *history, int64_t chat_id, const char *text)
             char *answer = reply.text;
             reply.text = NULL;
             nc_llm_reply_free(&reply);
+            *quiet = s_turn_messaged;
             return answer;
         }
         remember_calls(history, &reply);
-        for (int i = 0; i < reply.call_count; i++) run_tool(history, chat_id, &reply.calls[i]);
+        bool all_handled = reply.call_count > 0;
+        for (int i = 0; i < reply.call_count; i++) {
+            if (!run_tool(history, chat_id, &reply.calls[i])) all_handled = false;
+        }
         nc_llm_reply_free(&reply);
+        if (all_handled) {
+            remember(history, "assistant", HANDLED_SUMMARY);
+            *quiet = true;
+            return strdup(HANDLED_SUMMARY);
+        }
     }
     return strdup("Xin lỗi, tôi chưa làm xong yêu cầu này.");
 }
 
 static void on_text(const nc_event *event)
 {
-    char *answer = run_turn(s_history, event->chat_id, event->text);
-    send_text(event->chat_id, answer ? answer : "Không gọi được LLM, thử lại sau nhé.", NULL);
+    bool quiet = false;
+    char *answer = run_turn(s_history, event->chat_id, event->text, &quiet);
+    if (answer != NULL && quiet) {
+        printf("NC_REPLY skipped=sent_by_tool\n");
+    } else {
+        send_text(event->chat_id, answer ? answer : "Không gọi được LLM, thử lại sau nhé.", NULL);
+    }
     free(answer);
     save_session();
 }
@@ -651,10 +868,20 @@ static void run_background(const char *label, const char *message, bool quiet)
 {
     cJSON *history = cJSON_CreateArray();
     refresh_system_prompt(history);
-    char *answer = run_turn(history, s_owner_chat, message);
+    bool delivered = false;
+    char *answer = run_turn(history, s_owner_chat, message, &delivered);
     cJSON_Delete(history);
     if (answer == NULL) {
         printf("NC_%s result=llm_error\n", label);
+        return;
+    }
+    if (delivered) {
+        /* The model sent it itself: what the owner got goes into the main
+         * conversation, so a follow-up makes sense. */
+        printf("NC_%s result=sent_by_tool\n", label);
+        remember(s_history, "assistant", s_turn_message ? s_turn_message : answer);
+        free(answer);
+        save_session();
         return;
     }
     if (quiet && strstr(answer, "HEARTBEAT_OK") != NULL) {
@@ -705,7 +932,8 @@ static void run_heartbeat(void)
 static void brain_task(void *arg)
 {
     (void)arg;
-    printf("NC_READY tools=%u\n", (unsigned)s_tool_count);
+    printf("NC_READY tools=%u fallback=%u\n", (unsigned)s_tool_count,
+           (unsigned)(s_llm_count - 1));
     fflush(stdout);
     int64_t offset = load_offset();
     nc_event *events = calloc(NC_MAX_EVENTS, sizeof *events);
@@ -800,6 +1028,19 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
     s_cfg.search_url = keep(config->search_url);
     s_cfg.search_key = keep(config->search_key);
     s_cfg.fetch_allow = keep(config->fetch_allow);
+    s_llm[0] = (nc_llm_target){"primary", s_cfg.llm_url, s_cfg.llm_key, s_cfg.llm_model, 0, 0};
+    s_llm_count = 1;
+    if (config->llm_fallback_url != NULL && config->llm_fallback_url[0] != '\0') {
+        s_cfg.llm_fallback_url = keep(config->llm_fallback_url);
+        s_cfg.llm_fallback_key = keep(config->llm_fallback_key);
+        s_cfg.llm_fallback_model =
+            keep(config->llm_fallback_model && config->llm_fallback_model[0]
+                     ? config->llm_fallback_model
+                     : config->llm_model);
+        s_llm[1] = (nc_llm_target){"fallback", s_cfg.llm_fallback_url, s_cfg.llm_fallback_key,
+                                   s_cfg.llm_fallback_model, 0, 0};
+        s_llm_count = 2;
+    }
     if (s_cfg.search_provider[0] != '\0' && strcmp(s_cfg.search_provider, "searxng") != 0 &&
         strcmp(s_cfg.search_provider, "brave") != 0) {
         printf("NC_OFF unknown_search_provider\n");

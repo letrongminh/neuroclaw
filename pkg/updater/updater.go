@@ -55,7 +55,7 @@ func DownloadAndExtractRelease(releaseURL, platform, arch string) (string, error
 
 	// Download asset to temp file. Use the asset URL extension so
 	// extractArchive can detect the archive format (zip/tar.gz/tar).
-	tmpPattern := "picoclaw-release-*"
+	tmpPattern := "neuroclaw-release-*"
 	if u, perr := url.Parse(assetURL); perr == nil {
 		base := filepath.Base(u.Path)
 		lbase := strings.ToLower(base)
@@ -113,7 +113,7 @@ func DownloadAndExtractRelease(releaseURL, platform, arch string) (string, error
 	}
 
 	// Extract
-	destDir, err := os.MkdirTemp("", "picoclaw-extract-*")
+	destDir, err := os.MkdirTemp("", "neuroclaw-extract-*")
 	if err != nil {
 		os.Remove(tmpPath)
 		return "", err
@@ -186,26 +186,34 @@ func UpdateSelf(programName string) error {
 	return UpdateSelfFromRelease("", runtime.GOOS, runtime.GOARCH, programName)
 }
 
+// ReleaseOwner and ReleaseRepo name the GitHub repository whose releases
+// `neuroclaw update` installs. Never upstream PicoClaw: its binary has no
+// NeuroClaw lockdown.
+const (
+	ReleaseOwner = "letrongminh"
+	ReleaseRepo  = "neuroclaw"
+)
+
 // GetReleaseAPIURL returns the GitHub Releases API URL for the given repo owner.
-// Example: owner="sky5454" -> https://api.github.com/repos/sky5454/picoclaw/releases/latest
+// Example: owner="letrongminh" -> https://api.github.com/repos/letrongminh/neuroclaw/releases/latest
 func GetReleaseAPIURL(owner string) string {
-	return fmt.Sprintf("https://api.github.com/repos/%s/picoclaw/releases/latest", owner)
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", owner, ReleaseRepo)
 }
 
-// GetProdReleaseAPIURL returns the production release API URL (upstream).
+// GetProdReleaseAPIURL returns the production release API URL.
 func GetProdReleaseAPIURL() string {
-	return GetReleaseAPIURL("sipeed")
+	return GetReleaseAPIURL(ReleaseOwner)
 }
 
 // GetReleaseTagAPIURL returns the GitHub Releases API URL for a specific tag.
-// Example: owner="sipeed", tag="nightly" -> https://api.github.com/repos/sipeed/picoclaw/releases/tags/nightly
+// Example: owner="letrongminh", tag="v0.1.0" -> https://api.github.com/repos/letrongminh/neuroclaw/releases/tags/v0.1.0
 func GetReleaseTagAPIURL(owner, tag string) string {
-	return fmt.Sprintf("https://api.github.com/repos/%s/picoclaw/releases/tags/%s", owner, tag)
+	return fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/tags/%s", owner, ReleaseRepo, tag)
 }
 
 // GetNightlyReleaseAPIURL returns the nightly release API URL for the production repo.
 func GetNightlyReleaseAPIURL() string {
-	return GetReleaseTagAPIURL("sipeed", "nightly")
+	return GetReleaseTagAPIURL(ReleaseOwner, "nightly")
 }
 
 // findAssetURL resolves the appropriate asset URL for the given release

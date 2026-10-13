@@ -1,5 +1,5 @@
 <div align="center">
-<img src="assets/logo.webp" alt="PicoClaw" width="512">
+<img src="../../assets/logo.webp" alt="PicoClaw" width="512">
 
 <h1>PicoClaw: Ultra-Efficient AI Assistant in Go</h1>
 
@@ -18,11 +18,11 @@
     <a href="https://discord.gg/V4sAZ9XWpN"><img src="https://img.shields.io/badge/Discord-Community-4c60eb?style=flat&logo=discord&logoColor=white" alt="Discord"></a>
   </p>
 
-[中文](docs/project/README.zh.md) | [日本語](docs/project/README.ja.md) | [한국어](docs/project/README.ko.md) | [Português](docs/project/README.pt-br.md) | [Tiếng Việt](docs/project/README.vi.md) | [Français](docs/project/README.fr.md) | [Italiano](docs/project/README.it.md) | [Bahasa Indonesia](docs/project/README.id.md) | [Malay](docs/project/README.ms.md) | **English**
+[中文](../project/README.zh.md) | [日本語](../project/README.ja.md) | [한국어](../project/README.ko.md) | [Português](../project/README.pt-br.md) | [Tiếng Việt](../project/README.vi.md) | [Français](../project/README.fr.md) | [Italiano](../project/README.it.md) | [Bahasa Indonesia](../project/README.id.md) | [Malay](../project/README.ms.md) | **English**
 
 <p>
   <a href="https://picopaw.ai">
-    <img src="assets/picopaw-banner-en.webp" alt="PicoPaw AI: Your AI Desktop Buddy" width="100%">
+    <img src="../../assets/picopaw-banner-en.webp" alt="PicoPaw AI: Your AI Desktop Buddy" width="100%">
   </a>
 </p>
 
@@ -45,12 +45,12 @@
 <tr align="center">
 <td align="center" valign="top">
 <p align="center">
-<img src="assets/picoclaw_mem.gif" width="360" height="240">
+<img src="../../assets/picoclaw_mem.gif" width="360" height="240">
 </p>
 </td>
 <td align="center" valign="top">
 <p align="center">
-<img src="assets/licheervnano.png" width="400" height="240">
+<img src="../../assets/licheervnano.png" width="400" height="240">
 </p>
 </td>
 </tr>
@@ -73,7 +73,7 @@
 
 <p align="center">
   <a href="https://www.aliexpress.com/item/1005006519668532.html">
-    <img src="assets/licheerv-claw.jpg" alt="LicheeRV-Claw on AliExpress" width="520">
+    <img src="../../assets/licheerv-claw.jpg" alt="LicheeRV-Claw on AliExpress" width="520">
   </a>
 </p>
 
@@ -102,7 +102,7 @@
 
 2026-02-26 🎉 PicoClaw hits **20K Stars** in just 17 days! Channel auto-orchestration and capability interfaces are live.
 
-2026-02-16 🎉 PicoClaw breaks 12K Stars in one week! Community maintainer roles and [Roadmap](ROADMAP.md) officially launched.
+2026-02-16 🎉 PicoClaw breaks 12K Stars in one week! Community maintainer roles and [Roadmap](../../ROADMAP.md) officially launched.
 
 2026-02-13 🎉 PicoClaw breaks 5000 Stars in 4 days! Project roadmap and developer groups in progress.
 
@@ -139,14 +139,14 @@ _*Recent builds may use 10-20MB due to rapid PR merges. Resource optimization is
 | **Boot time**</br>(0.8GHz core) | >500s         | >30s                     | **<1s**                                |
 | **Cost**                       | Mac Mini $599 | Most Linux boards ~$50   | **Any Linux board**</br>**from $10**   |
 
-<img src="assets/compare.jpg" alt="PicoClaw" width="512">
+<img src="../../assets/compare.jpg" alt="PicoClaw" width="512">
 
 </div>
 
-> **[Hardware Compatibility List](docs/guides/hardware-compatibility.md)** — See all tested boards, from $5 RISC-V to Raspberry Pi to Android phones. Your board not listed? Submit a PR!
+> **[Hardware Compatibility List](../guides/hardware-compatibility.md)** — See all tested boards, from $5 RISC-V to Raspberry Pi to Android phones. Your board not listed? Submit a PR!
 
 <p align="center">
-<img src="assets/hardware-banner.jpg" alt="PicoClaw Hardware Compatibility" width="100%">
+<img src="../../assets/hardware-banner.jpg" alt="PicoClaw Hardware Compatibility" width="100%">
 </p>
 
 ## 🦾 Demonstration
@@ -160,9 +160,9 @@ _*Recent builds may use 10-20MB due to rapid PR merges. Resource optimization is
 <th><p align="center">Web Search & Learning</p></th>
 </tr>
 <tr>
-<td align="center"><p align="center"><img src="assets/picoclaw_code.gif" width="240" height="180"></p></td>
-<td align="center"><p align="center"><img src="assets/picoclaw_memory.gif" width="240" height="180"></p></td>
-<td align="center"><p align="center"><img src="assets/picoclaw_search.gif" width="240" height="180"></p></td>
+<td align="center"><p align="center"><img src="../../assets/picoclaw_code.gif" width="240" height="180"></p></td>
+<td align="center"><p align="center"><img src="../../assets/picoclaw_memory.gif" width="240" height="180"></p></td>
+<td align="center"><p align="center"><img src="../../assets/picoclaw_search.gif" width="240" height="180"></p></td>
 </tr>
 <tr>
 <td align="center">Develop · Deploy · Scale</td>
@@ -253,7 +253,7 @@ picoclaw-launcher
 > ```
 
 <p align="center">
-<img src="assets/launcher-webui.jpg" alt="WebUI Launcher" width="600">
+<img src="../../assets/launcher-webui.jpg" alt="WebUI Launcher" width="600">
 </p>
 
 **Getting started:**
@@ -307,7 +307,7 @@ macOS may block `picoclaw-launcher` on first launch because it is downloaded fro
 **Step 1:** Double-click `picoclaw-launcher`. You will see a security warning:
 
 <p align="center">
-<img src="assets/macos-gatekeeper-warning.jpg" alt="macOS Gatekeeper warning" width="400">
+<img src="../../assets/macos-gatekeeper-warning.jpg" alt="macOS Gatekeeper warning" width="400">
 </p>
 
 > *"picoclaw-launcher" Not Opened — Apple could not verify "picoclaw-launcher" is free of malware that may harm your Mac or compromise your privacy.*
@@ -315,7 +315,7 @@ macOS may block `picoclaw-launcher` on first launch because it is downloaded fro
 **Step 2:** Open **System Settings** → **Privacy & Security** → scroll down to the **Security** section → click **Open Anyway** → confirm by clicking **Open Anyway** in the dialog.
 
 <p align="center">
-<img src="assets/macos-gatekeeper-allow.jpg" alt="macOS Privacy & Security — Open Anyway" width="600">
+<img src="../../assets/macos-gatekeeper-allow.jpg" alt="macOS Privacy & Security — Open Anyway" width="600">
 </p>
 
 After this one-time step, `picoclaw-launcher` will open normally on subsequent launches.
@@ -333,10 +333,10 @@ Preview:
 
 <table>
   <tr>
-    <td><img src="assets/fui_main_page.jpg" width="200"></td>
-    <td><img src="assets/fui_web_page.jpg" width="200"></td>
-    <td><img src="assets/fui_log_page.jpg" width="200"></td>
-    <td><img src="assets/fui_setting_page.jpg" width="200"></td>
+    <td><img src="../../assets/fui_main_page.jpg" width="200"></td>
+    <td><img src="../../assets/fui_web_page.jpg" width="200"></td>
+    <td><img src="../../assets/fui_log_page.jpg" width="200"></td>
+    <td><img src="../../assets/fui_setting_page.jpg" width="200"></td>
   </tr>
 </table>
 
@@ -344,7 +344,7 @@ Download the APK from [picoclaw.io](https://picoclaw.io/download/) and install d
 
 **Option 2: Termux**
 
-For a full command-line setup checklist, see the [Android Termux Guide](docs/guides/android-termux.md).
+For a full command-line setup checklist, see the [Android Termux Guide](../guides/android-termux.md).
 
 <details>
 <summary><b>Terminal Launcher (for resource-constrained environments)</b></summary>
@@ -362,7 +362,7 @@ termux-chroot ./picoclaw onboard   # chroot provides a standard Linux filesystem
 
 Then follow the Terminal Launcher section below to complete configuration.
 
-<img src="assets/termux.jpg" alt="PicoClaw on Termux" width="512">
+<img src="../../assets/termux.jpg" alt="PicoClaw on Termux" width="512">
 
 For minimal environments where only the `picoclaw` core binary is available (no Launcher UI), you can configure everything via the command line and a JSON config file.
 
@@ -477,7 +477,7 @@ PicoClaw supports 30+ LLM providers through the `model_list` configuration. Use 
 }
 ```
 
-For full provider configuration details, see [Providers & Models](docs/guides/providers.md).
+For full provider configuration details, see [Providers & Models](../guides/providers.md).
 
 </details>
 
@@ -487,30 +487,30 @@ Talk to your PicoClaw through 19+ messaging platforms:
 
 | Channel | Setup | Protocol | Docs |
 |---------|-------|----------|------|
-| **Telegram** | Easy (bot token) | Long polling | [Guide](docs/channels/telegram/README.md) |
-| **Discord** | Easy (bot token + intents) | WebSocket | [Guide](docs/channels/discord/README.md) |
-| **WhatsApp** | Easy (QR scan or bridge URL) | Native / Bridge | [Guide](docs/guides/chat-apps.md#whatsapp) |
-| **Weixin** | Easy (Native QR scan) | iLink API | [Guide](docs/guides/chat-apps.md#weixin) |
-| **QQ** | Easy (AppID + AppSecret) | WebSocket | [Guide](docs/channels/qq/README.md) |
-| **Slack** | Easy (bot + app token) | Socket Mode | [Guide](docs/channels/slack/README.md) |
-| **Matrix** | Medium (homeserver + token) | Sync API | [Guide](docs/channels/matrix/README.md) |
-| **DingTalk** | Medium (client credentials) | Stream | [Guide](docs/channels/dingtalk/README.md) |
-| **Feishu / Lark** | Medium (App ID + Secret) | WebSocket/SDK | [Guide](docs/channels/feishu/README.md) |
-| **LINE** | Medium (credentials + webhook) | Webhook | [Guide](docs/channels/line/README.md) |
-| **WeCom** | Easy (QR login or manual) | WebSocket | [Guide](docs/channels/wecom/README.md) |
-| **VK** | Easy (group token) | Long Poll | [Guide](docs/channels/vk/README.md) |
-| **IRC** | Medium (server + nick) | IRC protocol | [Guide](docs/guides/chat-apps.md#irc) |
-| **OneBot** | Medium (WebSocket URL) | OneBot v11 | [Guide](docs/channels/onebot/README.md) |
-| **MQTT** | Easy (broker + agent_id) | MQTT pub/sub | [Guide](docs/channels/mqtt/README.md) |
-| **MaixCam** | Easy (enable) | TCP socket | [Guide](docs/channels/maixcam/README.md) |
+| **Telegram** | Easy (bot token) | Long polling | [Guide](../channels/telegram/README.md) |
+| **Discord** | Easy (bot token + intents) | WebSocket | [Guide](../channels/discord/README.md) |
+| **WhatsApp** | Easy (QR scan or bridge URL) | Native / Bridge | [Guide](../guides/chat-apps.md#whatsapp) |
+| **Weixin** | Easy (Native QR scan) | iLink API | [Guide](../guides/chat-apps.md#weixin) |
+| **QQ** | Easy (AppID + AppSecret) | WebSocket | [Guide](../channels/qq/README.md) |
+| **Slack** | Easy (bot + app token) | Socket Mode | [Guide](../channels/slack/README.md) |
+| **Matrix** | Medium (homeserver + token) | Sync API | [Guide](../channels/matrix/README.md) |
+| **DingTalk** | Medium (client credentials) | Stream | [Guide](../channels/dingtalk/README.md) |
+| **Feishu / Lark** | Medium (App ID + Secret) | WebSocket/SDK | [Guide](../channels/feishu/README.md) |
+| **LINE** | Medium (credentials + webhook) | Webhook | [Guide](../channels/line/README.md) |
+| **WeCom** | Easy (QR login or manual) | WebSocket | [Guide](../channels/wecom/README.md) |
+| **VK** | Easy (group token) | Long Poll | [Guide](../channels/vk/README.md) |
+| **IRC** | Medium (server + nick) | IRC protocol | [Guide](../guides/chat-apps.md#irc) |
+| **OneBot** | Medium (WebSocket URL) | OneBot v11 | [Guide](../channels/onebot/README.md) |
+| **MQTT** | Easy (broker + agent_id) | MQTT pub/sub | [Guide](../channels/mqtt/README.md) |
+| **MaixCam** | Easy (enable) | TCP socket | [Guide](../channels/maixcam/README.md) |
 | **Pico** | Easy (enable) | Native protocol | Built-in |
 | **Pico Client** | Easy (WebSocket URL) | WebSocket | Built-in |
 
 > All webhook-based channels share a single Gateway HTTP server (`gateway.host`:`gateway.port`, default `127.0.0.1:18790`). Feishu uses WebSocket/SDK mode and does not use the shared HTTP server.
 
-> Log verbosity is controlled by `gateway.log_level` (default: `warn`). Supported values: `debug`, `info`, `warn`, `error`, `fatal`. Can also be set via `PICOCLAW_LOG_LEVEL`. See [Configuration](docs/guides/configuration.md#gateway-log-level) for details.
+> Log verbosity is controlled by `gateway.log_level` (default: `warn`). Supported values: `debug`, `info`, `warn`, `error`, `fatal`. Can also be set via `PICOCLAW_LOG_LEVEL`. See [Configuration](../guides/configuration.md#gateway-log-level) for details.
 
-For detailed channel setup instructions, see [Chat Apps Configuration](docs/guides/chat-apps.md).
+For detailed channel setup instructions, see [Chat Apps Configuration](../guides/chat-apps.md).
 
 ## 🔧 Tools
 
@@ -532,7 +532,7 @@ PicoClaw can search the web to provide up-to-date information. Configure in `too
 
 ### ⚙️ Other Tools
 
-PicoClaw includes built-in tools for file operations, code execution, scheduling, and more. See [Tools Configuration](docs/reference/tools_configuration.md) for details.
+PicoClaw includes built-in tools for file operations, code execution, scheduling, and more. See [Tools Configuration](../reference/tools_configuration.md) for details.
 
 ## 🎯 Skills
 
@@ -569,7 +569,7 @@ Add to your `config.json`:
 
 `tools.skills.github.*` is deprecated. Use `tools.skills.registries.github.*` instead.
 
-For more details, see [Tools Configuration - Skills](docs/reference/tools_configuration.md#skills-tool).
+For more details, see [Tools Configuration - Skills](../reference/tools_configuration.md#skills-tool).
 
 ## 🔗 MCP (Model Context Protocol)
 
@@ -605,9 +605,9 @@ picoclaw mcp test filesystem
 Use `picoclaw mcp edit` when you need advanced fields that are not covered by `picoclaw mcp add`.
 For example, `picoclaw mcp add` supports `--deferred` and `--env-file`, while `picoclaw mcp edit` is still useful for direct JSON editing and uncommon MCP settings.
 
-For full MCP configuration (stdio, SSE, HTTP transports, Tool Discovery), see [Tools Configuration - MCP](docs/reference/tools_configuration.md#mcp-tool). For CLI usage and examples, see [MCP Server CLI](docs/reference/mcp-cli.md).
+For full MCP configuration (stdio, SSE, HTTP transports, Tool Discovery), see [Tools Configuration - MCP](../reference/tools_configuration.md#mcp-tool). For CLI usage and examples, see [MCP Server CLI](../reference/mcp-cli.md).
 
-## <img src="assets/clawdchat-icon.png" width="24" height="24" alt="ClawdChat"> Join the Agent Social Network
+## <img src="../../assets/clawdchat-icon.png" width="24" height="24" alt="ClawdChat"> Join the Agent Social Network
 
 Connect PicoClaw to the Agent Social Network simply by sending a single message via the CLI or any integrated Chat App.
 
@@ -647,7 +647,7 @@ PicoClaw supports scheduled reminders and recurring tasks through the `cron` too
 * **Recurring tasks**: "Remind me every 2 hours" -> triggers every 2 hours
 * **Cron expressions**: "Remind me at 9am daily" -> uses cron expression
 
-See [docs/reference/cron.md](docs/reference/cron.md) for current schedule types, execution modes, command-job gates, and persistence details.
+See [docs/reference/cron.md](../reference/cron.md) for current schedule types, execution modes, command-job gates, and persistence details.
 
 ## 📚 Documentation
 
@@ -655,25 +655,25 @@ For detailed guides beyond this README:
 
 | Topic | Description |
 |-------|-------------|
-| [Docker & Quick Start](docs/guides/docker.md) | Docker Compose setup, Launcher/Agent modes |
-| [Chat Apps](docs/guides/chat-apps.md) | All 18+ channel setup guides |
-| [Configuration](docs/guides/configuration.md) | Environment variables, workspace layout, security sandbox |
-| [MCP Server CLI](docs/reference/mcp-cli.md) | Add, list, test, edit, and remove MCP server entries from the CLI |
-| [Scheduled Tasks and Cron Jobs](docs/reference/cron.md) | Cron schedule types, deliver modes, command gates, job storage |
-| [Providers & Models](docs/guides/providers.md) | 30+ LLM providers, model routing, model_list configuration |
-| [Spawn & Async Tasks](docs/guides/spawn-tasks.md) | Quick tasks, long tasks with spawn, async sub-agent orchestration |
-| [Hooks](docs/architecture/hooks/README.md) | Event-driven hook system: observers, interceptors, approval hooks |
-| [Steering](docs/architecture/steering.md) | Inject messages into a running agent loop between tool calls |
-| [SubTurn](docs/architecture/subturn.md) | Subagent coordination, concurrency control, lifecycle |
-| [Troubleshooting](docs/operations/troubleshooting.md) | Common issues and solutions |
-| [Tools Configuration](docs/reference/tools_configuration.md) | Per-tool enable/disable, exec policies, MCP, Skills |
-| [Hardware Compatibility](docs/guides/hardware-compatibility.md) | Tested boards, minimum requirements |
+| [Docker & Quick Start](../guides/docker.md) | Docker Compose setup, Launcher/Agent modes |
+| [Chat Apps](../guides/chat-apps.md) | All 18+ channel setup guides |
+| [Configuration](../guides/configuration.md) | Environment variables, workspace layout, security sandbox |
+| [MCP Server CLI](../reference/mcp-cli.md) | Add, list, test, edit, and remove MCP server entries from the CLI |
+| [Scheduled Tasks and Cron Jobs](../reference/cron.md) | Cron schedule types, deliver modes, command gates, job storage |
+| [Providers & Models](../guides/providers.md) | 30+ LLM providers, model routing, model_list configuration |
+| [Spawn & Async Tasks](../guides/spawn-tasks.md) | Quick tasks, long tasks with spawn, async sub-agent orchestration |
+| [Hooks](../architecture/hooks/README.md) | Event-driven hook system: observers, interceptors, approval hooks |
+| [Steering](../architecture/steering.md) | Inject messages into a running agent loop between tool calls |
+| [SubTurn](../architecture/subturn.md) | Subagent coordination, concurrency control, lifecycle |
+| [Troubleshooting](../operations/troubleshooting.md) | Common issues and solutions |
+| [Tools Configuration](../reference/tools_configuration.md) | Per-tool enable/disable, exec policies, MCP, Skills |
+| [Hardware Compatibility](../guides/hardware-compatibility.md) | Tested boards, minimum requirements |
 
 ## 🤝 Contribute & Roadmap
 
 PRs welcome! The codebase is intentionally small and readable.
 
-See our [Community Roadmap](https://github.com/letrongminh/neuroclaw/issues/988) and [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+See our [Community Roadmap](https://github.com/letrongminh/neuroclaw/issues/988) and [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines.
 
 Developer group building, join after your first merged PR!
 
@@ -682,4 +682,4 @@ User Groups:
 Discord: <https://discord.gg/V4sAZ9XWpN>
 
 WeChat:
-<img src="assets/wechat.png" alt="WeChat group QR code" width="512">
+<img src="../../assets/wechat.png" alt="WeChat group QR code" width="512">

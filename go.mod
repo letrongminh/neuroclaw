@@ -1,4 +1,4 @@
-module github.com/sipeed/picoclaw
+module github.com/letrongminh/neuroclaw
 
 go 1.25.11
 

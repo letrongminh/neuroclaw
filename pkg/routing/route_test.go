@@ -3,8 +3,8 @@ package routing
 import (
 	"testing"
 
-	"github.com/sipeed/picoclaw/pkg/bus"
-	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/bus"
+	"github.com/letrongminh/neuroclaw/pkg/config"
 )
 
 func testConfig(agents []config.AgentConfig) *config.Config {

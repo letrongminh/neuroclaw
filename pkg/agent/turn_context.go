@@ -1,9 +1,9 @@
 package agent
 
 import (
-	"github.com/sipeed/picoclaw/pkg/bus"
-	"github.com/sipeed/picoclaw/pkg/routing"
-	"github.com/sipeed/picoclaw/pkg/session"
+	"github.com/letrongminh/neuroclaw/pkg/bus"
+	"github.com/letrongminh/neuroclaw/pkg/routing"
+	"github.com/letrongminh/neuroclaw/pkg/session"
 )
 
 // TurnContext carries normalized turn-scoped facts that can be shared across

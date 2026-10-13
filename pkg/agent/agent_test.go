@@ -18,16 +18,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/bus"
-	"github.com/sipeed/picoclaw/pkg/channels"
-	"github.com/sipeed/picoclaw/pkg/config"
-	runtimeevents "github.com/sipeed/picoclaw/pkg/events"
-	"github.com/sipeed/picoclaw/pkg/media"
-	"github.com/sipeed/picoclaw/pkg/providers"
-	"github.com/sipeed/picoclaw/pkg/routing"
-	"github.com/sipeed/picoclaw/pkg/session"
-	"github.com/sipeed/picoclaw/pkg/tools"
-	"github.com/sipeed/picoclaw/pkg/utils"
+	"github.com/letrongminh/neuroclaw/pkg/bus"
+	"github.com/letrongminh/neuroclaw/pkg/channels"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	runtimeevents "github.com/letrongminh/neuroclaw/pkg/events"
+	"github.com/letrongminh/neuroclaw/pkg/media"
+	"github.com/letrongminh/neuroclaw/pkg/providers"
+	"github.com/letrongminh/neuroclaw/pkg/routing"
+	"github.com/letrongminh/neuroclaw/pkg/session"
+	"github.com/letrongminh/neuroclaw/pkg/tools"
+	"github.com/letrongminh/neuroclaw/pkg/utils"
 )
 
 type fakeChannel struct{ id string }

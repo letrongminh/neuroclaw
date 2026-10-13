@@ -57,7 +57,7 @@ func startGatewayLikeProcess(t *testing.T) *exec.Cmd {
 func writeTestPidFile(t *testing.T, data ppid.PidFileData) string {
 	t.Helper()
 
-	path := filepath.Join(globalConfigDir(), ".picoclaw.pid")
+	path := filepath.Join(globalConfigDir(), ".neuroclaw.pid")
 	raw, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		t.Fatalf("marshal pid file: %v", err)

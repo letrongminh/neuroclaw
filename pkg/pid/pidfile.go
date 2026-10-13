@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
 )
 
-const pidFileName = ".picoclaw.pid"
+const pidFileName = ".neuroclaw.pid"
 
 var errInvalidPidFile = errors.New("invalid pid file")
 

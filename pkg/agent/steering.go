@@ -7,12 +7,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sipeed/picoclaw/pkg/bus"
-	runtimeevents "github.com/sipeed/picoclaw/pkg/events"
-	"github.com/sipeed/picoclaw/pkg/logger"
-	"github.com/sipeed/picoclaw/pkg/providers"
-	"github.com/sipeed/picoclaw/pkg/session"
-	"github.com/sipeed/picoclaw/pkg/tools"
+	"github.com/letrongminh/neuroclaw/pkg/bus"
+	runtimeevents "github.com/letrongminh/neuroclaw/pkg/events"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/providers"
+	"github.com/letrongminh/neuroclaw/pkg/session"
+	"github.com/letrongminh/neuroclaw/pkg/tools"
 )
 
 // SteeringMode controls how queued steering messages are dequeued.

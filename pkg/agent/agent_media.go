@@ -16,9 +16,9 @@ import (
 
 	"github.com/h2non/filetype"
 
-	"github.com/sipeed/picoclaw/pkg/logger"
-	"github.com/sipeed/picoclaw/pkg/media"
-	"github.com/sipeed/picoclaw/pkg/providers"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/media"
+	"github.com/letrongminh/neuroclaw/pkg/providers"
 )
 
 // genericPlaceholderRegex matches generic media placeholders emitted by various

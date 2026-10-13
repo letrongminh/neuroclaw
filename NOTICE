@@ -1,0 +1,10 @@
+NeuroClaw
+=========
+
+NeuroClaw is a hard fork of PicoClaw v0.3.1 (https://github.com/sipeed/picoclaw,
+tag v0.3.1, commit 2cf030d2), made for NeuroEdge (https://github.com/letrongminh/neuroedge-init).
+
+PicoClaw is Copyright (c) 2026 PicoClaw contributors and released under the MIT License.
+NeuroClaw keeps that license for all code, original and new; see LICENSE.
+
+What NeuroClaw changes, and why, is in README.md ("What changed from PicoClaw").

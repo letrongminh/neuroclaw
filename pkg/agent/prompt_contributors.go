@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sipeed/picoclaw/pkg/tools"
+	"github.com/letrongminh/neuroclaw/pkg/tools"
 )
 
 type toolDiscoveryPromptContributor struct {

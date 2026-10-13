@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sipeed/picoclaw/pkg"
-	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg"
+	"github.com/letrongminh/neuroclaw/pkg/config"
 )
 
 // MountRule describes a source-to-target mount exposed inside the Linux

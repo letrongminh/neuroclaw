@@ -824,7 +824,7 @@ func TestHandlePicoMediaProxyUsesRawBearerToken(t *testing.T) {
 func TestHandleWebSocketProxyRejectsStalePidDataAfterProcessExit(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("HOME", tmpDir)
-	t.Setenv("PICOCLAW_HOME", filepath.Join(tmpDir, ".picoclaw"))
+	t.Setenv("PICOCLAW_HOME", filepath.Join(tmpDir, ".neuroclaw"))
 
 	configPath := filepath.Join(tmpDir, "config.json")
 	h := NewHandler(configPath)

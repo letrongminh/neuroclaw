@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	anthropicmessages "github.com/sipeed/picoclaw/pkg/providers/anthropic_messages"
-	"github.com/sipeed/picoclaw/pkg/providers/azure"
-	"github.com/sipeed/picoclaw/pkg/providers/bedrock"
-	"github.com/sipeed/picoclaw/pkg/providers/common"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	anthropicmessages "github.com/letrongminh/neuroclaw/pkg/providers/anthropic_messages"
+	"github.com/letrongminh/neuroclaw/pkg/providers/azure"
+	"github.com/letrongminh/neuroclaw/pkg/providers/bedrock"
+	"github.com/letrongminh/neuroclaw/pkg/providers/common"
 )
 
 // createClaudeAuthProvider creates a Claude provider using OAuth credentials from auth store.

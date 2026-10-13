@@ -1,10 +1,10 @@
 package discord
 
 import (
-	"github.com/sipeed/picoclaw/pkg/audio/tts"
-	"github.com/sipeed/picoclaw/pkg/bus"
-	"github.com/sipeed/picoclaw/pkg/channels"
-	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/audio/tts"
+	"github.com/letrongminh/neuroclaw/pkg/bus"
+	"github.com/letrongminh/neuroclaw/pkg/channels"
+	"github.com/letrongminh/neuroclaw/pkg/config"
 )
 
 func init() {

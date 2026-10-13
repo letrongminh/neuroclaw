@@ -3,11 +3,11 @@
 package agent
 
 import (
-	"github.com/sipeed/picoclaw/pkg/audio/asr"
-	"github.com/sipeed/picoclaw/pkg/channels"
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/media"
-	"github.com/sipeed/picoclaw/pkg/tools"
+	"github.com/letrongminh/neuroclaw/pkg/audio/asr"
+	"github.com/letrongminh/neuroclaw/pkg/channels"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/media"
+	"github.com/letrongminh/neuroclaw/pkg/tools"
 )
 
 func (al *AgentLoop) RegisterTool(tool tools.Tool) {

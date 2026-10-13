@@ -2669,7 +2669,7 @@ func TestHandleFetchModels_ModelIndexUsesStoredKey(t *testing.T) {
 
 	tmp := t.TempDir()
 	oldHome := os.Getenv("PICOCLAW_HOME")
-	t.Setenv("PICOCLAW_HOME", filepath.Join(tmp, ".picoclaw"))
+	t.Setenv("PICOCLAW_HOME", filepath.Join(tmp, ".neuroclaw"))
 	defer func() {
 		if oldHome != "" {
 			os.Setenv("PICOCLAW_HOME", oldHome)
@@ -2733,7 +2733,7 @@ func TestHandleFetchModels_ModelIndexProviderMismatchRejectsKey(t *testing.T) {
 	defer srv.Close()
 
 	tmp := t.TempDir()
-	t.Setenv("PICOCLAW_HOME", filepath.Join(tmp, ".picoclaw"))
+	t.Setenv("PICOCLAW_HOME", filepath.Join(tmp, ".neuroclaw"))
 
 	cfg := config.DefaultConfig()
 	cfg.ModelList = []*config.ModelConfig{

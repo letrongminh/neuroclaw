@@ -49,7 +49,7 @@ For documentation contributions, prefer the layout and naming conventions in [`d
    ```
 3. Add the upstream remote:
    ```bash
-   git remote add upstream https://github.com/sipeed/picoclaw.git
+   git remote add upstream https://github.com/letrongminh/neuroclaw.git
    ```
 
 ---

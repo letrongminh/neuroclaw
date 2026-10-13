@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sipeed/picoclaw/pkg/auth"
-	"github.com/sipeed/picoclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/auth"
+	"github.com/letrongminh/neuroclaw/pkg/config"
 )
 
 func TestExtractProtocol(t *testing.T) {

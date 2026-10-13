@@ -19,7 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/sipeed/picoclaw/pkg/providers/protocoltypes"
+	"github.com/letrongminh/neuroclaw/pkg/providers/protocoltypes"
 )
 
 func TestConvertMessages_SystemPrompts(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sipeed/picoclaw/pkg/config"
-	"github.com/sipeed/picoclaw/pkg/migrate/internal"
+	"github.com/letrongminh/neuroclaw/pkg/config"
+	"github.com/letrongminh/neuroclaw/pkg/migrate/internal"
 )
 
 // OpenclawHomeEnvVar is the environment variable that overrides the source
@@ -141,7 +141,7 @@ func findSourceConfig(sourceHome string) (string, error) {
 }
 
 func rewriteWorkspacePath(path string) string {
-	path = strings.Replace(path, ".openclaw", ".picoclaw", 1)
+	path = strings.Replace(path, ".openclaw", ".neuroclaw", 1)
 	return path
 }
 

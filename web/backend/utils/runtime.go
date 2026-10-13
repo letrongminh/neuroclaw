@@ -14,7 +14,7 @@ import (
 )
 
 // GetPicoclawHome returns the picoclaw home directory.
-// Priority: $PICOCLAW_HOME > ~/.picoclaw
+// Priority: $PICOCLAW_HOME > ~/.neuroclaw
 func GetPicoclawHome() string {
 	return config.GetHome()
 }

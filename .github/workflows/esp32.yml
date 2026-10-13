@@ -1,6 +1,7 @@
 name: esp32
-# NeuroClaw-ESP (esp32/): host tests of the decisions, then the QEMU example end
-# to end against a fake Telegram and a fake LLM on the runner.
+# NeuroClaw-ESP (esp32/): host tests of the decisions, the QEMU example end to
+# end against a fake Telegram, LLM and search on the runner, and the Wi-Fi
+# example built for every supported chip.
 on:
   push:
     branches: [main]
@@ -17,8 +18,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: esp32/scripts/host_test.sh
+  targets:
+    name: Builds for ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: espressif/idf:v5.4
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [esp32, esp32s3, esp32c3, esp32c6]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Wi-Fi example
+        run: |
+          . "$IDF_PATH/export.sh"
+          esp32/scripts/build_targets.sh ${{ matrix.target }}
   qemu:
-    name: Telegram, LLM, gate, memory, cron, web, heartbeat — two boots on QEMU
+    name: Telegram, LLM, gate, memory, cron, web, heartbeat, console — two boots on QEMU
     runs-on: ubuntu-latest
     timeout-minutes: 30
     container: espressif/idf:v5.4

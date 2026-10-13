@@ -8,6 +8,8 @@
 #include <string.h>
 
 #include "cJSON.h"
+#include "driver/uart.h"
+#include "esp_console.h"
 #include "esp_littlefs.h"
 #include "esp_eth.h"
 #include "esp_eth_mac_openeth.h"
@@ -126,6 +128,41 @@ static void eth_up(void)
     ESP_LOGI(TAG, "network up");
 }
 
+/* --- the serial console ------------------------------------------------------------------- */
+
+/* NeuroClaw-ESP's commands on UART0, one per line, without a prompt (the test
+ * reads the same UART). A board would rather run esp_console_new_repl_uart. */
+static void console_task(void *arg)
+{
+    (void)arg;
+    const uart_port_t port = CONFIG_ESP_CONSOLE_UART_NUM;
+    ESP_ERROR_CHECK(uart_driver_install(port, 512, 0, 0, NULL, 0));
+    char line[256];
+    size_t n = 0;
+    while (true) {
+        uint8_t ch;
+        if (uart_read_bytes(port, &ch, 1, portMAX_DELAY) != 1) continue;
+        if (ch != '\n' && ch != '\r') {
+            if (n < sizeof line - 1) line[n++] = (char)ch;
+            continue;
+        }
+        if (n == 0) continue;
+        line[n] = '\0';
+        n = 0;
+        int ret = 0;
+        if (esp_console_run(line, &ret) == ESP_ERR_NOT_FOUND) printf("NC_CONSOLE unknown\n");
+        fflush(stdout);
+    }
+}
+
+static void console_up(void)
+{
+    const esp_console_config_t config = ESP_CONSOLE_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_console_init(&config));
+    ESP_ERROR_CHECK(neuroclaw_console_register());
+    xTaskCreate(console_task, "console", 6144, NULL, 3, NULL);
+}
+
 /* The workspace: LittleFS on the `ws` partition, kept across reboots. */
 static void workspace_up(void)
 {
@@ -143,8 +180,11 @@ void app_main(void)
     eth_up();
     char llm_url[128];
     snprintf(llm_url, sizeof llm_url, "%s/v1/chat/completions", CONFIG_EXAMPLE_CLOUD);
+    /* The fallback speaks the Anthropic Messages API: each URL has its own format. */
     char fallback_url[128];
-    snprintf(fallback_url, sizeof fallback_url, "%s/v2/chat/completions", CONFIG_EXAMPLE_CLOUD);
+    snprintf(fallback_url, sizeof fallback_url, "%s/v2/messages", CONFIG_EXAMPLE_CLOUD);
+    char search_url[128];
+    snprintf(search_url, sizeof search_url, "%s/tavily/search", CONFIG_EXAMPLE_CLOUD);
     const nc_config config = {
         .telegram_token = "7000000001:AAQemuOnlyNotARealTokenxxxxxxxxxxxx",
         .owner_id = CONFIG_EXAMPLE_OWNER,
@@ -154,14 +194,17 @@ void app_main(void)
         .llm_model = "fake",
         .workspace = "/ws",
         .tz = "<+07>-7",
-        .search_provider = "searxng",
-        .search_url = CONFIG_EXAMPLE_CLOUD,
+        .search_provider = "tavily",
+        .search_url = search_url,
+        .search_key = "tvly-qemu-not-a-real-key",
         /* Test only: the fake cloud lives on QEMU's host address, which is private. */
         .fetch_allow = "10.0.2.2",
         .llm_fallback_url = fallback_url,
         .llm_fallback_key = "sk-qemu-fallback-not-a-real-key",
         .llm_fallback_model = "fake-backup",
+        .llm_fallback_api = "anthropic",
     };
     const nc_gate gate = {NULL, stub_tools, stub_call, stub_answer};
     ESP_ERROR_CHECK(neuroclaw_start(&config, &gate));
+    console_up();
 }

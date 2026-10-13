@@ -12,8 +12,10 @@ Run it on a Linux board, a server (NeuroEdge Cloud), a Mac or a Windows PC; rele
 platforms as PicoClaw. Install: [docs/guides/install.md](docs/guides/install.md).
 
 Or on the chip itself: [`esp32/`](esp32/) is **NeuroClaw-ESP**, the same brain rewritten in C as an
-ESP-IDF component for one ESP32-S3 — Telegram, the LLM (with a fallback), memory, reminders,
-heartbeat, web search, messages and files to the owner, and the gate on a few-dollar chip, with the
+ESP-IDF component for one ESP32-S3 (it also builds for ESP32, ESP32-C3 and ESP32-C6) — Telegram,
+an OpenAI-compatible or Anthropic LLM (with a fallback and hourly/daily limits), memory, reminders,
+heartbeat, web search, diagnostics, messages and files to the owner, a serial admin console, and
+the gate on a few-dollar chip, with the
 same workspace and tools as here ([what is the same, what is not](esp32/README.md)), labelled
 `risk=single_chip` because brain and gate then share one address space.
 

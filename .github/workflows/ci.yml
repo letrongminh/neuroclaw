@@ -19,6 +19,8 @@ jobs:
           go-version-file: go.mod
       - name: gofmt
         run: test -z "$(gofmt -l pkg cmd)"
+      - name: docs lint
+        run: ./scripts/lint-docs.sh
       - name: vet
         run: go vet -tags "$TAGS" ./...
       - name: test

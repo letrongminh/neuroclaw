@@ -47,7 +47,8 @@ There are also checks in the code, not only in config:
 - The process-hook loader returns nothing.
 - The MCP manager and `neuroclaw mcp add` both refuse `stdio`.
 
-Section 13 lists two places where a program can still be started.
+One exception is kept on purpose: the `claude-cli` and `codex-cli` LLM providers (section 4) start the
+`claude` or `codex` program when you configure one of them as a model.
 
 ## 3. Chat channels
 
@@ -99,7 +100,7 @@ Supported protocols ([`pkg/providers/factory_provider.go`](../../pkg/providers/f
 | OpenAI-compatible | OpenRouter, Groq, DeepSeek, Mistral, Cerebras, NVIDIA, Venice, Moonshot, Qwen, Zhipu, SiliconFlow, Volcengine, ModelScope, Novita, LiteLLM, vLLM, Ollama, LM Studio and more; any other endpoint with `neuroclaw model add` |
 | Anthropic | API key or OAuth / setup token; Messages API variant |
 | Others | Gemini, MiniMax, AWS Bedrock, Antigravity (OAuth), GitHub Copilot |
-| Local CLIs | `claude-cli`, `codex-cli` (start the `claude` / `codex` program; see section 13) |
+| Local CLIs | `claude-cli`, `codex-cli` (start the `claude` / `codex` program; see section 2) |
 
 Models are entries of `model_list`. Each entry has:
 
@@ -259,7 +260,7 @@ tools that NeuroClaw locks.
 | `cron …`, `mcp …`, `skills …` | Sections 6, 8, 9 |
 | `migrate --from openclaw` | Import an OpenClaw config and workspace |
 | `config reset` | Back to defaults |
-| `update` | Self-update; see section 13 |
+| `update` | Replace the binary with the latest release of this repository (`neuroclaw_<os>_<arch>.tar.gz` for linux amd64/arm64 and darwin arm64, checked against `SHA256SUMS`); `-u` for another release URL |
 
 **Configuration:**
 
@@ -309,14 +310,13 @@ Tested on the host (ASan, UBSan) and end to end in QEMU over two boots of one fl
 
 ## 13. Known gaps
 
-What the code does today that does not match the promise or the name. Each needs its own fix:
+What the code does today that does not match the promise or the name. None is being changed for now;
+know them when you configure a brain:
 
 | Gap | Where | Effect |
 |:---|:---|:---|
-| `update` still downloads from upstream `sipeed/picoclaw` | `pkg/updater/updater.go`, `cmd/neuroclaw/main.go` | Do not use `neuroclaw update`: it would replace NeuroClaw with PicoClaw, and the lockdown with it |
-| `claude-cli` and `codex-cli` providers start external programs | `pkg/providers/cli/` | The only way NeuroClaw still runs a program; the lockdown does not cover it. Do not configure them on a home brain |
 | Legacy `tools.skills.github.*` settings re-create an enabled GitHub registry | `pkg/skills/config_bridge.go` | `neuroclaw skills install` could fetch from GitHub despite the lockdown. Not tried; leave those keys empty |
 | Empty `allow_from` lets anyone talk | `pkg/channels/base.go` | Only a warning is logged; set the owner's ID |
 | Shipped skills need locked tools | `workspace/skills` | `github`, `tmux`, `summarize`, `agent-browser` call command-line programs; `hardware` needs `i2c`/`spi`. They show in the catalog but cannot work. `picoclaw-agent` still describes PicoClaw |
-| PicoClaw names left over | help text, banner, MQTT topic `/picoclaw`, Makefile `build-launcher` targets (no `web/` any more) | Cosmetic, except the updater above |
+| PicoClaw names left over | help text, banner, MQTT topic `/picoclaw`, Makefile `build-launcher` targets (no `web/` any more) | Cosmetic |
 | WeCom variables are not prefixed | `pkg/config/config.go` (`BOT_ID`, `SECRET`) | Can collide with other programs' variables |

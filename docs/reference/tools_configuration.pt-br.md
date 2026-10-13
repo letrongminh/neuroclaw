@@ -342,12 +342,46 @@ Cada uma das outras ferramentas tem seu próprio interruptor `enabled` em `tools
 | `message` | ligada | `media_enabled` vem desligado por padrão |
 | `spawn`, `subagent` | ligada | |
 | `spawn_status` | desligada | |
+| `get_diagnostics` | ligada | Veja [Ferramenta de diagnóstico](#diagnostics-tool) |
 | `find_skills`, `install_skill` | ligada | Só têm efeito com `tools.skills.enabled`; reportadas como `risk=skill_install` |
 | `send_tts` | desligada | |
 | `i2c`, `spi`, `serial` | desligada | Ferramentas de hardware; `i2c` e `spi` são só Linux. Reportadas como `risk=hardware_bus` quando ligadas |
 | `media_cleanup` | ligada | `max_age_minutes` 30, `interval_minutes` 5 |
 
 Os rótulos de risco e o que cada um significa estão em [O que o NeuroClaw pode fazer, seção 2](capabilities.md#2-risk-labels).
+
+<a id="diagnostics-tool"></a>
+## Ferramenta de diagnóstico
+
+`get_diagnostics` permite que o modelo informe a saúde do próprio NeuroClaw. É somente leitura, não recebe argumentos e tem o mesmo nome da ferramenta do NeuroClaw-ESP. Ela devolve um JSON com:
+
+- `version`, `git_commit`, `go_version`, `os`, `arch`, `num_cpu`;
+- `started_at` e `uptime_sec` do processo;
+- `memory` (heap do Go e bytes totais segundo o runtime, número de GCs) e `goroutines`;
+- `workspace_disk`: bytes livres e totais do sistema de arquivos onde fica o workspace do agente (Linux, macOS, FreeBSD, Windows; nos demais, uma entrada `error` diz que o valor não é informado);
+- `channels_enabled`: nomes dos canais habilitados;
+- `models`: o modelo padrão, seus fallbacks e `cooldowns`, uma entrada por modelo que falhou desde o início (`available: false` enquanto a cadeia de fallback o pula, `remaining_sec`, `disabled_reason` para erros de cobrança);
+- `llm_budget`: limites, chamadas nesta hora e hoje, horários de reinício (veja [orçamento de chamadas LLM](rate-limiting.md#llm-call-budget), em inglês);
+- `risk_labels`: as capacidades de risco que estão ligadas (como registradas na inicialização);
+- `last_llm_error`: horário e mensagem da última chamada LLM que falhou, ou `null`.
+
+A ferramenta informa apenas nomes, contadores e estados. Chaves de API, tokens e URLs nunca aparecem: no último erro de LLM, credenciais e query strings são removidas de qualquer URL, e o texto ainda passa pela [filtragem de dados sensíveis](../security/sensitive_data_filtering.md).
+
+| Config | Tipo | Padrão | Descrição |
+|--------|------|--------|-----------|
+| `enabled` | bool | true | Registra a ferramenta `get_diagnostics` |
+
+```json
+{
+  "tools": {
+    "get_diagnostics": {
+      "enabled": true
+    }
+  }
+}
+```
+
+Variável de ambiente: `NEUROCLAW_TOOLS_GET_DIAGNOSTICS_ENABLED`.
 
 <a id="mcp-tool"></a>
 ## Ferramenta MCP

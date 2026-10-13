@@ -266,6 +266,21 @@ Telegram forum 消息在默认 `chat` 模式下就会保留 topic 隔离。
 这属于正常兼容行为。
 NeuroClaw 在迁移到新的 opaque canonical key 时，仍会兼容旧的 `agent:...` session key。
 
+<a id="listing-and-clearing-stored-sessions"></a>
+## 查看和清除已保存的 Session
+
+Session 按 agent 保存在 `<workspace>/sessions/` 中（见[能力说明](../reference/capabilities.md#7-memory-conversation-and-identity)，英文）。在终端里：
+
+```bash
+neuroclaw session list                 # key、agent、消息数、最后更新时间
+neuroclaw session clear <key>          # 清除一个 session（key 或它的某个别名）
+neuroclaw session clear --all          # 清除所有已配置 agent 的全部 session
+```
+
+`session clear` 会清空历史和摘要，效果与在聊天中发送 `/clear` 相同；如果 seahorse 上下文管理器有 `sessions/seahorse.db`，也会一并清除其中的该 session。
+
+Gateway 运行时会读取并追加写入同一批文件，从外部清除可能在某个回合中途被覆盖。因此只要 gateway 正在运行（根据它的 PID 文件判断），`session clear` 就会拒绝执行：请先停止 gateway，或在聊天中发送 `/clear`。`session list` 只读，随时都可以运行。
+
 ## 相关文档
 
 - [配置指南](configuration.zh.md)

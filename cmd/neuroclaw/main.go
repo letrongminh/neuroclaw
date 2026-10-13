@@ -107,9 +107,9 @@ Version: %s`, internal.Logo, config.FormatVersion())
 		Use:   "neuroclaw",
 		Short: short,
 		Long:  long,
-		Example: `picoclaw version
-picoclaw onboard
-picoclaw --no-color status`,
+		Example: `neuroclaw version
+neuroclaw onboard
+neuroclaw --no-color status`,
 		SilenceErrors: true,
 		// Avoid plain UsageString() on stderr/stdout when a command fails; cliui
 		// renders matching panels on stderr instead.
@@ -139,7 +139,7 @@ picoclaw --no-color status`,
 		migrate.NewMigrateCommand(),
 		skills.NewSkillsCommand(),
 		model.NewModelCommand(),
-		updater.NewUpdateCommand("picoclaw"),
+		updater.NewUpdateCommand("neuroclaw"),
 		version.NewVersionCommand(),
 	)
 

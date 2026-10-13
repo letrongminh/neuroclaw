@@ -25,11 +25,12 @@ NeuroClaw is a hard fork of [PicoClaw](https://github.com/sipeed/picoclaw) v0.3.
 | Shell and hardware | On by default, off by config | Off, always: `exec`, `i2c`, `spi`, `serial`, `install_skill`, `find_skills`, shell commands in cron, process hooks, USB monitoring, skill registries and stdio MCP servers. Neither `config.json` nor `NEUROCLAW_*` variables can turn them on ([`pkg/config/lockdown.go`](pkg/config/lockdown.go)). |
 | A gate that says "ask the owner" | An ordinary tool result | When a box tool returns `BLOCK` with a `confirmation`, NeuroClaw tells the model plainly that nothing ran, that only the owner at home can approve, and not to retry ([`pkg/tools/integration/neuroedge_result.go`](pkg/tools/integration/neuroedge_result.go)). |
 | Web console | Included | Removed: NeuroClaw is configured by `config.json`. |
+| `update` | Downloads `sipeed/picoclaw` releases | Downloads this repository's releases, checked against `SHA256SUMS` |
 | Names | `picoclaw`, `~/.picoclaw`, `PICOCLAW_*` | `neuroclaw`, `~/.neuroclaw`, `NEUROCLAW_*` |
 
 Everything else is PicoClaw's: chat channels (Telegram and more), LLM providers, memory and
 sessions, cron and heartbeat, web search, messages, built-in skills, subagents. Its guides
-are in [`docs/`](docs/) ([original README](docs/PICOCLAW_README.md)); read `picoclaw` as
+are in [`docs/`](docs/) ([original README](docs/project/PICOCLAW_README.md)); read `picoclaw` as
 `neuroclaw` there.
 
 **[What NeuroClaw can do](docs/reference/capabilities.md)** lists every capability of both brains, what

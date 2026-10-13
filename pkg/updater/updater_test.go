@@ -52,7 +52,7 @@ type testReleasePayload struct {
 	Assets  []testReleaseAsset `json:"assets"`
 }
 
-const testReleaseAPIPath = "/api.github.com/repos/sipeed/picoclaw/releases/latest"
+const testReleaseAPIPath = "/api.github.com/repos/letrongminh/neuroclaw/releases/latest"
 
 // TestDownloadAndExtractRelease_IntegrationLatestRelease downloads the latest
 // public release for a single platform as an opt-in smoke test.
@@ -115,23 +115,23 @@ func TestFindAssetInfo_SelectsPreferredAsset(t *testing.T) {
 				TagName: "v0.2.6",
 				Assets: []testReleaseAsset{
 					{
-						Name:               "picoclaw_Linux_x86_64.zip",
-						BrowserDownloadURL: server.URL + "/assets/picoclaw_Linux_x86_64.zip",
+						Name:               "neuroclaw_Linux_x86_64.zip",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_Linux_x86_64.zip",
 						Digest:             "sha256:" + strings.Repeat("1", 64),
 					},
 					{
-						Name:               "picoclaw_Linux_x86_64.tar.gz",
-						BrowserDownloadURL: server.URL + "/assets/picoclaw_Linux_x86_64.tar.gz",
+						Name:               "neuroclaw_Linux_x86_64.tar.gz",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_Linux_x86_64.tar.gz",
 						Digest:             "sha256:" + strings.Repeat("2", 64),
 					},
 					{
-						Name:               "picoclaw_Windows_x86_64.zip",
-						BrowserDownloadURL: server.URL + "/assets/picoclaw_Windows_x86_64.zip",
+						Name:               "neuroclaw_Windows_x86_64.zip",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_Windows_x86_64.zip",
 						Digest:             "sha256:" + strings.Repeat("3", 64),
 					},
 					{
-						Name:               "picoclaw_Windows_arm64.zip",
-						BrowserDownloadURL: server.URL + "/assets/picoclaw_Windows_arm64.zip",
+						Name:               "neuroclaw_Windows_arm64.zip",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_Windows_arm64.zip",
 						Digest:             "sha256:" + strings.Repeat("4", 64),
 					},
 				},
@@ -155,21 +155,21 @@ func TestFindAssetInfo_SelectsPreferredAsset(t *testing.T) {
 			name:         "linux prefers tar.gz over zip",
 			platform:     "linux",
 			arch:         "amd64",
-			wantURL:      server.URL + "/assets/picoclaw_Linux_x86_64.tar.gz",
+			wantURL:      server.URL + "/assets/neuroclaw_Linux_x86_64.tar.gz",
 			wantChecksum: strings.Repeat("2", 64),
 		},
 		{
 			name:         "windows amd64 matches x86_64 zip",
 			platform:     "windows",
 			arch:         "amd64",
-			wantURL:      server.URL + "/assets/picoclaw_Windows_x86_64.zip",
+			wantURL:      server.URL + "/assets/neuroclaw_Windows_x86_64.zip",
 			wantChecksum: strings.Repeat("3", 64),
 		},
 		{
 			name:         "windows arm64 matches arm64 zip",
 			platform:     "windows",
 			arch:         "arm64",
-			wantURL:      server.URL + "/assets/picoclaw_Windows_arm64.zip",
+			wantURL:      server.URL + "/assets/neuroclaw_Windows_arm64.zip",
 			wantChecksum: strings.Repeat("4", 64),
 		},
 	}
@@ -207,8 +207,8 @@ func TestFindAssetInfo_UsesChecksumAssetWhenDigestMissing(t *testing.T) {
 				TagName: "v0.2.6",
 				Assets: []testReleaseAsset{
 					{
-						Name:               "picoclaw_Windows_x86_64.zip",
-						BrowserDownloadURL: server.URL + "/assets/picoclaw_Windows_x86_64.zip",
+						Name:               "neuroclaw_Windows_x86_64.zip",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_Windows_x86_64.zip",
 					},
 					{
 						Name:               "checksums.txt",
@@ -217,8 +217,8 @@ func TestFindAssetInfo_UsesChecksumAssetWhenDigestMissing(t *testing.T) {
 				},
 			})
 		case "/assets/checksums.txt":
-			_, _ = io.WriteString(w, checksum+"  picoclaw_Windows_x86_64.zip\n")
-		case "/assets/picoclaw_Windows_x86_64.zip":
+			_, _ = io.WriteString(w, checksum+"  neuroclaw_Windows_x86_64.zip\n")
+		case "/assets/neuroclaw_Windows_x86_64.zip":
 			w.WriteHeader(http.StatusInternalServerError)
 		default:
 			http.NotFound(w, r)
@@ -232,8 +232,8 @@ func TestFindAssetInfo_UsesChecksumAssetWhenDigestMissing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("findAssetInfo returned error: %v", err)
 	}
-	if gotURL != server.URL+"/assets/picoclaw_Windows_x86_64.zip" {
-		t.Fatalf("assetURL = %q, want %q", gotURL, server.URL+"/assets/picoclaw_Windows_x86_64.zip")
+	if gotURL != server.URL+"/assets/neuroclaw_Windows_x86_64.zip" {
+		t.Fatalf("assetURL = %q, want %q", gotURL, server.URL+"/assets/neuroclaw_Windows_x86_64.zip")
 	}
 	if gotChecksum != checksum {
 		t.Fatalf("checksum = %q, want %q", gotChecksum, checksum)
@@ -242,7 +242,7 @@ func TestFindAssetInfo_UsesChecksumAssetWhenDigestMissing(t *testing.T) {
 
 func TestDownloadAndExtractRelease_ExtractsTarGz(t *testing.T) {
 	tarGzContent := buildTestTarGz(t, map[string]string{
-		"picoclaw_Linux_x86_64/picoclaw": "test linux binary payload",
+		"neuroclaw_Linux_x86_64/neuroclaw": "test linux binary payload",
 	})
 	sum := sha256.Sum256(tarGzContent)
 	checksum := hex.EncodeToString(sum[:])
@@ -255,13 +255,13 @@ func TestDownloadAndExtractRelease_ExtractsTarGz(t *testing.T) {
 				TagName: "v0.2.6",
 				Assets: []testReleaseAsset{
 					{
-						Name:               "picoclaw_Linux_x86_64.tar.gz",
-						BrowserDownloadURL: server.URL + "/assets/picoclaw_Linux_x86_64.tar.gz",
+						Name:               "neuroclaw_Linux_x86_64.tar.gz",
+						BrowserDownloadURL: server.URL + "/assets/neuroclaw_Linux_x86_64.tar.gz",
 						Digest:             "sha256:" + checksum,
 					},
 				},
 			})
-		case "/assets/picoclaw_Linux_x86_64.tar.gz":
+		case "/assets/neuroclaw_Linux_x86_64.tar.gz":
 			w.Header().Set("Content-Type", "application/gzip")
 			_, _ = w.Write(tarGzContent)
 		default:
@@ -278,7 +278,7 @@ func TestDownloadAndExtractRelease_ExtractsTarGz(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	binPath, err := findBinaryInDir(dir, "picoclaw")
+	binPath, err := findBinaryInDir(dir, "neuroclaw")
 	if err != nil {
 		t.Fatalf("findBinaryInDir returned error: %v", err)
 	}
@@ -292,9 +292,66 @@ func TestDownloadAndExtractRelease_ExtractsTarGz(t *testing.T) {
 	}
 }
 
+func TestProdReleaseIsNeuroClaw(t *testing.T) {
+	want := "https://api.github.com/repos/letrongminh/neuroclaw/releases/latest"
+	if got := GetProdReleaseAPIURL(); got != want {
+		t.Fatalf("GetProdReleaseAPIURL() = %q, want %q", got, want)
+	}
+}
+
+// The assets of a NeuroClaw release, as .github/workflows/release.yml names
+// them: neuroclaw_<goos>_<goarch>.tar.gz and a SHA256SUMS file, no API digest.
+func TestDownloadAndExtractRelease_NeuroClawReleaseAssets(t *testing.T) {
+	linux := buildTestTarGz(t, map[string]string{
+		"neuroclaw_linux_amd64/neuroclaw": "test linux binary payload",
+	})
+	sum := sha256.Sum256(linux)
+	sums := hex.EncodeToString(sum[:]) + "  neuroclaw_linux_amd64.tar.gz\n" +
+		strings.Repeat("ab", 32) + "  neuroclaw_linux_arm64.tar.gz\n"
+
+	var server *httptest.Server
+	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case testReleaseAPIPath:
+			writeReleasePayload(w, testReleasePayload{
+				TagName: "v0.1.0",
+				Assets: []testReleaseAsset{
+					{Name: "neuroclaw_darwin_arm64.tar.gz", BrowserDownloadURL: server.URL + "/assets/darwin"},
+					{Name: "neuroclaw_linux_amd64.tar.gz", BrowserDownloadURL: server.URL + "/assets/neuroclaw_linux_amd64.tar.gz"},
+					{Name: "neuroclaw_linux_arm64.tar.gz", BrowserDownloadURL: server.URL + "/assets/arm64"},
+					{Name: "SHA256SUMS", BrowserDownloadURL: server.URL + "/assets/SHA256SUMS"},
+				},
+			})
+		case "/assets/neuroclaw_linux_amd64.tar.gz":
+			_, _ = w.Write(linux)
+		case "/assets/SHA256SUMS":
+			_, _ = io.WriteString(w, sums)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	withTestHTTPClient(t, server.Client())
+
+	dir, err := DownloadAndExtractRelease(server.URL+testReleaseAPIPath, "linux", "amd64")
+	if err != nil {
+		t.Fatalf("DownloadAndExtractRelease returned error: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	binPath, err := findBinaryInDir(dir, "neuroclaw")
+	if err != nil {
+		t.Fatalf("findBinaryInDir returned error: %v", err)
+	}
+	if bs, _ := os.ReadFile(binPath); string(bs) != "test linux binary payload" {
+		t.Fatalf("extracted content = %q", bs)
+	}
+}
+
 func TestDownloadAndExtractRelease_RetriesTransientAssetFailure(t *testing.T) {
 	zipContent := buildTestZip(t, map[string]string{
-		"picoclaw.exe": "test windows binary payload",
+		"neuroclaw.exe": "test windows binary payload",
 	})
 	sum := sha256.Sum256(zipContent)
 	checksum := hex.EncodeToString(sum[:])
@@ -303,15 +360,15 @@ func TestDownloadAndExtractRelease_RetriesTransientAssetFailure(t *testing.T) {
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case "/api.github.com/repos/sipeed/picoclaw/releases/latest":
+		case "/api.github.com/repos/letrongminh/neuroclaw/releases/latest":
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprintf(
 				w,
-				`{"tag_name":"v0.2.6","assets":[{"name":"picoclaw_Windows_x86_64.zip","browser_download_url":%q,"digest":"sha256:%s"}]}`,
-				server.URL+"/assets/picoclaw_Windows_x86_64.zip",
+				`{"tag_name":"v0.2.6","assets":[{"name":"neuroclaw_Windows_x86_64.zip","browser_download_url":%q,"digest":"sha256:%s"}]}`,
+				server.URL+"/assets/neuroclaw_Windows_x86_64.zip",
 				checksum,
 			)
-		case "/assets/picoclaw_Windows_x86_64.zip":
+		case "/assets/neuroclaw_Windows_x86_64.zip":
 			assetAttempts++
 			if assetAttempts == 1 {
 				w.WriteHeader(http.StatusGatewayTimeout)
@@ -328,7 +385,7 @@ func TestDownloadAndExtractRelease_RetriesTransientAssetFailure(t *testing.T) {
 	withTestHTTPClient(t, server.Client())
 
 	dir, err := DownloadAndExtractRelease(
-		server.URL+"/api.github.com/repos/sipeed/picoclaw/releases/latest",
+		server.URL+"/api.github.com/repos/letrongminh/neuroclaw/releases/latest",
 		"windows",
 		"amd64",
 	)
@@ -341,7 +398,7 @@ func TestDownloadAndExtractRelease_RetriesTransientAssetFailure(t *testing.T) {
 		t.Fatalf("asset attempts = %d, want 2", assetAttempts)
 	}
 
-	bs, err := os.ReadFile(filepath.Join(dir, "picoclaw.exe"))
+	bs, err := os.ReadFile(filepath.Join(dir, "neuroclaw.exe"))
 	if err != nil {
 		t.Fatalf("ReadFile extracted asset: %v", err)
 	}

@@ -1,8 +1,8 @@
 > Retour au [README](../project/README.fr.md)
 
-# 🖥️ PicoClaw Liste de compatibilité matérielle
+# 🖥️ NeuroClaw Liste de compatibilité matérielle
 
-PicoClaw fonctionne sur pratiquement n'importe quel appareil Linux. Cette page répertorie les puces, produits et cartes de développement vérifiés.
+NeuroClaw fonctionne sur pratiquement n'importe quel appareil Linux. Cette page répertorie les puces, produits et cartes de développement vérifiés.
 
 **Votre matériel n'est pas listé ?** Soumettez une PR pour l'ajouter ! Les fabricants de matériel sont invités à contribuer et à co-promouvoir.
 
@@ -59,7 +59,7 @@ PicoClaw fonctionne sur pratiquement n'importe quel appareil Linux. Cette page r
 
 ## 2. Produits vérifiés (par date de sortie)
 
-Produits grand public, routeurs et appareils industriels testés avec PicoClaw.
+Produits grand public, routeurs et appareils industriels testés avec NeuroClaw.
 
 | Année | Produit | Arch | SoC | RAM | Catégorie |
 |-------|---------|------|-----|-----|-----------|
@@ -97,9 +97,9 @@ Produits grand public, routeurs et appareils industriels testés avec PicoClaw.
 
 ### Téléphones Android (via Termux)
 
-Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](https://github.com/termux/termux-app), utilisez `proot` pour exécuter PicoClaw.
+Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](https://github.com/termux/termux-app) et exécutez NeuroClaw via `termux-chroot` (de `proot`).
 
-> Voir [README : Exécuter sur d'anciens téléphones Android](../project/README.fr.md#-run-on-old-android-phones) pour les instructions de configuration.
+> Voir le [guide Android Termux](android-termux.md) pour les instructions de configuration.
 
 ### Bureau / Serveur / Cloud
 
@@ -108,7 +108,7 @@ Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](htt
 | x86_64 Linux | Binaire natif, aucune dépendance |
 | x86_64 Windows | Binaire natif |
 | macOS (Intel / Apple Silicon) | Binaire natif |
-| Docker (any platform) | `docker compose` en une ligne, voir [Guide Docker](docker.md) |
+| Docker | `ghcr.io/letrongminh/neuroclaw` pour linux/amd64, arm64 et riscv64 ; voir le [Guide Docker](docker.fr.md) |
 | OpenWrt routers | Builds MIPS/ARM, nécessite >32 Mo de RAM libre |
 | FreeBSD / NetBSD | Builds x86_64 et arm64 disponibles |
 
@@ -130,17 +130,17 @@ Tout téléphone Android ARM64 (2015+) avec 1 Go+ de RAM. Installez [Termux](htt
 
 ```bash
 # 1. Télécharger pour votre architecture
-wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
-tar xzf picoclaw_Linux_arm64.tar.gz
+wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
+tar xzf neuroclaw_Linux_arm64.tar.gz
 
 # 2. Initialiser
-./picoclaw onboard
+./neuroclaw onboard
 
 # 3. Tester
-./picoclaw agent -m "Hello, what board am I running on?"
+./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-Builds disponibles : `linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+Les archives de release sont nommées `neuroclaw_<OS>_<arch>` : `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`, `Linux_armv6`, `Linux_riscv64`, `Linux_loong64`, `Linux_mipsle` (soft-float), `Linux_s390x`. Voir le [guide d'installation](install.fr.md) pour toutes les plateformes.
 
 ### Ajouter votre matériel
 

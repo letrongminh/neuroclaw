@@ -2,7 +2,7 @@
 
 # Slack
 
-Slack là nền tảng nhắn tin tức thì hàng đầu dành cho doanh nghiệp. PicoClaw sử dụng Socket Mode của Slack để giao tiếp hai chiều theo thời gian thực, không cần cấu hình endpoint webhook công khai.
+Slack là nền tảng nhắn tin tức thì hàng đầu dành cho doanh nghiệp. NeuroClaw sử dụng Socket Mode của Slack để giao tiếp hai chiều theo thời gian thực, không cần cấu hình endpoint webhook công khai.
 
 ## Cấu hình
 
@@ -25,7 +25,7 @@ Slack là nền tảng nhắn tin tức thì hàng đầu dành cho doanh nghi�
 | enabled    | bool   | Có       | Có bật kênh Slack hay không                                                  |
 | bot_token  | string | Có       | Bot User OAuth Token của Slack bot (bắt đầu bằng xoxb-)                      |
 | app_token  | string | Có       | App Level Token Socket Mode của ứng dụng Slack (bắt đầu bằng xapp-)          |
-| allow_from | array  | Không    | Danh sách trắng ID người dùng; để trống cho phép tất cả                      |
+| allow_from | array  | Không    | Danh sách trắng ID người dùng; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 
 ## Quy trình thiết lập
 

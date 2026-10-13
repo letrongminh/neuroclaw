@@ -1,8 +1,8 @@
 > 返回 [README](../project/README.zh.md)
 
-# 🖥️ PicoClaw 硬件兼容性列表
+# 🖥️ NeuroClaw 硬件兼容性列表
 
-PicoClaw 几乎可以在任何 Linux 设备上运行。本页面记录了已验证的芯片、产品和开发板。
+NeuroClaw 几乎可以在任何 Linux 设备上运行。本页面记录了已验证的芯片、产品和开发板。
 
 **你的硬件不在列表中？** 提交 PR 来添加它！欢迎硬件厂商贡献和联合推广。
 
@@ -59,7 +59,7 @@ PicoClaw 几乎可以在任何 Linux 设备上运行。本页面记录了已验�
 
 ## 2. 已验证的产品（按发布日期排列）
 
-已通过 PicoClaw 测试的消费产品、路由器和工业设备。
+已通过 NeuroClaw 测试的消费产品、路由器和工业设备。
 
 | 年份 | 产品 | 架构 | SoC | 内存 | 类别 |
 |------|------|------|-----|------|------|
@@ -97,9 +97,9 @@ PicoClaw 几乎可以在任何 Linux 设备上运行。本页面记录了已验�
 
 ### Android 手机（通过 Termux）
 
-任何 ARM64 Android 手机（2015 年以后），1GB 以上内存。安装 [Termux](https://github.com/termux/termux-app)，使用 `proot` 运行 PicoClaw。
+任何 ARM64 Android 手机（2015 年以后），1GB 以上内存。安装 [Termux](https://github.com/termux/termux-app)，通过 `termux-chroot`（来自 `proot`）运行 NeuroClaw。
 
-> 参见 [README：在旧 Android 手机上运行](../project/README.zh.md#-run-on-old-android-phones) 获取设置说明。
+> 设置说明参见 [Android Termux 指南](android-termux.md)（英文）。
 
 ### 桌面 / 服务器 / 云
 
@@ -108,7 +108,7 @@ PicoClaw 几乎可以在任何 Linux 设备上运行。本页面记录了已验�
 | x86_64 Linux | 原生二进制文件，无依赖 |
 | x86_64 Windows | 原生二进制文件 |
 | macOS (Intel / Apple Silicon) | 原生二进制文件 |
-| Docker (any platform) | `docker compose` 一行命令，参见 [Docker 指南](docker.md) |
+| Docker | `ghcr.io/letrongminh/neuroclaw`，支持 linux/amd64、arm64 和 riscv64；参见 [Docker 指南](docker.md) |
 | OpenWrt routers | MIPS/ARM 构建，需要 >32MB 可用内存 |
 | FreeBSD / NetBSD | 提供 x86_64 和 arm64 构建 |
 
@@ -130,17 +130,17 @@ PicoClaw 几乎可以在任何 Linux 设备上运行。本页面记录了已验�
 
 ```bash
 # 1. 下载适合你架构的版本
-wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
-tar xzf picoclaw_Linux_arm64.tar.gz
+wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
+tar xzf neuroclaw_Linux_arm64.tar.gz
 
 # 2. 初始化
-./picoclaw onboard
+./neuroclaw onboard
 
 # 3. 测试
-./picoclaw agent -m "Hello, what board am I running on?"
+./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-可用构建版本：`linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+发布压缩包命名为 `neuroclaw_<OS>_<arch>`：`Linux_x86_64`、`Linux_arm64`、`Linux_armv7`、`Linux_armv6`、`Linux_riscv64`、`Linux_loong64`、`Linux_mipsle`（软浮点）、`Linux_s390x`。各平台的安装方式见[安装指南](install.md)。
 
 ### 添加你的硬件
 

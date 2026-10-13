@@ -273,18 +273,23 @@ function isMissingRequiredValue(value: unknown): boolean {
   return false
 }
 
-function getChannelDocSlug(channelName: string): string {
-  return channelName.replaceAll("_", "-")
-}
-
-const CHANNELS_WITHOUT_DOCS = new Set([
-  "pico",
-  "wecom",
+// Channels with a page under docs/channels/<name>/; every one but vk has a
+// README.zh.md too.
+const CHANNEL_DOCS = new Set([
+  "dingtalk",
+  "discord",
+  "feishu",
+  "line",
+  "maixcam",
   "matrix",
-  "irc",
-  "whatsapp",
-  "whatsapp_native",
   "mqtt",
+  "onebot",
+  "qq",
+  "slack",
+  "telegram",
+  "vk",
+  "wecom",
+  "weixin",
 ])
 
 export function ChannelConfigPage({ channelName }: ChannelConfigPageProps) {
@@ -399,16 +404,18 @@ export function ChannelConfigPage({ channelName }: ChannelConfigPageProps) {
 
   const docsUrl = useMemo(() => {
     if (!channel) return ""
-    if (CHANNELS_WITHOUT_DOCS.has(channel.name)) return ""
+    if (!CHANNEL_DOCS.has(channel.name)) return ""
     const language = (
       i18n.resolvedLanguage ??
       i18n.language ??
       ""
     ).toLowerCase()
-    const base = language.startsWith("zh")
-      ? "https://docs.picoclaw.io/zh-Hans/docs/channels"
-      : "https://docs.picoclaw.io/docs/channels"
-    return `${base}/${getChannelDocSlug(channel.name)}`
+    const base = "https://github.com/letrongminh/neuroclaw/blob/main/docs/channels"
+    const readme =
+      language.startsWith("zh") && channel.name !== "vk"
+        ? "README.zh.md"
+        : "README.md"
+    return `${base}/${channel.name}/${readme}`
   }, [channel, i18n.language, i18n.resolvedLanguage])
 
   const channelDisplayName = useMemo(() => {

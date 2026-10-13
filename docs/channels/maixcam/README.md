@@ -24,13 +24,13 @@ MaixCam is a dedicated channel for connecting to Sipeed MaixCAM and MaixCAM2 AI 
 | ---------- | ------ | -------- | ---------------------------------------------------------------- |
 | enabled    | bool   | Yes      | Whether to enable the MaixCam channel                            |
 | host       | string | Yes      | TCP server listening address                                     |
-| port       | int    | Yes      | TCP server listening port                                        |
-| allow_from | array  | No       | Allowlist of device IDs; empty means all devices are allowed     |
+| port       | int    | Yes      | TCP server listening port (default `18790`, the same as the gateway's HTTP port; set a different one if both run on the same host) |
+| allow_from | array  | No       | Allowlist of device IDs; empty lets anyone in (the gateway logs a warning); set it, or use `["*"]` to allow everyone on purpose     |
 
 ## Use Cases
 
-The MaixCam channel enables PicoClaw to act as an AI backend for edge devices:
+The MaixCam channel enables NeuroClaw to act as an AI backend for edge devices:
 
-- **Smart Surveillance**: MaixCAM sends image frames; PicoClaw analyzes them using vision models
-- **IoT Control**: Devices send sensor data; PicoClaw coordinates responses
-- **Offline AI**: Deploy PicoClaw on a local network for low-latency inference
+- **Smart Surveillance**: MaixCAM sends image frames; NeuroClaw analyzes them using vision models
+- **IoT Control**: Devices send sensor data; NeuroClaw coordinates responses
+- **Offline AI**: Deploy NeuroClaw on a local network for low-latency inference

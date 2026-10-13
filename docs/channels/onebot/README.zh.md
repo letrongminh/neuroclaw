@@ -25,7 +25,7 @@ OneBot 是一个面向 QQ 机器人的开放协议标准，为多种 QQ 机器�
 | enabled      | bool   | 是   | 是否启用 OneBot 频道             |
 | ws_url       | string | 是   | OneBot 服务器的 WebSocket URL    |
 | access_token | string | 否   | 连接 OneBot 服务器的访问令牌     |
-| allow_from   | array  | 否   | 用户ID白名单，空表示允许所有用户 |
+| allow_from   | array  | 否   | 用户ID白名单；为空时任何人都能使用（网关会记录警告）；请设置，或用 `["*"]` 明确允许所有人 |
 
 ## 设置流程
 

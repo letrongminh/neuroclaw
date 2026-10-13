@@ -1,8 +1,8 @@
 > Quay lại [README](../project/README.vi.md)
 
-# 🖥️ PicoClaw Danh sách tương thích phần cứng
+# 🖥️ NeuroClaw Danh sách tương thích phần cứng
 
-PicoClaw chạy được trên hầu hết mọi thiết bị Linux. Trang này ghi nhận các chip, sản phẩm và bo mạch phát triển đã được xác minh.
+NeuroClaw chạy được trên hầu hết mọi thiết bị Linux. Trang này ghi nhận các chip, sản phẩm và bo mạch phát triển đã được xác minh.
 
 **Phần cứng của bạn chưa có trong danh sách?** Gửi PR để thêm vào! Các nhà sản xuất phần cứng được hoan nghênh đóng góp và đồng quảng bá.
 
@@ -59,7 +59,7 @@ PicoClaw chạy được trên hầu hết mọi thiết bị Linux. Trang này 
 
 ## 2. Sản phẩm đã xác minh (theo ngày phát hành)
 
-Sản phẩm tiêu dùng, router và thiết bị công nghiệp đã được kiểm thử với PicoClaw.
+Sản phẩm tiêu dùng, router và thiết bị công nghiệp đã được kiểm thử với NeuroClaw.
 
 | Năm | Sản phẩm | Kiến trúc | SoC | RAM | Danh mục |
 |-----|----------|-----------|-----|-----|----------|
@@ -97,9 +97,9 @@ Sản phẩm tiêu dùng, router và thiết bị công nghiệp đã được k
 
 ### Điện thoại Android (qua Termux)
 
-Bất kỳ điện thoại Android ARM64 nào (2015+) với 1GB+ RAM. Cài đặt [Termux](https://github.com/termux/termux-app), sử dụng `proot` để chạy PicoClaw.
+Bất kỳ điện thoại Android ARM64 nào (2015+) với 1GB+ RAM. Cài đặt [Termux](https://github.com/termux/termux-app), chạy NeuroClaw qua `termux-chroot` (thuộc `proot`).
 
-> Xem [README: Chạy trên điện thoại Android cũ](../project/README.vi.md#-run-on-old-android-phones) để biết hướng dẫn cài đặt.
+> Xem [Hướng dẫn Android Termux](android-termux.md) để biết hướng dẫn cài đặt.
 
 ### Desktop / Máy chủ / Đám mây
 
@@ -108,7 +108,7 @@ Bất kỳ điện thoại Android ARM64 nào (2015+) với 1GB+ RAM. Cài đặ
 | x86_64 Linux | Binary gốc, không phụ thuộc |
 | x86_64 Windows | Binary gốc |
 | macOS (Intel / Apple Silicon) | Binary gốc |
-| Docker (any platform) | `docker compose` một dòng lệnh, xem [Hướng dẫn Docker](docker.md) |
+| Docker | `ghcr.io/letrongminh/neuroclaw` cho linux/amd64, arm64 và riscv64; xem [Hướng dẫn Docker](docker.vi.md) |
 | OpenWrt routers | Bản dựng MIPS/ARM, yêu cầu >32MB RAM trống |
 | FreeBSD / NetBSD | Có bản dựng x86_64 và arm64 |
 
@@ -130,17 +130,17 @@ Bất kỳ điện thoại Android ARM64 nào (2015+) với 1GB+ RAM. Cài đặ
 
 ```bash
 # 1. Tải xuống cho kiến trúc của bạn
-wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
-tar xzf picoclaw_Linux_arm64.tar.gz
+wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
+tar xzf neuroclaw_Linux_arm64.tar.gz
 
 # 2. Khởi tạo
-./picoclaw onboard
+./neuroclaw onboard
 
 # 3. Kiểm thử
-./picoclaw agent -m "Hello, what board am I running on?"
+./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-Các bản dựng có sẵn: `linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+Các bản nén phát hành được đặt tên `neuroclaw_<OS>_<arch>`: `Linux_x86_64`, `Linux_arm64`, `Linux_armv7`, `Linux_armv6`, `Linux_riscv64`, `Linux_loong64`, `Linux_mipsle` (soft-float), `Linux_s390x`. Xem [hướng dẫn cài đặt](install.vi.md) cho mọi nền tảng.
 
 ### Thêm phần cứng của bạn
 

@@ -1,31 +1,31 @@
 # 💬 Weixin (WeChat Personal) Channel
 
-PicoClaw supports connecting to your personal WeChat account using the official Tencent iLink API.
+NeuroClaw supports connecting to your personal WeChat account using the official Tencent iLink API.
 
 ## 🚀 Quick Onboarding
 
 The easiest way to set up the Weixin channel is using the interactive onboarding command:
 
 ```bash
-picoclaw auth weixin
+neuroclaw auth weixin
 ```
 
 This command will:
 1. Request a QR code from the iLink API and display it in your terminal.
 2. Wait for you to scan the QR code with your WeChat mobile app.
-3. Upon approval, automatically save the generated access token to your `~/.picoclaw/config.json`.
+3. Upon approval, automatically save the generated access token to your `~/.neuroclaw/config.json`.
 
 After onboarding, you can start the gateway:
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 ---
 
 ## ⚙️ Configuration
 
-You can also manually configure the filter rules in `config.json` under the `channels.weixin` section.
+You can also manually configure the filter rules in `config.json` under the `channel_list.weixin` section.
 
 ```json
 {
@@ -50,7 +50,7 @@ You can also manually configure the filter rules in `config.json` under the `cha
 |---|---|
 | `enabled` | Set to `true` to enable the channel at startup. |
 | `token` | The authentication token obtained via QR login. |
-| `allow_from` | (Optional) List of WeChat User IDs permitted to interact with the bot. If empty, anyone who can send messages to the connected account can trigger the bot. |
+| `allow_from` | (Optional) List of WeChat User IDs permitted to interact with the bot. If empty, anyone who can send messages to the connected account can trigger the bot (the gateway logs a warning); set it, or use `["*"]` on purpose. |
 | `proxy` | (Optional) HTTP proxy address (e.g. `http://localhost:7890`) for environments where connection to `ilinkai.weixin.qq.com` is restricted. |
 
 ## ⚠️ Important Notes

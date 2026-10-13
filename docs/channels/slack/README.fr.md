@@ -2,7 +2,7 @@
 
 # Slack
 
-Slack est l'une des principales plateformes de messagerie instantanée pour les entreprises. PicoClaw utilise le Socket Mode de Slack pour une communication bidirectionnelle en temps réel, sans nécessiter la configuration d'un endpoint webhook public.
+Slack est l'une des principales plateformes de messagerie instantanée pour les entreprises. NeuroClaw utilise le Socket Mode de Slack pour une communication bidirectionnelle en temps réel, sans nécessiter la configuration d'un endpoint webhook public.
 
 ## Configuration
 
@@ -25,7 +25,7 @@ Slack est l'une des principales plateformes de messagerie instantanée pour les 
 | enabled    | bool   | Oui    | Activer ou non le canal Slack                                                |
 | bot_token  | string | Oui    | Bot User OAuth Token du bot Slack (commence par xoxb-)                       |
 | app_token  | string | Oui    | App Level Token Socket Mode de l'application Slack (commence par xapp-)      |
-| allow_from | array  | Non    | Liste blanche d'ID utilisateurs ; vide signifie tous les utilisateurs        |
+| allow_from | array  | Non    | Liste blanche d'ID utilisateurs ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Procédure de configuration
 

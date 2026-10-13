@@ -2,7 +2,7 @@
 
 # Discord
 
-Discord é um aplicativo gratuito de chat de voz, vídeo e texto projetado para comunidades. O PicoClaw se conecta a servidores Discord via Discord Bot API, com suporte para receber e enviar mensagens.
+Discord é um aplicativo gratuito de chat de voz, vídeo e texto projetado para comunidades. O NeuroClaw se conecta a servidores Discord via Discord Bot API, com suporte para receber e enviar mensagens.
 
 ## Configuração
 
@@ -26,7 +26,7 @@ Discord é um aplicativo gratuito de chat de voz, vídeo e texto projetado para 
 | ------------- | ------ | ----------- | --------------------------------------------------------------------------- |
 | enabled       | bool   | Sim         | Se o canal Discord deve ser habilitado                                      |
 | token         | string | Sim         | Token do Bot Discord                                                        |
-| allow_from    | array  | Não         | Lista de IDs de usuários permitidos; vazio significa todos os usuários      |
+| allow_from    | array  | Não         | Lista de IDs de usuários permitidos; vazio deixa qualquer pessoa entrar (o gateway registra um aviso); defina-o, ou use `["*"]` para permitir todos de propósito      |
 | group_trigger | object | Não         | Configurações de gatilho de grupo (exemplo: { "mention_only": false })      |
 
 ## Configuração inicial

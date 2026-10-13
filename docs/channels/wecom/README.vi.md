@@ -2,10 +2,10 @@
 
 # WeCom
 
-PicoClaw cung cấp WeCom dưới dạng một kênh duy nhất `channels.wecom`, được xây dựng trên API WebSocket chính thức của WeCom AI Bot.
+NeuroClaw cung cấp WeCom dưới dạng một kênh duy nhất `channel_list.wecom`, được xây dựng trên API WebSocket chính thức của WeCom AI Bot.
 Điều này thay thế việc phân tách cũ `wecom`, `wecom_app` và `wecom_aibot` bằng một mô hình cấu hình thống nhất.
 
-> Không cần URL callback webhook công khai. PicoClaw thiết lập kết nối WebSocket đi ra tới WeCom.
+> Không cần URL callback webhook công khai. NeuroClaw thiết lập kết nối WebSocket đi ra tới WeCom.
 
 ## Tính năng được hỗ trợ
 
@@ -33,19 +33,19 @@ Mở Web UI, điều hướng đến **Channels → WeCom** và nhấp vào nút
 Chạy:
 
 ```bash
-picoclaw auth wecom
+neuroclaw auth wecom
 ```
 
 Lệnh thực hiện:
 1. Yêu cầu mã QR từ WeCom và hiển thị trong terminal
 2. Đồng thời in ra một **Liên kết mã QR** mà bạn có thể mở trong trình duyệt nếu mã QR trên terminal khó quét
 3. Chờ xác nhận — sau khi quét, bạn cũng phải **xác nhận đăng nhập trong ứng dụng WeCom**
-4. Khi thành công, ghi `bot_id` và `secret` vào `channels.wecom` và lưu cấu hình
+4. Khi thành công, ghi `bot_id` và `secret` vào `channel_list.wecom` và lưu cấu hình
 
 Thời gian chờ mặc định là **5 phút**. Sử dụng `--timeout` để kéo dài:
 
 ```bash
-picoclaw auth wecom --timeout 10m
+neuroclaw auth wecom --timeout 10m
 ```
 
 > ⚠️ Quét mã QR là chưa đủ — bạn cũng phải nhấn **Xác nhận** trong ứng dụng WeCom, nếu không lệnh sẽ hết thời gian chờ.
@@ -82,28 +82,28 @@ Nếu bạn đã có `bot_id` và `secret` từ nền tảng WeCom AI Bot, hãy 
 | `secret` | string | — | Secret của WeCom AI Bot. Được lưu mã hóa trong `.security.yml`. Bắt buộc khi được kích hoạt. |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | Điểm cuối WebSocket của WeCom. |
 | `send_thinking_message` | bool | `true` | Gửi tin nhắn `Processing...` trước khi phản hồi streaming bắt đầu. |
-| `allow_from` | array | `[]` | Danh sách cho phép người gửi. Để trống nghĩa là cho phép tất cả. |
+| `allow_from` | array | `[]` | Danh sách cho phép người gửi; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 | `reasoning_channel_id` | string | `""` | ID chat tùy chọn để định tuyến đầu ra suy luận đến một cuộc hội thoại riêng. |
 
 ### Biến môi trường
 
-Tất cả các trường có thể được ghi đè bằng biến môi trường với tiền tố `PICOCLAW_CHANNELS_WECOM_`:
+Tất cả các trường có thể được ghi đè bằng biến môi trường với tiền tố `NEUROCLAW_CHANNELS_WECOM_`:
 
 | Biến môi trường | Trường tương ứng |
 | ---------------- | ---------------- |
-| `PICOCLAW_CHANNELS_WECOM_ENABLED` | `enabled` |
-| `PICOCLAW_CHANNELS_WECOM_BOT_ID` | `bot_id` |
-| `PICOCLAW_CHANNELS_WECOM_SECRET` | `secret` |
-| `PICOCLAW_CHANNELS_WECOM_WEBSOCKET_URL` | `websocket_url` |
-| `PICOCLAW_CHANNELS_WECOM_SEND_THINKING_MESSAGE` | `send_thinking_message` |
-| `PICOCLAW_CHANNELS_WECOM_ALLOW_FROM` | `allow_from` |
-| `PICOCLAW_CHANNELS_WECOM_REASONING_CHANNEL_ID` | `reasoning_channel_id` |
+| `NEUROCLAW_CHANNELS_WECOM_ENABLED` | `enabled` |
+| `NEUROCLAW_CHANNELS_WECOM_BOT_ID` | `bot_id` |
+| `NEUROCLAW_CHANNELS_WECOM_SECRET` | `secret` |
+| `NEUROCLAW_CHANNELS_WECOM_WEBSOCKET_URL` | `websocket_url` |
+| `NEUROCLAW_CHANNELS_WECOM_SEND_THINKING_MESSAGE` | `send_thinking_message` |
+| `NEUROCLAW_CHANNELS_WECOM_ALLOW_FROM` | `allow_from` |
+| `NEUROCLAW_CHANNELS_WECOM_REASONING_CHANNEL_ID` | `reasoning_channel_id` |
 
 ---
 
 ## Hành vi khi chạy
 
-- PicoClaw duy trì một lượt WeCom đang hoạt động để phản hồi streaming có thể tiếp tục trên cùng một luồng khi có thể.
+- NeuroClaw duy trì một lượt WeCom đang hoạt động để phản hồi streaming có thể tiếp tục trên cùng một luồng khi có thể.
 - Phản hồi streaming có thời lượng tối đa **5,5 phút** và khoảng cách gửi tối thiểu **500ms**.
 - Nếu streaming không còn khả dụng, phản hồi sẽ chuyển sang gửi push chủ động.
 - Các liên kết tuyến chat hết hạn sau **30 phút** không hoạt động.
@@ -117,9 +117,9 @@ Tất cả các trường có thể được ghi đè bằng biến môi trườ
 
 | Cấu hình trước đây | Di chuyển |
 | ------------------- | --------- |
-| `channels.wecom` (bot webhook) | Thay thế bằng `channels.wecom` sử dụng `bot_id` + `secret`. |
-| `channels.wecom_app` | Xóa. Sử dụng `channels.wecom` thay thế. |
-| `channels.wecom_aibot` | Di chuyển `bot_id` và `secret` sang `channels.wecom`. |
+| `channel_list.wecom` (bot webhook) | Thay thế bằng `channel_list.wecom` sử dụng `bot_id` + `secret`. |
+| `channel_list.wecom_app` | Xóa. Sử dụng `channel_list.wecom` thay thế. |
+| `channel_list.wecom_aibot` | Di chuyển `bot_id` và `secret` sang `channel_list.wecom`. |
 | `token`, `encoding_aes_key`, `webhook_url`, `webhook_path` | Không còn sử dụng. Xóa khỏi cấu hình. |
 | `corp_id`, `corp_secret`, `agent_id` | Không còn sử dụng. Xóa khỏi cấu hình. |
 | `welcome_message`, `processing_message`, `max_steps` | Không còn là một phần của cấu hình kênh WeCom. |
@@ -131,12 +131,12 @@ Tất cả các trường có thể được ghi đè bằng biến môi trườ
 ### Liên kết QR hết thời gian chờ
 
 - Sau khi quét mã QR, bạn cũng phải **xác nhận đăng nhập trong ứng dụng WeCom**. Chỉ quét là chưa đủ.
-- Chạy lại với `--timeout` lớn hơn: `picoclaw auth wecom --timeout 10m`
+- Chạy lại với `--timeout` lớn hơn: `neuroclaw auth wecom --timeout 10m`
 - Nếu mã QR trên terminal khó quét, hãy sử dụng **Liên kết mã QR** được in bên dưới để mở trong trình duyệt.
 
 ### Mã QR đã hết hạn
 
-- Mã QR có thời hạn hiệu lực giới hạn. Chạy lại `picoclaw auth wecom` để lấy mã mới.
+- Mã QR có thời hạn hiệu lực giới hạn. Chạy lại `neuroclaw auth wecom` để lấy mã mới.
 
 ### Kết nối WebSocket thất bại
 
@@ -146,4 +146,4 @@ Tất cả các trường có thể được ghi đè bằng biến môi trườ
 ### Phản hồi không đến
 
 - Kiểm tra xem `allow_from` có đang chặn người gửi không.
-- Kiểm tra rằng `channels.wecom.bot_id` và `channels.wecom.secret` đã được thiết lập và không trống.
+- Kiểm tra rằng `channel_list.wecom.bot_id` và `channel_list.wecom.secret` đã được thiết lập và không trống.

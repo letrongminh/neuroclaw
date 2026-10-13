@@ -2,7 +2,7 @@
 
 > 返回 [README](../project/README.zh.md)
 
-PicoClaw 的工具配置位于 `config.json` 的 `tools` 字段中。
+NeuroClaw 的工具配置位于 `config.json` 的 `tools` 字段中。
 
 ## 目录结构
 
@@ -30,7 +30,7 @@ PicoClaw 的工具配置位于 `config.json` 的 `tools` 字段中。
 
 ## 敏感数据过滤
 
-在将工具结果发送给 LLM 之前，PicoClaw 可以从输出中过滤敏感值（API 密钥、令牌、密码）。这可以防止 LLM 看到自己的凭据。
+在将工具结果发送给 LLM 之前，NeuroClaw 可以从输出中过滤敏感值（API 密钥、令牌、密码）。这可以防止 LLM 看到自己的凭据。
 
 详细说明请参阅[敏感数据过滤](../security/sensitive_data_filtering.zh.md)。
 
@@ -84,7 +84,45 @@ Web 工具用于网页搜索和抓取。
 | `enabled`     | bool   | false  | 启用 Tavily 搜索                  |
 | `api_key`     | string | -      | Tavily API 密钥                   |
 | `base_url`    | string | -      | 自定义 Tavily API 基础 URL        |
-| `max_results` | int    | 0      | 最大结果数（0 = 默认）            |
+| `max_results` | int    | 5      | 最大结果数                        |
+
+### Kagi Search
+
+Kagi Search 使用官方的 Kagi OpenAPI 客户端调用 `POST /search`，并返回 `data.search` 中的常规网页结果。
+
+| 配置项        | 类型     | 默认值                           | 描述                                          |
+|---------------|----------|----------------------------------|-----------------------------------------------|
+| `enabled`     | bool     | false                            | 启用 Kagi Search                              |
+| `api_key`     | string   | -                                | Kagi API 密钥                                 |
+| `api_keys`    | string[] | -                                | 用于轮换的多个 API 密钥（优先于 `api_key`）   |
+| `base_url`    | string   | `https://kagi.com/api/v1/search` | Kagi Search API 端点                          |
+| `max_results` | int      | 5                                | 最大结果数                                    |
+
+```json
+{
+  "tools": {
+    "web": {
+      "provider": "kagi",
+      "kagi": {
+        "enabled": true,
+        "max_results": 5,
+        "base_url": "https://kagi.com/api/v1/search"
+      }
+    }
+  }
+}
+```
+
+请把 Kagi API 密钥存放在 `.security.yml` 中：
+
+```yaml
+web:
+  kagi:
+    api_keys:
+      - "YOUR_KAGI_API_KEY"
+```
+
+Kagi API 的用量可能与普通 Kagi 订阅分开计费或限额，具体取决于你的账户和 API 设置。
 
 ### GLM Search
 
@@ -102,8 +140,41 @@ Web 工具用于网页搜索和抓取。
 
 | 配置项        | 类型 | 默认值 | 描述                  |
 |---------------|------|--------|-----------------------|
-| `enabled`     | bool | true   | 启用 DuckDuckGo 搜索  |
+| `enabled`     | bool | false  | 启用 DuckDuckGo 搜索  |
 | `max_results` | int  | 5      | 最大结果数            |
+
+### Sogou
+
+| 配置项        | 类型 | 默认值 | 描述                  |
+|---------------|------|--------|-----------------------|
+| `enabled`     | bool | true   | 启用搜狗搜索          |
+| `max_results` | int  | 5      | 最大结果数            |
+
+### Gemini Google Search
+
+Gemini 搜索使用带有 Google Search grounding 的 Gemini 模型，返回由 AI 综合生成、附带 Google 搜索引用的答案。
+
+| 配置项        | 类型   | 默认值             | 描述                       |
+|---------------|--------|--------------------|----------------------------|
+| `enabled`     | bool   | false              | 启用 Gemini Google Search  |
+| `api_key`     | string | -                  | Google Gemini API 密钥     |
+| `model`       | string | `gemini-2.5-flash` | 用于搜索的 Gemini 模型     |
+| `max_results` | int    | 5                  | 最大引用数                 |
+
+```json
+{
+  "tools": {
+    "web": {
+      "gemini": {
+        "enabled": true,
+        "api_key": "YOUR_GEMINI_API_KEY",
+        "model": "gemini-2.5-flash",
+        "max_results": 5
+      }
+    }
+  }
+}
+```
 
 ### Perplexity
 
@@ -132,15 +203,40 @@ Web 工具用于网页搜索和抓取。
 | 配置项        | 类型   | 默认值                   | 描述                  |
 |---------------|--------|--------------------------|-----------------------|
 | `enabled`     | bool   | false                    | 启用 SearXNG 搜索     |
-| `base_url`    | string | `http://localhost:8888`  | SearXNG 实例 URL      |
+| `base_url`    | string | -                        | SearXNG 实例 URL（例如 `http://localhost:8888`） |
 | `max_results` | int    | 5                        | 最大结果数            |
 
 ### 其他 Web 设置
 
 | 配置项                   | 类型     | 默认值 | 描述                                           |
 |--------------------------|----------|--------|-------------------------------------------------|
+| `provider`               | string   | `auto` | 使用的搜索提供商；`auto` 会在已启用的搜索引擎中自动选择 |
+| `proxy`                  | string   | `""`   | Web 工具使用的代理                              |
 | `prefer_native`          | bool     | true   | 优先使用 provider 原生搜索而非配置的搜索引擎    |
 | `private_host_whitelist` | string[] | `[]`   | 允许 Web 抓取的私有/内部主机白名单              |
+
+### `web_search` 工具参数
+
+运行时，`web_search` 工具接受以下参数：
+
+| 字段 | 类型 | 必需 | 描述 |
+|------|------|------|------|
+| `query` | string | 是 | 搜索查询字符串 |
+| `count` | integer | 否 | 返回的结果数。默认：`10`，最大：`10` |
+| `range` | string | 否 | 可选的时间过滤：`d`（天）、`w`（周）、`m`（月）、`y`（年） |
+
+省略 `range` 时，NeuroClaw 执行不限时间的搜索。
+对于 Kagi，`d`、`w`、`m` 映射到 Kagi lens 的 `time_relative`；`y` 映射到 lens 的 `time_after`，取当前日期一年前的日期。
+
+### `web_search` 调用示例
+
+```json
+{
+  "query": "ai agent news",
+  "count": 10,
+  "range": "w"
+}
+```
 
 ## Exec 工具
 
@@ -148,9 +244,12 @@ Exec 工具用于执行 shell 命令。
 
 | 配置项                 | 类型  | 默认值 | 描述                           |
 |------------------------|-------|--------|--------------------------------|
-| `enabled`              | bool  | true   | 启用 exec 工具                 |
-| `enable_deny_patterns` | bool  | true   | 启用默认的危险命令拦截         |
-| `custom_deny_patterns` | array | []     | 自定义拒绝模式（正则表达式）   |
+| `enabled`               | bool  | true   | 启用 exec 工具。开启时，启动时会记录为 `risk=shell` |
+| `enable_deny_patterns`  | bool  | true   | 启用默认的危险命令拦截         |
+| `custom_deny_patterns`  | array | []     | 自定义拒绝模式（正则表达式）   |
+| `custom_allow_patterns` | array | []     | 自定义允许模式（正则表达式）   |
+| `allow_remote`          | bool  | true   | 允许来自远程渠道（聊天应用）的 exec 调用；`false` 则把 exec 限制在内部渠道 |
+| `timeout_seconds`       | int   | 60     | 每条命令的超时时间（秒）；`0` 使用默认值（60） |
 
 ### 禁用 Exec 工具
 
@@ -169,7 +268,7 @@ Exec 工具用于执行 shell 命令。
 
 **通过环境变量：**
 ```bash
-PICOCLAW_TOOLS_EXEC_ENABLED=false
+NEUROCLAW_TOOLS_EXEC_ENABLED=false
 ```
 
 > **注意：** 禁用后，代理将无法执行 shell 命令。这也会影响 Cron 工具运行计划 shell 命令的能力。
@@ -178,10 +277,12 @@ PICOCLAW_TOOLS_EXEC_ENABLED=false
 
 - **`enable_deny_patterns`**：设为 `false` 可完全禁用默认的危险命令拦截模式
 - **`custom_deny_patterns`**：添加自定义拒绝正则模式；匹配的命令将被拦截
+- **`custom_allow_patterns`**：添加允许正则模式；匹配的命令不受拒绝模式限制
+- **`allow_remote`**：设为 `false` 可拒绝来自远程渠道的 exec 调用
 
 ### 默认拦截的命令模式
 
-默认情况下，PicoClaw 会拦截以下危险命令：
+默认情况下，NeuroClaw 会拦截以下危险命令：
 
 - 删除命令：`rm -rf`、`del /f/q`、`rmdir /s`
 - 磁盘操作：`format`、`mkfs`、`diskpart`、`dd if=`、写入 `/dev/sd*`
@@ -198,7 +299,7 @@ PICOCLAW_TOOLS_EXEC_ENABLED=false
 
 ### 已知架构限制
 
-exec 守卫仅验证发送给 PicoClaw 的顶层命令。它**不会**递归检查该命令启动后由构建工具或脚本生成的子进程。
+exec 守卫仅验证发送给 NeuroClaw 的顶层命令。它**不会**递归检查该命令启动后由构建工具或脚本生成的子进程。
 
 以下工作流在初始命令被允许后可以绕过直接命令守卫：
 
@@ -232,7 +333,29 @@ Cron 工具用于调度周期性任务。
 | 配置项                 | 类型 | 默认值 | 描述                                |
 |------------------------|------|--------|-------------------------------------|
 | `exec_timeout_minutes` | int  | 5      | 执行超时时间（分钟），0 表示无限制  |
-| `allow_command`        | bool | false  | 允许 cron 任务执行 shell 命令       |
+| `enabled`              | bool | true   | 注册面向 Agent 的 cron 工具         |
+| `allow_command`        | bool | true   | 允许命令类任务无需额外确认。`exec` 开启时，启动时会记录为 `risk=cron_shell` |
+| `command_allowed_remotes` | string[] | [] | 允许创建命令类任务的远程渠道或 `channel:chat_id` 值；`*` 允许所有渠道，除非所有远程渠道都可信，否则很危险 |
+
+关于调度类型、执行模式（`deliver`、agent 轮次和命令类任务）、持久化以及当前的命令安全检查，见[定时任务与 Cron 作业](cron.md)。
+
+## 各工具开关
+
+其余每个工具在 `tools.<name>` 下都有自己的 `enabled` 开关（环境变量 `NEUROCLAW_TOOLS_<NAME>_ENABLED`）。默认值取自 `pkg/config/defaults.go`：
+
+| 工具 | 默认 | 说明 |
+|------|------|------|
+| `read_file`、`write_file`、`append_file`、`edit_file`、`list_dir` | 开 | `read_file` 还有 `mode`（`bytes` 或 `lines`，默认 `bytes`）和 `max_read_file_size`（默认 65536） |
+| `load_image`、`send_file`、`web_fetch` | 开 | |
+| `message` | 开 | `media_enabled` 默认关闭 |
+| `spawn`、`subagent` | 开 | |
+| `spawn_status` | 关 | |
+| `find_skills`、`install_skill` | 开 | 仅在 `tools.skills.enabled` 时生效；记录为 `risk=skill_install` |
+| `send_tts` | 关 | |
+| `i2c`、`spi`、`serial` | 关 | 硬件工具；`i2c` 和 `spi` 仅限 Linux。开启时记录为 `risk=hardware_bus` |
+| `media_cleanup` | 开 | `max_age_minutes` 为 30，`interval_minutes` 为 5 |
+
+风险标签及其含义见[NeuroClaw 能做什么，第 2 节](capabilities.md#2-risk-labels)。
 
 <a id="mcp-tool"></a>
 ## MCP 工具
@@ -271,20 +394,67 @@ LLM 不会加载所有工具，而是获得一个轻量级搜索工具（使用 
 | 配置项     | 类型   | 必需     | 描述                               |
 |------------|--------|----------|------------------------------------|
 | `enabled`  | bool   | 是       | 启用此 MCP 服务器                  |
-| `type`     | string | 否       | 传输类型：`stdio`、`sse`、`http`   |
+| `type`     | string | 否       | 传输类型：`stdio`、`sse`、`http`（`streamable-http` 可作为 `http` 的别名） |
 | `command`  | string | stdio    | stdio 传输的可执行命令             |
 | `args`     | array  | 否       | stdio 传输的命令参数               |
 | `env`      | object | 否       | stdio 进程的环境变量               |
 | `env_file` | string | 否       | stdio 进程的环境文件路径           |
 | `url`      | string | sse/http | `sse`/`http` 传输的端点 URL        |
 | `headers`  | object | 否       | `sse`/`http` 传输的 HTTP 头        |
+| `tls`      | object | 否       | NeuroClaw：`sse`/`http` 传输的双向 TLS（见下文） |
+
+### 双向 TLS（`tls`）
+
+NeuroClaw 新增。以 `mcp serve --http` 启动的 NeuroEdge 家用盒子会拒绝任何没有出示它所签发证书的客户端。在 `http` 或 `sse` 服务器上设置 `tls`，大脑就会出示客户端证书，并且只信任该盒子的 CA，无需旁边再架设 TLS 桥接。
+
+| 配置项        | 类型   | 描述 |
+|---------------|--------|------|
+| `ca_file`     | string | 签发服务器证书的 CA 的 PEM 文件。为空：使用系统根证书 |
+| `cert_file`   | string | 此客户端证书的 PEM 文件。须与 `key_file` 同时设置，或都不设置 |
+| `key_file`    | string | 此客户端私钥的 PEM 文件 |
+| `server_name` | string | 覆盖在服务器证书中校验的名称 |
+
+路径可以以 `~` 开头。规则来自 `pkg/mcp/tls.go`：
+
+- `url` 必须是 `https://`；否则服务器连接失败，报错 `tls is set but url ... is not https`。
+- 连接至少使用 TLS 1.3。
+- 不设置 `tls` 时，使用默认的 HTTP 传输，与 PicoClaw 相同。
+- `stdio` 服务器会忽略 `tls`。
+- `neuroclaw mcp add` 没有 `tls` 参数；请通过编辑 `config.json`（`neuroclaw mcp edit`）添加。对同名服务器再次运行 `mcp add` 会替换该条目，并丢掉 `tls` 块。
+
+```json
+{
+  "tools": {
+    "mcp": {
+      "enabled": true,
+      "servers": {
+        "home": {
+          "enabled": true,
+          "type": "http",
+          "url": "https://neuroedge-box.local:8443/mcp",
+          "tls": {
+            "ca_file": "~/.neuroclaw/pki/ca.pem",
+            "cert_file": "~/.neuroclaw/pki/brain.pem",
+            "key_file": "~/.neuroclaw/pki/brain.key",
+            "server_name": "neuroedge-box.local"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+家用盒子一侧的设置见 [NeuroEdge 指南](../guides/neuroedge.md)。
 
 ### 传输行为
 
 - 如果省略 `type`，传输方式将自动检测：
     - 设置了 `url` → `sse`
     - 设置了 `command` → `stdio`
-- `http` 和 `sse` 都使用 `url` + 可选的 `headers`。
+- `http` 和 `sse` 都使用 `url` + 可选的 `headers` + 可选的 `tls`。
+- `neuroclaw mcp add` 默认使用 `stdio`（见 [MCP 服务器 CLI](mcp-cli.md)）；上述自动检测仅适用于手写的条目。
+- 已启用的 `stdio` 服务器在启动时会记录为 `risk=stdio_mcp`。
 - `env` 和 `env_file` 仅应用于 `stdio` 服务器。
 
 ### 配置示例
@@ -453,15 +623,15 @@ Skills 工具配置通过 ClawHub 等注册表进行技能发现和安装。
 
 ## 环境变量
 
-所有配置选项都可以通过格式为 `PICOCLAW_TOOLS_<SECTION>_<KEY>` 的环境变量覆盖：
+所有配置选项都可以通过格式为 `NEUROCLAW_TOOLS_<SECTION>_<KEY>` 的环境变量覆盖：
 
 例如：
 
-- `PICOCLAW_TOOLS_WEB_BRAVE_ENABLED=true`
-- `PICOCLAW_TOOLS_EXEC_ENABLED=false`
-- `PICOCLAW_TOOLS_EXEC_ENABLE_DENY_PATTERNS=false`
-- `PICOCLAW_TOOLS_CRON_EXEC_TIMEOUT_MINUTES=10`
-- `PICOCLAW_TOOLS_MCP_ENABLED=true`
+- `NEUROCLAW_TOOLS_WEB_BRAVE_ENABLED=true`
+- `NEUROCLAW_TOOLS_EXEC_ENABLED=false`
+- `NEUROCLAW_TOOLS_EXEC_ENABLE_DENY_PATTERNS=false`
+- `NEUROCLAW_TOOLS_CRON_EXEC_TIMEOUT_MINUTES=10`
+- `NEUROCLAW_TOOLS_MCP_ENABLED=true`
 
 注意：嵌套的映射式配置（例如 `tools.mcp.servers.<name>.*`）在 `config.json` 中配置，而非通过环境变量。
 

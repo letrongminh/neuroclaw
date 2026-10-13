@@ -25,12 +25,12 @@ MaixCam é um canal dedicado para conectar dispositivos de câmera AI Sipeed Mai
 | enabled    | bool   | Sim         | Se o canal MaixCam deve ser habilitado                                     |
 | host       | string | Sim         | Endereço de escuta do servidor TCP                                         |
 | port       | int    | Sim         | Porta de escuta do servidor TCP                                            |
-| allow_from | array  | Não         | Lista de IDs de dispositivos permitidos; vazio significa todos os dispositivos |
+| allow_from | array  | Não         | Lista de IDs de dispositivos permitidos; vazio deixa qualquer pessoa entrar (o gateway registra um aviso); defina-o, ou use `["*"]` para permitir todos de propósito |
 
 ## Casos de uso
 
-O canal MaixCam permite que o PicoClaw atue como backend de IA para dispositivos de borda:
+O canal MaixCam permite que o NeuroClaw atue como backend de IA para dispositivos de borda:
 
-- **Vigilância inteligente**: MaixCAM envia quadros de imagem; PicoClaw os analisa usando modelos de visão
-- **Controle IoT**: Dispositivos enviam dados de sensores; PicoClaw coordena as respostas
-- **IA offline**: Implante o PicoClaw em uma rede local para inferência de baixa latência
+- **Vigilância inteligente**: MaixCAM envia quadros de imagem; NeuroClaw os analisa usando modelos de visão
+- **Controle IoT**: Dispositivos enviam dados de sensores; NeuroClaw coordena as respostas
+- **IA offline**: Implante o NeuroClaw em uma rede local para inferência de baixa latência

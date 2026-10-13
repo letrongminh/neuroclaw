@@ -2,10 +2,10 @@
 
 # WeCom
 
-O PicoClaw expõe o WeCom como um único canal `channels.wecom`, construído sobre a API WebSocket oficial do WeCom AI Bot.
+O NeuroClaw expõe o WeCom como um único canal `channel_list.wecom`, construído sobre a API WebSocket oficial do WeCom AI Bot.
 Isso substitui a antiga separação `wecom`, `wecom_app` e `wecom_aibot` por um modelo de configuração unificado.
 
-> Nenhuma URL de callback webhook pública é necessária. O PicoClaw estabelece uma conexão WebSocket de saída para o WeCom.
+> Nenhuma URL de callback webhook pública é necessária. O NeuroClaw estabelece uma conexão WebSocket de saída para o WeCom.
 
 ## Funcionalidades Suportadas
 
@@ -33,19 +33,19 @@ Abra a Web UI, navegue até **Channels → WeCom** e clique no botão de vincula
 Execute:
 
 ```bash
-picoclaw auth wecom
+neuroclaw auth wecom
 ```
 
 O comando:
 1. Solicita um QR code ao WeCom e o exibe no terminal
 2. Também exibe um **Link do QR Code** que você pode abrir no navegador se o QR do terminal for difícil de escanear
 3. Aguarda a confirmação — após escanear, você também deve **confirmar o login dentro do aplicativo WeCom**
-4. Em caso de sucesso, grava `bot_id` e `secret` em `channels.wecom` e salva a configuração
+4. Em caso de sucesso, grava `bot_id` e `secret` em `channel_list.wecom` e salva a configuração
 
 O timeout padrão é de **5 minutos**. Use `--timeout` para estendê-lo:
 
 ```bash
-picoclaw auth wecom --timeout 10m
+neuroclaw auth wecom --timeout 10m
 ```
 
 > ⚠️ Escanear o QR code não é suficiente — você também deve tocar em **Confirmar** dentro do aplicativo WeCom, caso contrário o comando expirará.
@@ -82,28 +82,28 @@ Se você já possui um `bot_id` e `secret` da plataforma WeCom AI Bot, configure
 | `secret` | string | — | Secret do WeCom AI Bot. Armazenado criptografado em `.security.yml`. Obrigatório quando ativado. |
 | `websocket_url` | string | `wss://openws.work.weixin.qq.com` | Endpoint WebSocket do WeCom. |
 | `send_thinking_message` | bool | `true` | Enviar uma mensagem `Processing...` antes do início da resposta em streaming. |
-| `allow_from` | array | `[]` | Lista de permissões de remetentes. Vazio significa permitir todos os remetentes. |
+| `allow_from` | array | `[]` | Lista de permissões de remetentes. Vazio deixa qualquer remetente entrar (o gateway registra um aviso); defina-a, ou use `["*"]` para permitir todos de propósito. |
 | `reasoning_channel_id` | string | `""` | ID de chat opcional para rotear a saída de raciocínio para uma conversa separada. |
 
 ### Variáveis de Ambiente
 
-Todos os campos podem ser substituídos via variáveis de ambiente com o prefixo `PICOCLAW_CHANNELS_WECOM_`:
+Todos os campos podem ser substituídos via variáveis de ambiente com o prefixo `NEUROCLAW_CHANNELS_WECOM_`:
 
 | Variável de Ambiente | Campo Correspondente |
 | -------------------- | -------------------- |
-| `PICOCLAW_CHANNELS_WECOM_ENABLED` | `enabled` |
-| `PICOCLAW_CHANNELS_WECOM_BOT_ID` | `bot_id` |
-| `PICOCLAW_CHANNELS_WECOM_SECRET` | `secret` |
-| `PICOCLAW_CHANNELS_WECOM_WEBSOCKET_URL` | `websocket_url` |
-| `PICOCLAW_CHANNELS_WECOM_SEND_THINKING_MESSAGE` | `send_thinking_message` |
-| `PICOCLAW_CHANNELS_WECOM_ALLOW_FROM` | `allow_from` |
-| `PICOCLAW_CHANNELS_WECOM_REASONING_CHANNEL_ID` | `reasoning_channel_id` |
+| `NEUROCLAW_CHANNELS_WECOM_ENABLED` | `enabled` |
+| `NEUROCLAW_CHANNELS_WECOM_BOT_ID` | `bot_id` |
+| `NEUROCLAW_CHANNELS_WECOM_SECRET` | `secret` |
+| `NEUROCLAW_CHANNELS_WECOM_WEBSOCKET_URL` | `websocket_url` |
+| `NEUROCLAW_CHANNELS_WECOM_SEND_THINKING_MESSAGE` | `send_thinking_message` |
+| `NEUROCLAW_CHANNELS_WECOM_ALLOW_FROM` | `allow_from` |
+| `NEUROCLAW_CHANNELS_WECOM_REASONING_CHANNEL_ID` | `reasoning_channel_id` |
 
 ---
 
 ## Comportamento em Tempo de Execução
 
-- O PicoClaw mantém um turno WeCom ativo para que as respostas em streaming possam continuar no mesmo fluxo quando possível.
+- O NeuroClaw mantém um turno WeCom ativo para que as respostas em streaming possam continuar no mesmo fluxo quando possível.
 - As respostas em streaming têm uma duração máxima de **5,5 minutos** e um intervalo mínimo de envio de **500ms**.
 - Se o streaming não estiver mais disponível, as respostas recorrem à entrega por push ativo.
 - As associações de rotas de chat expiram após **30 minutos** de inatividade.
@@ -117,9 +117,9 @@ Todos os campos podem ser substituídos via variáveis de ambiente com o prefixo
 
 | Configuração anterior | Migração |
 | --------------------- | -------- |
-| `channels.wecom` (bot webhook) | Substituir por `channels.wecom` usando `bot_id` + `secret`. |
-| `channels.wecom_app` | Remover. Usar `channels.wecom` no lugar. |
-| `channels.wecom_aibot` | Mover `bot_id` e `secret` para `channels.wecom`. |
+| `channel_list.wecom` (bot webhook) | Substituir por `channel_list.wecom` usando `bot_id` + `secret`. |
+| `channel_list.wecom_app` | Remover. Usar `channel_list.wecom` no lugar. |
+| `channel_list.wecom_aibot` | Mover `bot_id` e `secret` para `channel_list.wecom`. |
 | `token`, `encoding_aes_key`, `webhook_url`, `webhook_path` | Não mais utilizados. Remover da configuração. |
 | `corp_id`, `corp_secret`, `agent_id` | Não mais utilizados. Remover da configuração. |
 | `welcome_message`, `processing_message`, `max_steps` | Não fazem mais parte da configuração do canal WeCom. |
@@ -131,12 +131,12 @@ Todos os campos podem ser substituídos via variáveis de ambiente com o prefixo
 ### A vinculação QR expira
 
 - Após escanear o QR code, você também deve **confirmar o login dentro do aplicativo WeCom**. Escanear sozinho não é suficiente.
-- Execute novamente com um `--timeout` maior: `picoclaw auth wecom --timeout 10m`
+- Execute novamente com um `--timeout` maior: `neuroclaw auth wecom --timeout 10m`
 - Se o QR code no terminal for difícil de escanear, use o **Link do QR Code** exibido abaixo dele para abrir no navegador.
 
 ### QR code expirado
 
-- O QR code tem validade limitada. Execute novamente `picoclaw auth wecom` para obter um novo.
+- O QR code tem validade limitada. Execute novamente `neuroclaw auth wecom` para obter um novo.
 
 ### Falha na conexão WebSocket
 
@@ -146,4 +146,4 @@ Todos os campos podem ser substituídos via variáveis de ambiente com o prefixo
 ### As respostas não chegam
 
 - Verifique se `allow_from` está bloqueando o remetente.
-- Verifique se `channels.wecom.bot_id` e `channels.wecom.secret` estão definidos e não vazios.
+- Verifique se `channel_list.wecom.bot_id` e `channel_list.wecom.secret` estão definidos e não vazios.

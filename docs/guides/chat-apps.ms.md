@@ -4,9 +4,11 @@
 
 ## 💬 Aplikasi Sembang
 
-Berbual dengan picoclaw anda melalui Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, Feishu, Slack, IRC, OneBot, MQTT, MaixCam, atau Pico (protokol asli)
+Berbual dengan neuroclaw anda melalui Telegram, Discord, WhatsApp, Matrix, QQ, DingTalk, LINE, WeCom, Feishu, Slack, IRC, OneBot, MQTT, MaixCam, atau Pico (protokol asli)
 
 > **Nota**: Semua saluran berasaskan webhook (LINE, WeCom, dan sebagainya) diservis pada satu pelayan HTTP Gateway yang dikongsi (`gateway.host`:`gateway.port`, lalai `127.0.0.1:18790`). Tiada port khusus per saluran untuk dikonfigurasikan. Nota: Feishu menggunakan mod WebSocket/SDK dan tidak menggunakan pelayan HTTP webhook yang dikongsi.
+
+> **Tetapkan `allow_from` pada setiap saluran.** `allow_from` yang kosong membenarkan sesiapa sahaja yang boleh mencapai bot untuk berbual dengannya (gateway hanya mencatat amaran `SECURITY: Channel allows EVERYONE`). Senaraikan ID pengguna anda sendiri, atau guna `["*"]` untuk menyatakan secara jelas bahawa akses terbuka memang dimaksudkan. Beberapa contoh di bawah menunjukkan `"allow_from": []` demi ringkas; jangan biarkan kosong pada bot yang boleh menjalankan tool. Apa yang boleh dibuat oleh pengguna sembang terhadap agen (shell, arahan berjadual, pemasangan skill) disenaraikan dengan label risikonya dalam [Keupayaan §2](../reference/capabilities.md).
 
 | Saluran          | Penyediaan                                 |
 | ---------------- | ------------------------------------------ |
@@ -17,14 +19,14 @@ Berbual dengan picoclaw anda melalui Telegram, Discord, WhatsApp, Matrix, QQ, Di
 | **QQ**           | Mudah (AppID + AppSecret)                  |
 | **DingTalk**     | Sederhana (kelayakan aplikasi)             |
 | **LINE**         | Sederhana (kelayakan + webhook URL)        |
-| **WeCom AI Bot** | Sederhana (Token + kunci AES)              |
+| **WeCom AI Bot** | Sederhana (bot_id + secret, WebSocket)     |
 | **Feishu**       | Sederhana (App ID + Secret, mod WebSocket) |
 | **Slack**        | Sederhana (Bot token + App token)          |
 | **IRC**          | Sederhana (pelayan + konfigurasi TLS)      |
 | **OneBot**       | Sederhana (QQ melalui protokol OneBot)     |
 | **MQTT**         | Mudah (broker + agent_id)                  |
 | **MaixCam**      | Mudah (integrasi perkakasan Sipeed)        |
-| **Pico**         | Protokol PicoClaw asli                     |
+| **Pico**         | Protokol NeuroClaw asli                     |
 
 <details>
 <summary><b>Telegram</b> (Disyorkan)</summary>
@@ -56,15 +58,15 @@ Berbual dengan picoclaw anda melalui Telegram, Discord, WhatsApp, Matrix, QQ, Di
 **3. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 **4. Menu arahan Telegram (auto-register semasa startup)**
 
-PicoClaw kini menyimpan definisi arahan dalam satu registry bersama. Semasa startup, Telegram akan mendaftarkan arahan bot yang disokong secara automatik (contohnya `/start`, `/help`, `/show`, `/list`, `/use`, `/btw`) supaya menu arahan dan tingkah laku runtime sentiasa selari.
+NeuroClaw menyimpan definisi arahan dalam satu registry bersama. Semasa startup, Telegram akan mendaftarkan arahan bot yang disokong secara automatik (contohnya `/start`, `/help`, `/show`, `/list`, `/use`, `/btw`) supaya menu arahan dan tingkah laku runtime sentiasa selari.
 Pendaftaran menu arahan Telegram kekal sebagai UX penemuan setempat saluran; pelaksanaan arahan generik dikendalikan secara berpusat dalam gelung agen melalui commands executor.
 
-Jika pendaftaran arahan gagal (ralat sementara rangkaian/API), saluran tetap akan bermula dan PicoClaw akan mencuba semula pendaftaran di latar belakang.
+Jika pendaftaran arahan gagal (ralat sementara rangkaian/API), saluran tetap akan bermula dan NeuroClaw akan mencuba semula pendaftaran di latar belakang.
 
 Anda juga boleh mengurus skill yang dipasang terus dari Telegram:
 
@@ -74,7 +76,7 @@ Anda juga boleh mengurus skill yang dipasang terus dari Telegram:
 - `/use clear`
 - `/btw <question>` untuk bertanya soalan sampingan segera tanpa mengubah sejarah sesi aktif; `/btw` dikendalikan sebagai pertanyaan langsung tanpa tool dan tidak memasuki aliran pelaksanaan tool biasa
 
-**4. Pemformatan Lanjutan**
+**5. Pemformatan Lanjutan**
 Anda boleh menetapkan `use_markdown_v2: true` untuk mengaktifkan pilihan pemformatan yang lebih maju. Ini membolehkan bot menggunakan keseluruhan set ciri Telegram MarkdownV2, termasuk gaya bersarang, spoiler, dan blok lebar tetap tersuai.
 
 </details>
@@ -148,7 +150,7 @@ Anda juga boleh mencetuskan dengan awalan kata kunci (contohnya `!bot`):
 **6. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -156,7 +158,7 @@ picoclaw gateway
 <details>
 <summary><b>WhatsApp</b> (asli melalui whatsmeow)</summary>
 
-PicoClaw boleh menyambung ke WhatsApp dalam dua cara:
+NeuroClaw boleh menyambung ke WhatsApp dalam dua cara:
 
 - **Asli (disyorkan):** Dalam proses menggunakan [whatsmeow](https://github.com/tulir/whatsmeow). Tiada bridge berasingan. Tetapkan `"use_native": true` dan biarkan `bridge_url` kosong. Pada larian pertama, imbas kod QR dengan WhatsApp (Linked Devices). Sesi disimpan di bawah workspace anda (contohnya `workspace/whatsapp/`). Saluran asli ini adalah **pilihan** untuk memastikan binari lalai kekal kecil; bina dengan `-tags whatsapp_native` (contohnya `make build-whatsapp-native` atau `go build -tags whatsapp_native ./cmd/...`).
 - **Bridge:** Sambung ke bridge WebSocket luaran. Tetapkan `bridge_url` (contohnya `ws://localhost:3001`) dan biarkan `use_native` sebagai false.
@@ -177,7 +179,7 @@ PicoClaw boleh menyambung ke WhatsApp dalam dua cara:
 }
 ```
 
-Jika `session_store_path` kosong, sesi akan disimpan dalam `<workspace>/whatsapp/`. Jalankan `picoclaw gateway`; pada larian pertama, imbas kod QR yang dipaparkan dalam terminal menggunakan WhatsApp → Linked Devices.
+Jika `session_store_path` kosong, sesi akan disimpan dalam `<workspace>/whatsapp/`. Jalankan `neuroclaw gateway`; pada larian pertama, imbas kod QR yang dipaparkan dalam terminal menggunakan WhatsApp → Linked Devices.
 
 </details>
 
@@ -205,12 +207,12 @@ Jika `session_store_path` kosong, sesi akan disimpan dalam `<workspace>/whatsapp
 }
 ```
 
-> Tetapkan `allow_from` kepada kosong untuk membenarkan semua pengguna, atau nyatakan nombor QQ untuk mengehadkan akses.
+> Nyatakan nombor QQ dalam `allow_from` untuk mengehadkan akses. Kosong membenarkan semua pengguna; gunakan `["*"]` untuk menjadikannya jelas.
 
 **3. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -240,12 +242,12 @@ picoclaw gateway
 }
 ```
 
-> Tetapkan `allow_from` kepada kosong untuk membenarkan semua pengguna, atau nyatakan user ID DingTalk untuk mengehadkan akses.
+> Nyatakan user ID DingTalk dalam `allow_from` untuk mengehadkan akses. Kosong membenarkan semua pengguna; gunakan `["*"]` untuk menjadikannya jelas.
 
 **3. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 </details>
 
@@ -277,7 +279,7 @@ picoclaw gateway
 **3. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 Untuk pilihan penuh (`device_id`, `join_on_invite`, `group_trigger`, `placeholder`, `reasoning_channel_id`), lihat [Panduan Konfigurasi Saluran Matrix](../channels/matrix/README.md).
@@ -326,7 +328,7 @@ Kemudian tetapkan Webhook URL dalam LINE Developers Console kepada `https://your
 **4. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 > Dalam sembang kumpulan, bot hanya membalas apabila @disebut. Balasan akan memetik mesej asal.
@@ -336,22 +338,22 @@ picoclaw gateway
 <details>
 <summary><b>WeCom (企业微信)</b></summary>
 
-PicoClaw menyokong tiga jenis integrasi WeCom:
+NeuroClaw mendedahkan WeCom sebagai satu saluran AI Bot melalui WebSocket.
+URL panggilan balik webhook awam tidak diperlukan.
 
-**Pilihan 1: WeCom Bot (Bot)** - Penyediaan lebih mudah, menyokong sembang kumpulan
-**Pilihan 2: WeCom App (Custom App)** - Lebih banyak ciri, pemesejan proaktif, sembang peribadi sahaja
-**Pilihan 3: WeCom AI Bot (AI Bot)** - AI Bot rasmi, balasan streaming, menyokong sembang kumpulan & peribadi
+Lihat [Panduan Konfigurasi WeCom](../channels/wecom/README.md) untuk rujukan konfigurasi penuh dan nota migrasi.
 
-Lihat [Panduan Konfigurasi WeCom](../channels/wecom/README.zh.md) untuk arahan penyediaan terperinci.
+**Persediaan pantas - disyorkan**
 
-**Quick Setup - WeCom Bot:**
+**1. Sahkan**
 
-**1. Cipta bot**
+```bash
+neuroclaw auth wecom
+```
 
-* Pergi ke WeCom Admin Console → Group Chat → Add Group Bot
-* Salin webhook URL (format: `https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx`)
+Arahan ini memaparkan kod QR, menunggu kelulusan dalam WeCom, dan menulis `bot_id` + `secret` ke dalam entri `wecom` dalam `channel_list`.
 
-**2. Konfigurasi**
+**2. Konfigurasi secara manual jika perlu**
 
 ```json
 {
@@ -359,79 +361,12 @@ Lihat [Panduan Konfigurasi WeCom](../channels/wecom/README.zh.md) untuk arahan p
     "wecom": {
       "enabled": true,
       "type": "wecom",
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY",
-      "webhook_path": "/webhook/wecom",
-      "allow_from": []
-    }
-  }
-}
-```
-
-> Webhook WeCom diservis pada pelayan Gateway yang dikongsi (`gateway.host`:`gateway.port`, lalai `127.0.0.1:18790`).
-
-**Quick Setup - WeCom App:**
-
-**1. Cipta aplikasi**
-
-* Pergi ke WeCom Admin Console → App Management → Create App
-* Salin **AgentId** dan **Secret**
-* Pergi ke halaman "My Company", salin **CorpID**
-
-**2. Konfigurasi penerimaan mesej**
-
-* Dalam butiran aplikasi, klik "Receive Message" → "Set API"
-* Tetapkan URL kepada `http://your-server:18790/webhook/wecom-app`
-* Jana **Token** dan **EncodingAESKey**
-
-**3. Konfigurasi**
-
-```json
-{
-  "channel_list": {
-    "wecom_app": {
-      "enabled": true,
-      "corp_id": "wwxxxxxxxxxxxxxxxx",
-      "corp_secret": "YOUR_CORP_SECRET",
-      "agent_id": 1000002,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-app",
-      "allow_from": []
-    }
-  }
-}
-```
-
-**4. Jalankan**
-
-```bash
-picoclaw gateway
-```
-
-> **Nota**: Callback webhook WeCom diservis pada port Gateway (lalai 18790). Gunakan reverse proxy untuk HTTPS.
-
-**Quick Setup - WeCom AI Bot:**
-
-**1. Cipta AI Bot**
-
-* Pergi ke WeCom Admin Console → App Management → AI Bot
-* Dalam tetapan AI Bot, konfigurasikan callback URL: `http://your-server:18791/webhook/wecom-aibot`
-* Salin **Token** dan klik "Random Generate" untuk **EncodingAESKey**
-
-**2. Konfigurasi**
-
-```json
-{
-  "channel_list": {
-    "wecom_aibot": {
-      "enabled": true,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_43_CHAR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-aibot",
+      "bot_id": "YOUR_BOT_ID",
+      "secret": "YOUR_SECRET",
+      "websocket_url": "wss://openws.work.weixin.qq.com",
+      "send_thinking_message": true,
       "allow_from": [],
-      "welcome_message": "Hello! How can I help you?"
+      "reasoning_channel_id": ""
     }
   }
 }
@@ -440,10 +375,10 @@ picoclaw gateway
 **3. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
-> **Nota**: WeCom AI Bot menggunakan protokol streaming pull — tiada isu timeout balasan. Tugasan panjang (>30 saat) akan bertukar secara automatik kepada penghantaran push `response_url`.
+> Entri lama `wecom_app` dan `wecom_aibot` digantikan oleh entri `wecom` bersepadu di bawah `channel_list`.
 
 </details>
 
@@ -451,7 +386,7 @@ picoclaw gateway
 <details>
 <summary><b>MQTT</b></summary>
 
-Mana-mana client MQTT boleh berkomunikasi dengan PicoClaw melalui broker. Peranti atau perkhidmatan menerbitkan permintaan ke broker; PicoClaw melanggan, memproses dan menerbitkan respons kembali.
+Mana-mana client MQTT boleh berkomunikasi dengan NeuroClaw melalui broker. Peranti atau perkhidmatan menerbitkan permintaan ke broker; NeuroClaw melanggan, memproses dan menerbitkan respons kembali.
 
 **1. Konfigurasi**
 
@@ -464,7 +399,7 @@ Mana-mana client MQTT boleh berkomunikasi dengan PicoClaw melalui broker. Perant
       "settings": {
         "broker": "ssl://your-broker:8883",
         "agent_id": "assistant",
-        "topic_prefix": "/picoclaw",
+        "topic_prefix": "/neuroclaw",
         "keep_alive": 60,
         "qos": 0
       }
@@ -473,7 +408,7 @@ Mana-mana client MQTT boleh berkomunikasi dengan PicoClaw melalui broker. Perant
 }
 ```
 
-Nama pengguna dan kata laluan dalam `~/.picoclaw/.security.yml`:
+Nama pengguna dan kata laluan dalam `~/.neuroclaw/.security.yml`:
 
 ```yaml
 channel_list:
@@ -486,8 +421,8 @@ channel_list:
 **Format topik**
 
 ```
-{prefix}/{agent_id}/{client_id}/request    # Client → PicoClaw
-{prefix}/{agent_id}/{client_id}/response   # PicoClaw → Client
+{prefix}/{agent_id}/{client_id}/request    # Client → NeuroClaw
+{prefix}/{agent_id}/{client_id}/response   # NeuroClaw → Client
 ```
 
 `client_id` ditetapkan oleh aplikasi client anda untuk mengenal pasti peranti atau sesi.
@@ -495,16 +430,16 @@ channel_list:
 **2. Jalankan**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 **3. Uji**
 
 ```bash
-mosquitto_pub -t "/picoclaw/assistant/device1/request" \
+mosquitto_pub -t "/neuroclaw/assistant/device1/request" \
   -m '{"text": "Helo"}'
 
-mosquitto_sub -t "/picoclaw/assistant/device1/response"
+mosquitto_sub -t "/neuroclaw/assistant/device1/response"
 ```
 
 Untuk semua pilihan konfigurasi, lihat [Dokumentasi Saluran MQTT](../channels/mqtt/README.md).

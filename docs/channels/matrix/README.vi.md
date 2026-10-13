@@ -23,10 +23,12 @@ Thêm vào `config.json`:
       },
       "placeholder": {
         "enabled": true,
-        "text": "Thinking..."
+        "text": ["Thinking...", "Processing...", "Typing..."]
       },
       "reasoning_channel_id": "",
-      "message_format": "richtext"
+      "message_format": "richtext",
+      "crypto_database_path": "",
+      "crypto_passphrase": "YOUR_MATRIX_CRYPTO_PICKLE_KEY"
     }
   }
 }
@@ -42,11 +44,20 @@ Thêm vào `config.json`:
 | access_token         | string   | Có       | Token truy cập của bot |
 | device_id            | string   | Không    | ID thiết bị Matrix tùy chọn |
 | join_on_invite       | bool     | Không    | Tự động tham gia phòng được mời |
-| allow_from           | []string | Không    | Danh sách trắng người dùng (ID Matrix) |
+| allow_from           | []string | Không    | Danh sách trắng người dùng (ID Matrix); để trống thì ai cũng vào được (gateway ghi cảnh báo), nên hãy đặt giá trị hoặc dùng `["*"]` nếu cố ý |
 | group_trigger        | object   | Không    | Chiến lược kích hoạt nhóm (`mention_only` / `prefixes`) |
-| placeholder          | object   | Không    | Cấu hình tin nhắn giữ chỗ |
+| placeholder          | object   | Không    | Cấu hình tin nhắn giữ chỗ (xem bên dưới) |
 | reasoning_channel_id | string   | Không    | Kênh đích cho đầu ra suy luận |
 | message_format       | string   | Không    | Định dạng đầu ra: `"richtext"` (mặc định) render markdown thành HTML; `"plain"` chỉ gửi văn bản thuần |
+| crypto_database_path | string   | Không    | Đường dẫn lưu cơ sở dữ liệu mã hóa (dùng đường dẫn workspace `~/.neuroclaw/workspace` nếu để trống) |
+| crypto_passphrase    | string   | Không    | Khóa tuần tự hóa để mã hóa khóa phiên trong cơ sở dữ liệu; phải giữ nguyên sau khi đã đặt |
+
+### Cấu hình Placeholder
+
+| Trường  | Kiểu           | Bắt buộc | Mô tả |
+|---------|----------------|----------|-------|
+| enabled | bool           | Không    | Bật tin nhắn giữ chỗ (mặc định: false) |
+| text    | string/[]string | Không   | Văn bản giữ chỗ. Có thể là một chuỗi hoặc một mảng chuỗi. Nếu có nhiều văn bản, một cái được chọn ngẫu nhiên lúc chạy. Mặc định: "Thinking..." |
 
 ## 3. Tính năng Hiện tại
 
@@ -59,6 +70,7 @@ Thêm vào `config.json`:
 - Trạng thái đang gõ (`m.typing`)
 - Tin nhắn giữ chỗ + thay thế phản hồi cuối cùng
 - Tự động tham gia phòng được mời (có thể tắt)
+- Hỗ trợ mã hóa đầu cuối (E2EE) cho tin nhắn được mã hóa
 
 ## 4. TODO
 

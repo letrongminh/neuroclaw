@@ -70,7 +70,7 @@ A **Turn** is one complete cycle:
 
 > user message -> LLM iterations (possibly including tool calls) -> final assistant response
 
-This definition comes from the agent loop design (#1316). In session history, Turn boundaries are identified by `user`-role messages.
+This definition comes from the agent loop design (upstream PicoClaw #1316). In session history, Turn boundaries are identified by `user`-role messages.
 
 Turn is the atomic unit for compression. Cutting inside a Turn can orphan tool-call sequences — an assistant message with `ToolCalls` separated from its corresponding `tool` results. Compressing at Turn boundaries avoids this by construction.
 
@@ -160,5 +160,5 @@ These are recognized limitations in the current implementation, documented here 
 
 - How `AGENT.md` frontmatter configures context parameters — that is part of the Agent definition work
 - How the context builder assembles context in the new architecture — that is upcoming work
-- How compression events surface through the event system — that is part of the event model (#1316)
+- How compression events surface through the event system — that is part of the event model (upstream PicoClaw #1316)
 - Subagent context isolation — that is a separate track

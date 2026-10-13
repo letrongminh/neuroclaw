@@ -25,7 +25,7 @@ DingTalk là nền tảng giao tiếp doanh nghiệp của Alibaba, được s�
 | enabled       | bool   | Có       | Có bật kênh DingTalk hay không                                   |
 | client_id     | string | Có       | Client ID của ứng dụng DingTalk                                  |
 | client_secret | string | Có       | Client Secret của ứng dụng DingTalk                              |
-| allow_from    | array  | Không    | Danh sách trắng ID người dùng; để trống cho phép tất cả          |
+| allow_from    | array  | Không    | Danh sách trắng ID người dùng; để trống thì ai cũng vào được (gateway ghi cảnh báo); hãy đặt giá trị, hoặc dùng `["*"]` nếu cố ý cho tất cả |
 
 ## Quy trình thiết lập
 

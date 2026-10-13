@@ -30,7 +30,7 @@
 | app_secret            | string | 是   | 飞书应用的 App Secret                                                                            |
 | encrypt_key           | string | 否   | 事件回调加密密钥                                                                                 |
 | verification_token    | string | 否   | 用于Webhook事件验证的Token                                                                       |
-| allow_from            | array  | 否   | 用户ID白名单，空表示所有用户                                                                     |
+| allow_from            | array  | 否   | 用户ID白名单；为空时任何人都能使用（网关会记录警告）；请设置，或用 `["*"]` 明确允许所有人                                                                     |
 | random_reaction_emoji | array  | 否   | 随机添加的表情列表，空则使用默认 "Pin"                                                           |
 | is_lark               | bool   | 否   | 是否使用 Lark 国际版域名（`open.larksuite.com`），默认为 `false`（使用飞书域名 `open.feishu.cn`） |
 
@@ -41,7 +41,7 @@
 3. 配置事件订阅和Webhook URL
 4. 设置加密(可选,生产环境建议启用)
 5. 将 App ID、App Secret、Encrypt Key 和 Verification Token(如果启用加密) 填入配置文件中
-6. 自定义你希望 PicoClaw react 你消息时的表情（可选, Reference URL: [Feishu Emoji List](https://open.larkoffice.com/document/server-docs/im-v1/message-reaction/emojis-introduce))
+6. 自定义你希望 NeuroClaw react 你消息时的表情（可选, Reference URL: [Feishu Emoji List](https://open.larkoffice.com/document/server-docs/im-v1/message-reaction/emojis-introduce))
 
 ## 平台限制
 

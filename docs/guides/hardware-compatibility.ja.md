@@ -1,8 +1,8 @@
 > [README](../project/README.ja.md) に戻る
 
-# 🖥️ PicoClaw ハードウェア互換性リスト
+# 🖥️ NeuroClaw ハードウェア互換性リスト
 
-PicoClaw はほぼすべての Linux デバイスで動作します。このページでは、検証済みのチップ、製品、開発ボードを記録しています。
+NeuroClaw はほぼすべての Linux デバイスで動作します。このページでは、検証済みのチップ、製品、開発ボードを記録しています。
 
 **お使いのハードウェアがリストにない場合は？** PR を送信して追加してください！ハードウェアベンダーの貢献と共同プロモーションを歓迎します。
 
@@ -59,7 +59,7 @@ PicoClaw はほぼすべての Linux デバイスで動作します。このペ�
 
 ## 2. 検証済み製品（発売日順）
 
-PicoClaw でテスト済みのコンシューマー製品、ルーター、産業用デバイス。
+NeuroClaw でテスト済みのコンシューマー製品、ルーター、産業用デバイス。
 
 | 年 | 製品 | アーキテクチャ | SoC | RAM | カテゴリ |
 |----|------|----------------|-----|-----|----------|
@@ -97,9 +97,9 @@ PicoClaw でテスト済みのコンシューマー製品、ルーター、産�
 
 ### Android スマートフォン（Termux 経由）
 
-1GB 以上の RAM を搭載した ARM64 Android スマートフォン（2015年以降）。[Termux](https://github.com/termux/termux-app) をインストールし、`proot` を使用して PicoClaw を実行します。
+1GB 以上の RAM を搭載した ARM64 Android スマートフォン（2015年以降）。[Termux](https://github.com/termux/termux-app) をインストールし、`termux-chroot`（`proot` に含まれます）経由で NeuroClaw を実行します。
 
-> セットアップ手順は [README：古い Android スマートフォンで実行](../project/README.ja.md#-run-on-old-android-phones) を参照してください。
+> セットアップ手順は [Android Termux ガイド](android-termux.md) を参照してください。
 
 ### デスクトップ / サーバー / クラウド
 
@@ -108,7 +108,7 @@ PicoClaw でテスト済みのコンシューマー製品、ルーター、産�
 | x86_64 Linux | ネイティブバイナリ、依存関係なし |
 | x86_64 Windows | ネイティブバイナリ |
 | macOS (Intel / Apple Silicon) | ネイティブバイナリ |
-| Docker (any platform) | `docker compose` ワンライナー、[Docker ガイド](docker.md) を参照 |
+| Docker | linux/amd64、arm64、riscv64 向けの `ghcr.io/letrongminh/neuroclaw`。[Docker ガイド](docker.ja.md) を参照 |
 | OpenWrt routers | MIPS/ARM ビルド、32MB 以上の空きメモリが必要 |
 | FreeBSD / NetBSD | x86_64 および arm64 ビルドが利用可能 |
 
@@ -130,17 +130,17 @@ PicoClaw でテスト済みのコンシューマー製品、ルーター、産�
 
 ```bash
 # 1. お使いのアーキテクチャ向けをダウンロード
-wget https://github.com/sipeed/picoclaw/releases/latest/download/picoclaw_Linux_arm64.tar.gz
-tar xzf picoclaw_Linux_arm64.tar.gz
+wget https://github.com/letrongminh/neuroclaw/releases/latest/download/neuroclaw_Linux_arm64.tar.gz
+tar xzf neuroclaw_Linux_arm64.tar.gz
 
 # 2. 初期化
-./picoclaw onboard
+./neuroclaw onboard
 
 # 3. テスト
-./picoclaw agent -m "Hello, what board am I running on?"
+./neuroclaw agent -m "Hello, what board am I running on?"
 ```
 
-利用可能なビルド：`linux-amd64`, `linux-arm64`, `linux-arm`, `linux-riscv64`, `linux-loong64`, `linux-mipsle`
+リリースアーカイブは `neuroclaw_<OS>_<arch>` という名前です：`Linux_x86_64`、`Linux_arm64`、`Linux_armv7`、`Linux_armv6`、`Linux_riscv64`、`Linux_loong64`、`Linux_mipsle`（ソフトフロート）、`Linux_s390x`。各プラットフォームについては [インストールガイド](install.ja.md) を参照してください。
 
 ### ハードウェアを追加する
 

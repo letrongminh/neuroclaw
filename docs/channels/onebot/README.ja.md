@@ -25,7 +25,7 @@ OneBot は QQ ボット向けのオープンプロトコル標準で、複数の
 | enabled      | bool   | はい   | OneBot チャンネルを有効にするかどうか                            |
 | ws_url       | string | はい   | OneBot サーバーの WebSocket URL                                  |
 | access_token | string | いいえ | OneBot サーバーへの接続に使用するアクセストークン                |
-| allow_from   | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は全ユーザーを許可           |
+| allow_from   | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 
 ## セットアップ手順
 

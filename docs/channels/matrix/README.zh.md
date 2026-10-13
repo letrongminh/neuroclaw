@@ -44,12 +44,12 @@
 | access_token         | string   | 是   | 机器人 access token |
 | device_id            | string   | 否   | 设备 ID（可选） |
 | join_on_invite       | bool     | 否   | 是否自动加入邀请房间 |
-| allow_from           | []string | 否   | 白名单用户（Matrix 用户 ID） |
+| allow_from           | []string | 否   | 白名单用户（Matrix 用户 ID）；为空时任何人都能使用（网关会记录警告），请设置或用 `["*"]` 明确允许所有人 |
 | group_trigger        | object   | 否   | 群聊触发策略（支持 `mention_only` / `prefixes`） |
 | placeholder          | object   | 否   | 占位消息配置 |
 | reasoning_channel_id | string   | 否   | 思维链输出目标通道 |
 | message_format       | string   | 否   | 消息格式：`richtext`（富文本）或 `plain`（纯文本） |
-| crypto_database_path | string   | 否   | 加密数据库存储路径（为空时使用工作空间路径 `~/.picoclaw/workspace`） |
+| crypto_database_path | string   | 否   | 加密数据库存储路径（为空时使用工作空间路径 `~/.neuroclaw/workspace`） |
 | crypto_passphrase    | string   | 否   | 加密数据库中 session key 的序列化密钥；设置后不能更改 |
 
 ### 占位消息配置 (Placeholder)

@@ -1,8 +1,8 @@
-# Contributing to PicoClaw
+# Contributing to NeuroClaw
 
-Thank you for your interest in contributing to PicoClaw! This project is a community-driven effort to build the lightweight and versatile personal AI assistant. We welcome contributions of all kinds: bug fixes, features, documentation, translations, and testing.
+Thank you for your interest in contributing to NeuroClaw! This project is a community-driven effort to build the lightweight and versatile personal AI assistant. We welcome contributions of all kinds: bug fixes, features, documentation, translations, and testing.
 
-PicoClaw itself was substantially developed with AI assistance — we embrace this approach and have built our contribution process around it.
+NeuroClaw, like PicoClaw before it, was substantially developed with AI assistance; we embrace this approach and have built our contribution process around it.
 
 ## Table of Contents
 
@@ -31,7 +31,7 @@ We are committed to maintaining a welcoming and respectful community. Be kind, c
 - **Feature requests** — Open an issue using the feature request template; discuss before implementing.
 - **Code** — Fix bugs or implement features. See the workflow below.
 - **Documentation** — Improve READMEs, docs, inline comments, or translations.
-- **Testing** — Run PicoClaw on new hardware, channels, or LLM providers and report your results.
+- **Testing** — Run NeuroClaw on new hardware, channels, or LLM providers and report your results.
 
 For substantial new features, please open an issue first to discuss the design before writing code. This prevents wasted effort and ensures alignment with the project's direction.
 
@@ -44,8 +44,8 @@ For documentation contributions, prefer the layout and naming conventions in [`d
 1. **Fork** the repository on GitHub.
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/<your-username>/picoclaw.git
-   cd picoclaw
+   git clone https://github.com/<your-username>/neuroclaw.git
+   cd neuroclaw
    ```
 3. Add the upstream remote:
    ```bash

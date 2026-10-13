@@ -24,13 +24,13 @@ MaixCam 是专用于连接矽速科技 MaixCAM 与 MaixCAM2 AI 摄像设备的�
 | ---------- | ------ | ---- | -------------------------------- |
 | enabled    | bool   | 是   | 是否启用 MaixCam 频道            |
 | host       | string | 是   | TCP 服务器监听地址               |
-| port       | int    | 是   | TCP 服务器监听端口               |
-| allow_from | array  | 否   | 设备ID白名单，空表示允许所有设备 |
+| port       | int    | 是   | TCP 服务器监听端口（默认 `18790`，与网关的 HTTP 端口相同；两者在同一主机上运行时请设置不同的端口） |
+| allow_from | array  | 否   | 设备ID白名单；为空时任何设备都能接入（网关会记录警告）；请设置，或用 `["*"]` 明确允许所有设备 |
 
 ## 使用场景
 
-MaixCam 通道使 PicoClaw 能够作为边缘设备的 AI 后端运行：
+MaixCam 通道使 NeuroClaw 能够作为边缘设备的 AI 后端运行：
 
-- **智能监控** ：MaixCAM 发送图像帧，PicoClaw 通过视觉模型进行分析
-- **物联网控制** ：设备发送传感器数据，PicoClaw 协调响应
-- **离线AI** ：在本地网络部署 PicoClaw 实现低延迟推理
+- **智能监控** ：MaixCAM 发送图像帧，NeuroClaw 通过视觉模型进行分析
+- **物联网控制** ：设备发送传感器数据，NeuroClaw 协调响应
+- **离线AI** ：在本地网络部署 NeuroClaw 实现低延迟推理

@@ -44,12 +44,12 @@ Add this to `config.json`:
 | access_token         | string   | Yes      | Bot access token |
 | device_id            | string   | No       | Optional Matrix device ID |
 | join_on_invite       | bool     | No       | Auto-join invited rooms |
-| allow_from           | []string | No       | User whitelist (Matrix user IDs) |
+| allow_from           | []string | No       | User whitelist (Matrix user IDs); empty lets anyone in (the gateway logs a warning), so set it or use `["*"]` on purpose |
 | group_trigger        | object   | No       | Group trigger strategy (`mention_only` / `prefixes`) |
 | placeholder          | object   | No       | Placeholder message config (see below) |
 | reasoning_channel_id | string   | No       | Target channel for reasoning output |
 | message_format       | string   | No       | Output format: `"richtext"` (default) renders markdown as HTML; `"plain"` sends plain text only |
-| crypto_database_path | string   | No       | Path to store the crypto database (uses workspace path `~/.picoclaw/workspace` if empty) |
+| crypto_database_path | string   | No       | Path to store the crypto database (uses workspace path `~/.neuroclaw/workspace` if empty) |
 | crypto_passphrase    | string   | No       | Serialization key for encrypting session keys in the database; must remain unchanged once set |
 
 ### Placeholder Config

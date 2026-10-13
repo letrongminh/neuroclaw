@@ -25,7 +25,7 @@ OneBot é um padrão de protocolo aberto para bots QQ, fornecendo uma interface 
 | enabled      | bool   | Sim         | Se o canal OneBot deve ser habilitado                                |
 | ws_url       | string | Sim         | URL WebSocket do servidor OneBot                                     |
 | access_token | string | Não         | Token de acesso para conexão ao servidor OneBot                      |
-| allow_from   | array  | Não         | Lista de permissão de IDs de usuário; vazio permite todos            |
+| allow_from   | array  | Não         | Lista de permissão de IDs de usuário; vazio deixa qualquer pessoa entrar (o gateway registra um aviso); defina-o, ou use `["*"]` para permitir todos de propósito            |
 
 ## Configuração passo a passo
 

@@ -4,16 +4,16 @@
 
 ## 💬 チャットアプリ連携
 
-PicoClaw は複数のチャットプラットフォームをサポートしており、Agent をどこにでも接続できます。
+Telegram、Discord、WhatsApp、Matrix、QQ、DingTalk、LINE、WeCom、Feishu、Slack、IRC、OneBot、MQTT、MaixCam、Pico（ネイティブプロトコル）を通じて NeuroClaw と会話できます。
 
-> **注意**: すべての Webhook ベースのチャネル（LINE、WeCom など）は、共有 Gateway HTTP サーバー（`gateway.host`:`gateway.port`、デフォルト `127.0.0.1:18790`）上で提供されます。チャネルごとにポートを設定する必要はありません。注意：飛書（Feishu）は WebSocket/SDK モードを使用し、共有 HTTP Webhook サーバーは使用しません。
+> **注意**: HTTP コールバックに依存するチャネルは、単一の共有 Gateway HTTP サーバー（`gateway.host`:`gateway.port`、デフォルト `127.0.0.1:18790`）を使用します。Feishu、DingTalk、WeCom のようなソケット/ストリームベースのチャネルは、受信に共有 Webhook サーバーを使用しません。
 
-### チャネル一覧
+> **すべてのチャネルで `allow_from` を設定してください。** `allow_from` が空の場合、ボットに到達できる誰でもボットと会話できます（Gateway は警告 `SECURITY: Channel allows EVERYONE` をログに出力するだけです）。自分のユーザー ID を列挙するか、公開アクセスが意図したものであることを明示するために `["*"]` を使用してください。以下の例の多くは簡潔さのために `"allow_from": []` と記載していますが、ツールを実行できるボットでは空のままにしないでください。チャットのユーザーがエージェントに実行させられること（シェル、スケジュールされたコマンド、スキルのインストール）は、リスクラベルとともに [Capabilities §2](../reference/capabilities.md) に一覧があります。
 
 | チャネル             | セットアップ難易度 | 特徴                                      | ドキュメント                                                                                                    |
 | -------------------- | ------------------ | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | **Telegram**         | ⭐ 簡単            | 推奨、音声テキスト変換対応、ロングポーリング（公開 IP 不要） | [ドキュメント](../channels/telegram/README.ja.md)                                                             |
-| **Discord**          | ⭐ 簡単            | Socket Mode、グループ/DM 対応、Bot エコシステム充実 | [ドキュメント](../channels/discord/README.ja.md)                                                              |
+| **Discord**          | ⭐ 簡単            | Gateway WebSocket（公開 IP 不要）、グループ/DM 対応 | [ドキュメント](../channels/discord/README.ja.md)                                                              |
 | **WhatsApp**         | ⭐ 簡単            | ネイティブ (QR スキャン) または Bridge URL | [ドキュメント](#whatsapp)                                                             |
 | **微信 (Weixin)**    | ⭐ 簡単            | ネイティブ QR スキャン（Tencent iLink API）| [ドキュメント](#weixin)                                                               |
 | **Slack**            | ⭐ 簡単            | **Socket Mode** (公開 IP 不要)、エンタープライズ対応 | [ドキュメント](../channels/slack/README.ja.md)                                                                |
@@ -21,15 +21,13 @@ PicoClaw は複数のチャットプラットフォームをサポートして�
 | **QQ**               | ⭐⭐ 中程度        | 公式ボット API、中国コミュニティ向け       | [ドキュメント](../channels/qq/README.ja.md)                                                                   |
 | **DingTalk**         | ⭐⭐ 中程度        | Stream モード（公開 IP 不要）、企業向け    | [ドキュメント](../channels/dingtalk/README.ja.md)                                                             |
 | **LINE**             | ⭐⭐⭐ やや難      | HTTPS Webhook が必要                       | [ドキュメント](../channels/line/README.ja.md)                                                                 |
-| **WeCom (企業微信)** | ⭐⭐⭐ やや難      | グループ Bot (Webhook)、カスタムアプリ (API)、AI Bot 対応 | [ガイド](../channels/wecom/README.ja.md) |
+| **WeCom (企業微信)** | ⭐⭐⭐ やや難      | 公式 AI Bot（WebSocket）、ストリーミング + メディア対応 | [ドキュメント](../channels/wecom/README.ja.md) |
 | **Feishu (飛書)**    | ⭐⭐⭐ やや難      | エンタープライズコラボレーション、機能豊富 | [ドキュメント](../channels/feishu/README.ja.md)                                                               |
 | **IRC**              | ⭐⭐ 中程度        | サーバー + TLS 設定                        | [ドキュメント](#irc) |
 | **OneBot**           | ⭐⭐ 中程度        | NapCat/Go-CQHTTP 互換、コミュニティエコシステム充実 | [ドキュメント](../channels/onebot/README.ja.md)                                                               |
 | **MQTT**             | ⭐ 簡単            | ブローカー経由で任意の MQTT クライアントと通信 | [ドキュメント](../channels/mqtt/README.ja.md)                                                                 |
 | **MaixCam**          | ⭐ 簡単            | Sipeed AI カメラハードウェア統合チャネル   | [ドキュメント](../channels/maixcam/README.ja.md)                                                              |
-| **Pico**             | ⭐ 簡単            | PicoClaw ネイティブプロトコルチャネル     |                                                                                                               |
-
----
+| **Pico**             | ⭐ 簡単            | NeuroClaw ネイティブプロトコルチャネル     |                                                                                                               |
 
 <a id="telegram"></a>
 <details>
@@ -61,15 +59,28 @@ PicoClaw は複数のチャットプラットフォームをサポートして�
 **3. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 **4. Telegram コマンドメニュー（起動時に自動登録）**
 
-PicoClaw は統一されたコマンド定義を使用します。起動時に Telegram がサポートするコマンド（例: `/start`、`/help`、`/show`、`/list`、`/use`、`/btw`）を Bot コマンドメニューに自動登録し、メニュー表示と実際の動作を一致させます。
+NeuroClaw は統一されたコマンド定義を使用します。起動時に Telegram がサポートするコマンド（例: `/start`、`/help`、`/show`、`/list`、`/use`、`/btw`）を Bot コマンドメニューに自動登録し、メニュー表示と実際の動作を一致させます。
 Telegram 側はコマンドメニュー登録機能を保持し、汎用コマンドの実行は Agent Loop 内の commands executor で統一的に処理されます。
 
 ネットワークや API の一時的なエラーで登録に失敗しても、チャネルの起動はブロックされません。システムがバックグラウンドで自動リトライします。
+
+Telegram からスキルや MCP サーバーを直接確認することもできます：
+
+- `/list skills`
+- `/list mcp`
+- `/show mcp <server>`
+- `/use <skill> <message>`
+- `/use <skill>` の後、次のメッセージで実際のリクエストを送信
+- `/use clear`
+- `/btw <question>`：アクティブなセッション履歴を変更せずに、すぐに脇道の質問をします。`/btw` はツールを使わないクエリとして処理され、通常のツール実行フローには入りません
+
+**5. 高度なフォーマット**
+`use_markdown_v2: true` を設定すると、拡張フォーマットオプションが有効になります。これにより、ボットは Telegram MarkdownV2 の全機能（ネストされたスタイル、スポイラー、カスタム固定幅ブロックなど）を利用できます。
 
 </details>
 
@@ -144,7 +155,7 @@ Telegram 側はコマンドメニュー登録機能を保持し、汎用コマ�
 **6. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -153,7 +164,7 @@ picoclaw gateway
 <details>
 <summary><b>WhatsApp</b>（ネイティブ whatsmeow）</summary>
 
-PicoClaw は 2 つの WhatsApp 接続方式をサポートしています：
+NeuroClaw は 2 つの WhatsApp 接続方式をサポートしています：
 
 - **ネイティブ（推奨）：** プロセス内で [whatsmeow](https://github.com/tulir/whatsmeow) を使用。独立した Bridge は不要です。`"use_native": true` に設定し、`bridge_url` を空にします。初回実行時に WhatsApp で QR コードをスキャン（リンクデバイス）。セッションはワークスペース配下（例: `workspace/whatsapp/`）に保存されます。ネイティブチャネルは**オプション**ビルドで、`-tags whatsapp_native` でコンパイルします（例: `make build-whatsapp-native` または `go build -tags whatsapp_native ./cmd/...`）。
 - **Bridge：** 外部 WebSocket Bridge に接続。`bridge_url`（例: `ws://localhost:3001`）を設定し、`use_native` を false のままにします。
@@ -174,7 +185,7 @@ PicoClaw は 2 つの WhatsApp 接続方式をサポートしています：
 }
 ```
 
-`session_store_path` が空の場合、セッションは `<workspace>/whatsapp/` に保存されます。`picoclaw gateway` を実行し、初回実行時にターミナルに表示される QR コードをスキャンしてください（WhatsApp → リンクデバイス）。
+`session_store_path` が空の場合、セッションは `<workspace>/whatsapp/` に保存されます。`neuroclaw gateway` を実行し、初回実行時にターミナルに表示される QR コードをスキャンしてください（WhatsApp → リンクデバイス）。
 
 </details>
 
@@ -182,13 +193,13 @@ PicoClaw は 2 つの WhatsApp 接続方式をサポートしています：
 <details>
 <summary><b>微信 (Weixin)</b></summary>
 
-PicoClaw は Tencent iLink 公式 API を使用して WeChat 個人アカウントへの接続をサポートしています。
+NeuroClaw は Tencent iLink 公式 API を使用して WeChat 個人アカウントへの接続をサポートしています。
 
 **1. ログイン**
 
 インタラクティブな QR ログインフローを実行します：
 ```bash
-picoclaw auth weixin
+neuroclaw auth weixin
 ```
 WeChat モバイルアプリで表示された QR コードをスキャンしてください。ログイン成功後、トークンが設定ファイルに保存されます。
 
@@ -210,7 +221,7 @@ WeChat モバイルアプリで表示された QR コードをスキャンして
 
 **3. 実行**
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -244,7 +255,7 @@ picoclaw gateway
 **3. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 すべてのオプション（`device_id`、`join_on_invite`、`group_trigger`、`placeholder`、`reasoning_channel_id`）については [Matrix チャネル設定ガイド](../channels/matrix/README.md) を参照してください。
@@ -261,7 +272,7 @@ QQ 開放プラットフォームでは、OpenClaw 互換ボットのワンク�
 
 1. [QQ Bot クイックスタート](https://q.qq.com/qqbot/openclaw/index.html) を開き、QR コードをスキャンしてログイン
 2. ボットが自動的に作成されます — **App ID** と **App Secret** をコピー
-3. PicoClaw を設定：
+3. NeuroClaw を設定：
 
 ```json
 {
@@ -277,7 +288,7 @@ QQ 開放プラットフォームでは、OpenClaw 互換ボットのワンク�
 }
 ```
 
-4. `picoclaw gateway` を実行し、QQ を開いてボットとチャット
+4. `neuroclaw gateway` を実行し、QQ を開いてボットとチャット
 
 > App Secret は一度しか表示されません。すぐに保存してください — 再度表示するとリセットされます。
 >
@@ -290,7 +301,7 @@ QQ 開放プラットフォームでは、OpenClaw 互換ボットのワンク�
 * [QQ 開放プラットフォーム](https://q.qq.com/) にログインして開発者登録
 * QQ ボットを作成 — アバターと名前をカスタマイズ
 * ボット設定から **App ID** と **App Secret** をコピー
-* 上記の設定を行い、`picoclaw gateway` を実行
+* 上記の設定を行い、`neuroclaw gateway` を実行
 
 </details>
 
@@ -324,7 +335,7 @@ QQ 開放プラットフォームでは、OpenClaw 互換ボットのワンク�
 **3. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -343,7 +354,7 @@ picoclaw gateway
       "type": "irc",
       "server": "irc.libera.chat:6697",
       "tls": true,
-      "nick": "picoclaw-bot",
+      "nick": "neuroclaw-bot",
       "channels": ["#your-channel"],
       "password": "",
       "allow_from": []
@@ -357,7 +368,7 @@ picoclaw gateway
 **2. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 ボットは IRC サーバーに接続し、指定されたチャネルに参加します。
@@ -390,12 +401,12 @@ picoclaw gateway
 }
 ```
 
-> `allow_from` を空にするとすべてのユーザーを許可します。DingTalk ユーザー ID を指定してアクセスを制限することもできます。
+> アクセスを制限するには、`allow_from` に DingTalk ユーザー ID を指定してください。空の場合は全ユーザーを許可します。明示するには `["*"]` を使用してください。
 
 **3. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -443,7 +454,7 @@ LINE Developers Console で Webhook URL を `https://your-domain/webhook/line` �
 **4. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 > グループチャットでは、Bot は @メンション時のみ応答します。返信は元のメッセージを引用します。
@@ -454,7 +465,7 @@ picoclaw gateway
 <details>
 <summary><b>Feishu (飛書)</b></summary>
 
-PicoClaw は WebSocket/SDK モードで飛書に接続します — 公開 Webhook URL やコールバックサーバーは不要です。
+NeuroClaw は WebSocket/SDK モードで飛書に接続します — 公開 Webhook URL やコールバックサーバーは不要です。
 
 **1. アプリを作成**
 
@@ -484,7 +495,7 @@ PicoClaw は WebSocket/SDK モードで飛書に接続します — 公開 Webho
 **3. 実行してチャット**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 飛書を開き、ボット名を検索してチャットを開始できます。ボットをグループに追加することもできます — `group_trigger.mention_only: true` を設定すると @メンション時のみ応答します。
@@ -495,24 +506,24 @@ picoclaw gateway
 
 <a id="wecom"></a>
 <details>
-<summary><b>WeCom (企業微信)</b></summary>
+<summary><b>WeCom (企业微信)</b></summary>
 
-PicoClaw は 3 種類の WeCom 統合をサポートしています：
+NeuroClaw は WeCom を、WebSocket 経由の単一の AI Bot チャネルとして提供します。
+公開 Webhook コールバック URL は不要です。
 
-**方式 1: グループ Bot (Bot)** — セットアップ簡単、グループチャット対応
-**方式 2: カスタムアプリ (App)** — より多機能、プロアクティブメッセージング、プライベートチャットのみ
-**方式 3: AI Bot** — 公式 AI Bot、ストリーミング返信、グループ・プライベートチャット対応
+設定の詳細リファレンスと移行に関する注意は [WeCom 設定ガイド](../channels/wecom/README.ja.md) を参照してください。
 
-詳細なセットアップ手順は [WeCom 設定ガイド](../channels/wecom/README.ja.md) を参照してください。
+**クイックセットアップ（推奨）**
 
-**クイックセットアップ — グループ Bot：**
+**1. 認証**
 
-**1. Bot を作成**
+```bash
+neuroclaw auth wecom
+```
 
-* WeCom 管理コンソール → グループチャット → グループ Bot を追加
-* Webhook URL をコピー（形式：`https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=xxx`）
+このコマンドは QR コードを表示し、WeCom での承認を待って、`bot_id` と `secret` を `channel_list` の `wecom` エントリに書き込みます。
 
-**2. 設定**
+**2. 必要に応じて手動で設定**
 
 ```json
 {
@@ -520,80 +531,12 @@ PicoClaw は 3 種類の WeCom 統合をサポートしています：
     "wecom": {
       "enabled": true,
       "type": "wecom",
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=YOUR_KEY",
-      "webhook_path": "/webhook/wecom",
-      "allow_from": []
-    }
-  }
-}
-```
-
-> WeCom Webhook は共有 Gateway サーバー（`gateway.host`:`gateway.port`、デフォルト `127.0.0.1:18790`）上で提供されます。
-
-**クイックセットアップ — カスタムアプリ：**
-
-**1. アプリを作成**
-
-* WeCom 管理コンソール → アプリ管理 → アプリを作成
-* **AgentId** と **Secret** をコピー
-* 「マイ企業」ページで **CorpID** をコピー
-
-**2. メッセージ受信を設定**
-
-* アプリ詳細で「メッセージ受信」→「API を設定」をクリック
-* URL を `http://your-server:18790/webhook/wecom-app` に設定
-* **Token** と **EncodingAESKey** を生成
-
-**3. 設定**
-
-```json
-{
-  "channel_list": {
-    "wecom_app": {
-      "enabled": true,
-      "corp_id": "wwxxxxxxxxxxxxxxxx",
-      "corp_secret": "YOUR_CORP_SECRET",
-      "agent_id": 1000002,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-app",
-      "allow_from": []
-    }
-  }
-}
-```
-
-**4. 実行**
-
-```bash
-picoclaw gateway
-```
-
-> **注意**: WeCom Webhook コールバックは Gateway ポート（デフォルト 18790）で提供されます。HTTPS にはリバースプロキシを使用してください。
-
-**クイックセットアップ — AI Bot：**
-
-**1. AI Bot を作成**
-
-* WeCom 管理コンソール → アプリ管理 → AI Bot
-* AI Bot 設定でコールバック URL を設定：`http://your-server:18790/webhook/wecom-aibot`
-* **Token** をコピーし、「ランダム生成」をクリックして **EncodingAESKey** を取得
-
-**2. 設定**
-
-```json
-{
-  "channel_list": {
-    "wecom_aibot": {
-      "enabled": true,
-      "token": "YOUR_TOKEN",
-      "encoding_aes_key": "YOUR_43_CHAR_ENCODING_AES_KEY",
-      "webhook_path": "/webhook/wecom-aibot",
+      "bot_id": "YOUR_BOT_ID",
+      "secret": "YOUR_SECRET",
+      "websocket_url": "wss://openws.work.weixin.qq.com",
+      "send_thinking_message": true,
       "allow_from": [],
-      "welcome_message": "こんにちは！何かお手伝いできますか？",
-      "processing_message": "⏳ Processing, please wait. The results will be sent shortly."
+      "reasoning_channel_id": ""
     }
   }
 }
@@ -602,10 +545,10 @@ picoclaw gateway
 **3. 実行**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
-> **注意**: WeCom AI Bot はストリーミングプルプロトコルを使用しており、返信タイムアウトの心配はありません。長時間タスク（30 秒超）は自動的に `response_url` プッシュ配信に切り替わります。
+> 旧 `wecom_app` と `wecom_aibot` のエントリは、`channel_list` 配下の統合された `wecom` エントリに置き換えられました。
 
 </details>
 
@@ -613,7 +556,7 @@ picoclaw gateway
 <details>
 <summary><b>OneBot（OneBot プロトコル経由の QQ）</b></summary>
 
-OneBot は QQ ボット向けのオープンプロトコルです。PicoClaw は OneBot v11 互換の実装（例：[Lagrange](https://github.com/LagrangeDev/Lagrange.Core)、[NapCat](https://github.com/NapNeko/NapCatQQ)）に WebSocket で接続します。
+OneBot は QQ ボット向けのオープンプロトコルです。NeuroClaw は OneBot v11 互換の実装（例：[Lagrange](https://github.com/LagrangeDev/Lagrange.Core)、[NapCat](https://github.com/NapNeko/NapCatQQ)）に WebSocket で接続します。
 
 **1. OneBot 実装をセットアップ**
 
@@ -644,30 +587,7 @@ OneBot v11 互換の QQ ボットフレームワークをインストールし�
 **3. 実行**
 
 ```bash
-picoclaw gateway
-```
-
-</details>
-
-<a id="maixcam"></a>
-<details>
-<summary><b>MaixCam</b></summary>
-
-Sipeed AI カメラハードウェア向けの統合チャネルです。
-
-```json
-{
-  "channel_list": {
-    "maixcam": {
-      "enabled": true,
-      "type": "maixcam"
-    }
-  }
-}
-```
-
-```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 </details>
@@ -676,7 +596,7 @@ picoclaw gateway
 <details>
 <summary><b>MQTT</b></summary>
 
-任意の MQTT クライアントがブローカーを介して PicoClaw と通信できます。デバイスやサービスがブローカーにリクエストをパブリッシュし、PicoClaw がサブスクライブして処理し、レスポンスをパブリッシュして返します。
+任意の MQTT クライアントがブローカーを介して NeuroClaw と通信できます。デバイスやサービスがブローカーにリクエストをパブリッシュし、NeuroClaw がサブスクライブして処理し、レスポンスをパブリッシュして返します。
 
 **1. 設定**
 
@@ -689,7 +609,7 @@ picoclaw gateway
       "settings": {
         "broker": "ssl://your-broker:8883",
         "agent_id": "assistant",
-        "topic_prefix": "/picoclaw",
+        "topic_prefix": "/neuroclaw",
         "keep_alive": 60,
         "qos": 0
       }
@@ -698,7 +618,7 @@ picoclaw gateway
 }
 ```
 
-ユーザー名とパスワードは `~/.picoclaw/.security.yml` に記載します：
+ユーザー名とパスワードは `~/.neuroclaw/.security.yml` に記載します：
 
 ```yaml
 channel_list:
@@ -711,8 +631,8 @@ channel_list:
 **トピック形式**
 
 ```
-{prefix}/{agent_id}/{client_id}/request    # クライアント → PicoClaw
-{prefix}/{agent_id}/{client_id}/response   # PicoClaw → クライアント
+{prefix}/{agent_id}/{client_id}/request    # クライアント → NeuroClaw
+{prefix}/{agent_id}/{client_id}/response   # NeuroClaw → クライアント
 ```
 
 `client_id` はクライアントアプリケーションがデバイスやセッションを識別するために設定します。
@@ -720,16 +640,16 @@ channel_list:
 **2. 起動**
 
 ```bash
-picoclaw gateway
+neuroclaw gateway
 ```
 
 **3. テスト**
 
 ```bash
-mosquitto_pub -t "/picoclaw/assistant/device1/request" \
+mosquitto_pub -t "/neuroclaw/assistant/device1/request" \
   -m '{"text": "こんにちは"}'
 
-mosquitto_sub -t "/picoclaw/assistant/device1/response"
+mosquitto_sub -t "/neuroclaw/assistant/device1/response"
 ```
 
 完全な設定オプションは [MQTT チャンネルドキュメント](../channels/mqtt/README.ja.md) を参照してください。

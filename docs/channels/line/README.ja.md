@@ -2,7 +2,7 @@
 
 # Line
 
-PicoClaw は LINE Messaging API と Webhook コールバックを通じて LINE をサポートします。
+NeuroClaw は LINE Messaging API と Webhook コールバックを通じて LINE をサポートします。
 
 ## 設定
 
@@ -27,7 +27,7 @@ PicoClaw は LINE Messaging API と Webhook コールバックを通じて LINE 
 | channel_secret       | string | はい   | LINE Messaging API の Channel Secret                               |
 | channel_access_token | string | はい   | LINE Messaging API の Channel Access Token                         |
 | webhook_path         | string | いいえ | Webhook のパス（デフォルト: /webhook/line）                        |
-| allow_from           | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は全ユーザーを許可             |
+| allow_from           | array  | いいえ | ユーザーIDのホワイトリスト。空の場合は誰でも許可されます（Gateway が警告をログに出力します）。設定するか、全員を意図的に許可する場合は `["*"]` を使用してください |
 
 ## セットアップ手順
 
@@ -35,7 +35,7 @@ PicoClaw は LINE Messaging API と Webhook コールバックを通じて LINE 
 2. Channel Secret と Channel Access Token を取得する
 3. Webhook を設定する:
    - LINE は Webhook に HTTPS が必要なため、HTTPS 対応サーバーをデプロイするか、ngrok などのリバースプロキシツールを使用してローカルサーバーをインターネットに公開する必要があります
-   - PicoClaw は共有の Gateway HTTP サーバーを使用してすべてのチャンネルの Webhook コールバックを受信します。デフォルトのリッスンアドレスは 127.0.0.1:18790 です
+   - NeuroClaw は共有の Gateway HTTP サーバーを使用してすべてのチャンネルの Webhook コールバックを受信します。デフォルトのリッスンアドレスは 127.0.0.1:18790 です
    - Webhook URL を `https://your-domain.com/webhook/line` に設定し、外部ドメインをローカルの Gateway（デフォルトポート 18790）にリバースプロキシする
    - Webhook を有効にして URL を検証する
 4. Channel Secret と Channel Access Token を設定ファイルに入力する

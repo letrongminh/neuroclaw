@@ -25,7 +25,7 @@ DingTalk est la plateforme de communication d'entreprise d'Alibaba, très popula
 | enabled       | bool   | Oui    | Activer ou non le canal DingTalk                                 |
 | client_id     | string | Oui    | Client ID de l'application DingTalk                              |
 | client_secret | string | Oui    | Client Secret de l'application DingTalk                          |
-| allow_from    | array  | Non    | Liste blanche d'ID utilisateurs ; vide signifie tous les utilisateurs |
+| allow_from    | array  | Non    | Liste blanche d'ID utilisateurs ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Procédure de configuration
 

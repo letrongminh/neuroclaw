@@ -2,7 +2,7 @@
 
 # QQ
 
-PicoClaw prend en charge QQ via l'API Bot officielle de la plateforme ouverte QQ.
+NeuroClaw prend en charge QQ via l'API Bot officielle de la plateforme ouverte QQ.
 
 ## Configuration
 
@@ -25,7 +25,7 @@ PicoClaw prend en charge QQ via l'API Bot officielle de la plateforme ouverte QQ
 | enabled    | bool   | Oui    | Activer ou non le canal QQ                                                  |
 | app_id     | string | Oui    | App ID de l'application bot QQ                                              |
 | app_secret | string | Oui    | App Secret de l'application bot QQ                                          |
-| allow_from | array  | Non    | Liste blanche d'identifiants utilisateur ; vide signifie tous les utilisateurs |
+| allow_from | array  | Non    | Liste blanche d'identifiants utilisateur ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Configuration initiale
 
@@ -35,8 +35,8 @@ La plateforme ouverte QQ propose une entrée de création en un clic :
 
 1. Ouvrir [QQ Bot Quick Create](https://q.qq.com/qqbot/openclaw/index.html) et se connecter en scannant le QR code
 2. Le système crée automatiquement un bot — copier l'**App ID** et l'**App Secret**
-3. Renseigner les identifiants dans le fichier de configuration PicoClaw
-4. Exécuter `picoclaw gateway` pour démarrer le service
+3. Renseigner les identifiants dans le fichier de configuration NeuroClaw
+4. Exécuter `neuroclaw gateway` pour démarrer le service
 5. Ouvrir QQ et commencer à discuter avec le bot
 
 > L'App Secret n'est affiché qu'une seule fois — sauvegardez-le immédiatement. Le consulter à nouveau forcera une réinitialisation.
@@ -48,8 +48,8 @@ La plateforme ouverte QQ propose une entrée de création en un clic :
 1. Se connecter à la [plateforme ouverte QQ](https://q.qq.com/) avec son compte QQ et s'inscrire en tant que développeur
 2. Créer un bot QQ et personnaliser son avatar et son nom
 3. Obtenir l'**App ID** et l'**App Secret** dans les paramètres du bot
-4. Renseigner les identifiants dans le fichier de configuration PicoClaw
-5. Exécuter `picoclaw gateway` pour démarrer le service
+4. Renseigner les identifiants dans le fichier de configuration NeuroClaw
+5. Exécuter `neuroclaw gateway` pour démarrer le service
 6. Rechercher votre bot dans QQ et commencer à discuter
 
 > Pendant le développement, il est recommandé d'activer le mode sandbox et d'y ajouter les utilisateurs et groupes de test pour le débogage.

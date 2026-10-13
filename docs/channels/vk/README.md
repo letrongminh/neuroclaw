@@ -27,7 +27,7 @@ The VK channel uses Bots Long Poll API for bot-based communication with VK socia
 | enabled          | bool   | Yes      | Whether to enable the VK channel                                   |
 | token            | string | Yes      | Set to `NOT_HERE` - token is stored securely (see Token Storage)   |
 | group_id         | int    | Yes      | VK Community ID (Group ID)                                         |
-| allow_from       | array  | No       | Allowlist of user IDs; empty means all users are allowed           |
+| allow_from       | array  | No       | Allowlist of user IDs; empty lets anyone in (the gateway logs a warning); set it, or use `["*"]` to allow everyone on purpose           |
 | group_trigger    | object | No       | Configuration for group chat triggers                              |
 
 ### Token Storage
@@ -36,12 +36,12 @@ For security reasons, the VK access token should not be stored directly in the c
 
 1. Set `token` to `"NOT_HERE"` in the configuration
 2. Store the actual token using one of these methods:
-   - **Environment variable**: Set `PICOCLAW_CHANNELS_VK_TOKEN` environment variable
-   - **Secure storage**: Use PicoClaw's secure token storage mechanism
+   - **Environment variable**: Set `NEUROCLAW_CHANNELS_VK_TOKEN` environment variable
+   - **Secure storage**: Use NeuroClaw's secure token storage mechanism
 
 Example using environment variable:
 ```bash
-export PICOCLAW_CHANNELS_VK_TOKEN="vk1.a.abc123..."
+export NEUROCLAW_CHANNELS_VK_TOKEN="vk1.a.abc123..."
 ```
 
 ### Group Trigger Configuration
@@ -76,9 +76,9 @@ export PICOCLAW_CHANNELS_VK_TOKEN="vk1.a.abc123..."
 4. Copy the generated access token
 5. Store the token securely (see Token Storage section below)
 
-### 4. Configure PicoClaw
+### 4. Configure NeuroClaw
 
-1. Add the token to your PicoClaw configuration
+1. Add the token to your NeuroClaw configuration
 2. Set the `group_id` to your community ID (numeric value)
 3. (Optional) Configure `allow_from` to restrict which user IDs can interact
 
@@ -113,7 +113,7 @@ The VK channel supports group chats with configurable triggers:
 
 ### Message Length
 
-VK has a maximum message length of 4000 characters. PicoClaw automatically splits longer messages into multiple parts.
+VK has a maximum message length of 4000 characters. NeuroClaw automatically splits longer messages into multiple parts.
 
 ## Example Configuration
 
@@ -173,7 +173,7 @@ VK has a maximum message length of 4000 characters. PicoClaw automatically split
 1. Check that the access token is valid
 2. Verify that the `group_id` is correct
 3. Ensure the user ID is in `allow_from` if configured
-4. Check PicoClaw logs for error messages
+4. Check NeuroClaw logs for error messages
 
 ### Permission Errors
 

@@ -25,7 +25,7 @@ Le canal Telegram utilise le long polling via l'API Bot Telegram pour une commun
 | --------------- | ------ | ------ | ------------------------------------------------------------------------ |
 | enabled         | bool   | Oui    | Activer ou non le canal Telegram                                         |
 | token           | string | Oui    | Token de l'API Bot Telegram                                              |
-| allow_from      | array  | Non    | Liste blanche d'identifiants utilisateur ; vide signifie tous les utilisateurs |
+| allow_from      | array  | Non    | Liste blanche d'identifiants utilisateur ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 | proxy           | string | Non    | URL du proxy pour se connecter à l'API Telegram (ex. http://127.0.0.1:7890) |
 | use_markdown_v2 | bool   | Non    | Activer le formatage Telegram MarkdownV2                                 |
 

@@ -24,13 +24,13 @@ MaixCam est un canal dédié à la connexion aux caméras AI Sipeed MaixCAM et M
 | ---------- | ------ | ------ | --------------------------------------------------------------------------- |
 | enabled    | bool   | Oui    | Activer ou non le canal MaixCam                                             |
 | host       | string | Oui    | Adresse d'écoute du serveur TCP                                             |
-| port       | int    | Oui    | Port d'écoute du serveur TCP                                                |
-| allow_from | array  | Non    | Liste blanche d'identifiants d'appareils ; vide signifie tous les appareils |
+| port       | int    | Oui    | Port d'écoute du serveur TCP (par défaut `18790`, identique au port HTTP de la passerelle ; choisissez-en un autre si les deux tournent sur le même hôte) |
+| allow_from | array  | Non    | Liste blanche d'identifiants d'appareils ; vide laisse entrer tout le monde (la passerelle consigne un avertissement) ; renseignez-le, ou utilisez `["*"]` pour autoriser tout le monde volontairement |
 
 ## Cas d'utilisation
 
-Le canal MaixCam permet à PicoClaw de fonctionner comme backend IA pour les appareils en périphérie :
+Le canal MaixCam permet à NeuroClaw de fonctionner comme backend IA pour les appareils en périphérie :
 
-- **Surveillance intelligente** : MaixCAM envoie des images ; PicoClaw les analyse via des modèles de vision
-- **Contrôle IoT** : Les appareils envoient des données de capteurs ; PicoClaw coordonne les réponses
-- **IA hors ligne** : Déployer PicoClaw sur un réseau local pour une inférence à faible latence
+- **Surveillance intelligente** : MaixCAM envoie des images ; NeuroClaw les analyse via des modèles de vision
+- **Contrôle IoT** : Les appareils envoient des données de capteurs ; NeuroClaw coordonne les réponses
+- **IA hors ligne** : Déployer NeuroClaw sur un réseau local pour une inférence à faible latence

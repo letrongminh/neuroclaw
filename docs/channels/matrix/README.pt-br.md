@@ -42,7 +42,7 @@ Adicione isto ao `config.json`:
 | access_token         | string   | Sim         | Token de acesso do bot |
 | device_id            | string   | Não         | ID de dispositivo Matrix opcional |
 | join_on_invite       | bool     | Não         | Entrar automaticamente em salas convidadas |
-| allow_from           | []string | Não         | Lista branca de usuários (IDs Matrix) |
+| allow_from           | []string | Não         | Lista branca de usuários (IDs Matrix); vazio deixa qualquer pessoa entrar (o gateway registra um aviso), então defina-o ou use `["*"]` de propósito |
 | group_trigger        | object   | Não         | Estratégia de gatilho de grupo (`mention_only` / `prefixes`) |
 | placeholder          | object   | Não         | Configuração de mensagem de espaço reservado |
 | reasoning_channel_id | string   | Não         | Canal alvo para saída de raciocínio |

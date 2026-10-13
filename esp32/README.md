@@ -28,15 +28,17 @@ The full list of what both brains do is in [What NeuroClaw can do](../docs/refer
 | Reminders | `cron` tool: `at_seconds`, `every_seconds`, `cron_expr`, add/list/get/update/remove/enable/disable | Same arguments; jobs in `cron/jobs.json`; a job runs the agent and the reply goes to the owner |
 | Heartbeat | `HEARTBEAT.md`, every 30 min, `HEARTBEAT_OK` not sent | Same |
 | Web | `web_search` (Brave, SearXNG, …), `web_fetch` (private hosts refused) | `web_search` (SearXNG or Brave), `web_fetch` (private hosts refused, redirects checked) |
+| Messages and files | `message` (the final reply is then not sent too), `send_file` (the turn ends when the file was the answer) | Same names, arguments and rules, to the owner only; files streamed from flash, images as photos (a document if Telegram refuses the photo) |
+| A model that fails | `fallbacks`: the next model on network, auth, billing, rate-limit or overload errors, not on a bad request; cooldown 1, 5, 25 min, then 1 h (billing 5 h → 24 h) | `llm_fallback_url` (+ key, model): the same rule and the same cooldown |
 
 ## Not on the chip
 
 | Go NeuroClaw | Why not here |
 |:---|:---|
 | Channels other than Telegram (Discord, Slack, Matrix…) | Each is a client and a TLS session in 512 KB of SRAM; Telegram is what the owner uses |
-| LLM providers other than OpenAI-compatible | One protocol keeps the code small; OpenRouter or a local server cover the rest |
+| LLM providers other than OpenAI-compatible; more than one fallback | One protocol keeps the code small; OpenRouter or a local server cover the rest |
 | Subagents, `spawn`, MCP client | One task on one chip; devices come through the gate in-process, not MCP |
-| Images, voice, files to the chat | No camera or audio pipeline on this board yet |
+| Images and voice from the owner; speech out | No camera or audio pipeline on this board yet |
 | Search providers other than SearXNG and Brave | Kept to two JSON APIs; DuckDuckGo's HTML is too big to parse on the chip |
 
 ## Risk, said plainly
@@ -60,6 +62,8 @@ const nc_config config = {
     .workspace = "/ws",              /* a mounted LittleFS partition */
     .tz = "<+07>-7",
     .search_provider = "searxng", .search_url = "https://searx.example",   /* optional */
+    .llm_fallback_url = "http://192.168.1.20:8080/v1/chat/completions",   /* optional */
+    .llm_fallback_model = "qwen2.5-7b-instruct",
 };
 const nc_gate gate = {ctx, my_tools, my_call, my_answer}; /* the firmware's gate */
 neuroclaw_start(&config, &gate);
@@ -74,8 +78,8 @@ The Telegram offset is saved before updates are handled, so after a crash a mess
 once.
 
 Serial lines for tests and logs start with `NC_` (`NC_READY`, `NC_SESSION`, `NC_IGNORED`, `NC_TOOL`,
-`NC_ASK`, `NC_BUTTON`, `NC_CRON_RUN`, `NC_HEARTBEAT`, `NC_SUMMARY`, `NC_FETCH`, `NC_STACK`); none carries
-the token, the key or what the owner wrote.
+`NC_ASK`, `NC_BUTTON`, `NC_CRON_RUN`, `NC_HEARTBEAT`, `NC_SUMMARY`, `NC_FETCH`, `NC_MESSAGE`,
+`NC_SEND_FILE`, `NC_LLM_FALLBACK`, `NC_STACK`); none carries the token, the keys or what the owner wrote.
 
 ## Test it
 
@@ -91,8 +95,10 @@ The QEMU example has a stub gate with the rules of NeuroEdge's chat-den-cua demo
 asks the owner) and talks to a fake Telegram, LLM and SearXNG on the host, over two boots of one flash
 image: strangers dropped; the light; the door through the owner's button; memory written and read back;
 the brain's own files refused; a reminder five seconds later; the conversation, memory and summary still
-there after the reboot, no message handled twice; a web search; a page fetched as text; the home's
-network refused, directly and behind a redirect; the heartbeat.
+there after the reboot, no message handled twice; a file and a photo sent (a refused photo sent as a
+document), a message to a stranger refused, a reminder delivered with `message` once; a web search; a
+page fetched as text; the home's network refused, directly and behind a redirect; the configured LLM
+down and the fallback answering, the first not called while it cools down; the heartbeat.
 
 Telegram and chat-completions clients after [zclaw](https://github.com/tnm/zclaw) (MIT); workspace on
 [LittleFS](https://github.com/joltwallet/esp_littlefs) (MIT); see [NOTICE](../NOTICE).

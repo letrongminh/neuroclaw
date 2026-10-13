@@ -9,9 +9,9 @@ and, for anything that cannot be undone, asks you at home first.
 Run it on a cheap Linux board at home or on a server (NeuroEdge Cloud); it is the same binary.
 
 Or on the chip itself: [`esp32/`](esp32/) is **NeuroClaw-ESP**, the same brain rewritten in C as an
-ESP-IDF component for one ESP32-S3 — Telegram, the LLM, memory, reminders, heartbeat, web search and
-the gate on a few-dollar chip, with the same workspace and tools as here ([what is the same, what is
-not](esp32/README.md)), labelled
+ESP-IDF component for one ESP32-S3 — Telegram, the LLM (with a fallback), memory, reminders,
+heartbeat, web search, messages and files to the owner, and the gate on a few-dollar chip, with the
+same workspace and tools as here ([what is the same, what is not](esp32/README.md)), labelled
 `risk=single_chip` because brain and gate then share one address space.
 
 NeuroClaw is a hard fork of [PicoClaw](https://github.com/sipeed/picoclaw) v0.3.1 (MIT). See

@@ -291,7 +291,7 @@ Details and the risk of sharing one chip with the gate: [`esp32/README.md`](../.
 | | NeuroClaw (Go) | NeuroClaw-ESP |
 |:---|:---|:---|
 | Channel | 20 channels | Telegram only, owner's user ID only; everyone else dropped before the model |
-| LLM | Many protocols, fallbacks, cooldown | One OpenAI-compatible chat-completions URL |
+| LLM | Many protocols, fallbacks, cooldown | One OpenAI-compatible chat-completions URL and an optional fallback URL, with the Go rules for when to fall back and the same cooldown |
 | Way to devices | MCP over mTLS to the box | `nc_gate` callbacks into the firmware's gate, same `ALLOW` / `BLOCK` / `REJECTED` |
 | Owner approval | Owner approves at the box | Same guidance text; the chip sends approve / refuse buttons, only the owner's press counts, once |
 | File tools | Five, workspace only | Same five, workspace only, 16 KB a file; `sessions/` and `cron/` not writable by the model |
@@ -301,9 +301,10 @@ Details and the risk of sharing one chip with the gate: [`esp32/README.md`](../.
 | Heartbeat | 30 min | 30 min (`CONFIG_NEUROCLAW_HEARTBEAT_MIN`, 0 = off) |
 | `web_search` | Ten providers | SearXNG or Brave |
 | `web_fetch` | Private addresses refused | Same rule; every resolved address and every redirect (at most 3) checked; 6000 bytes of text |
+| `message`, `send_file` | Any channel; media off by default in `message` | Same names and rules (final reply not sent after `message`; a turn whose round only delivered files ends there), owner only; files streamed from flash up to `CONFIG_NEUROCLAW_SEND_FILE_MAX` (10 MB), images as photos |
 | Rounds per message | Configurable | `CONFIG_NEUROCLAW_MAX_ROUNDS`, 4 |
 | After a crash | | Telegram offset saved before handling: a message is acted on at most once |
-| Not there | | Other channels, other providers, subagents, MCP client, voice, images, files to chat, skill registries |
+| Not there | | Other channels, other providers, more than one fallback, subagents, MCP client, voice, images from the owner, `reaction`, `load_image`, skill registries |
 
 Tested on the host (ASan, UBSan) and end to end in QEMU over two boots of one flash image
 (`esp32/scripts/`, CI job `esp32`).

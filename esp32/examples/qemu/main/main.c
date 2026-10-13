@@ -143,6 +143,8 @@ void app_main(void)
     eth_up();
     char llm_url[128];
     snprintf(llm_url, sizeof llm_url, "%s/v1/chat/completions", CONFIG_EXAMPLE_CLOUD);
+    char fallback_url[128];
+    snprintf(fallback_url, sizeof fallback_url, "%s/v2/chat/completions", CONFIG_EXAMPLE_CLOUD);
     const nc_config config = {
         .telegram_token = "7000000001:AAQemuOnlyNotARealTokenxxxxxxxxxxxx",
         .owner_id = CONFIG_EXAMPLE_OWNER,
@@ -156,6 +158,9 @@ void app_main(void)
         .search_url = CONFIG_EXAMPLE_CLOUD,
         /* Test only: the fake cloud lives on QEMU's host address, which is private. */
         .fetch_allow = "10.0.2.2",
+        .llm_fallback_url = fallback_url,
+        .llm_fallback_key = "sk-qemu-fallback-not-a-real-key",
+        .llm_fallback_model = "fake-backup",
     };
     const nc_gate gate = {NULL, stub_tools, stub_call, stub_answer};
     ESP_ERROR_CHECK(neuroclaw_start(&config, &gate));

@@ -1,9 +1,9 @@
 # What NeuroClaw can do
 
 This is the list of what NeuroClaw does today, read from the code: what is on by default, what you can
-turn on, and what NeuroClaw keeps off whatever the configuration says. It covers both brains:
+turn on, and what each risky capability is labelled. It covers both brains:
 
-- **NeuroClaw** (Go) — this repository's binary, on a Linux board at home or on a server.
+- **NeuroClaw** (Go) — this repository's binary, on a Linux board, a server, a Mac or a Windows PC.
 - **NeuroClaw-ESP** (C) — [`esp32/`](../../esp32/), the same brain as an ESP-IDF component on one ESP32-S3.
 
 Where the two differ, section 12 says so. Section 13 lists what is known to be wrong or unfinished.
@@ -12,43 +12,44 @@ every key.
 
 ## 1. The promise
 
-NeuroClaw is the brain of a NeuroEdge home. It talks, thinks, remembers and searches. It never moves a
-device or runs a program on the machine by itself:
+NeuroClaw can do everything PicoClaw v0.3.1 does, and it is the brain of a NeuroEdge home:
 
-- The only way to a device is a tool of the home's gate: MCP tools of the NeuroEdge box (Go), or
-  `nc_gate` callbacks into the firmware's gate (ESP).
+- The devices of a NeuroEdge home are reached through a tool of the home's gate: MCP tools of the
+  NeuroEdge box (Go), or `nc_gate` callbacks into the firmware's gate (ESP). The system prompt tells
+  the model never to go around them with other tools ([`pkg/agent/context.go`](../../pkg/agent/context.go)).
 - When the gate answers `BLOCK` with a `confirmation`, the model is told that nothing ran, that only the
   owner at home can approve, that approval written in the chat does not count, and not to retry
   ([`pkg/tools/integration/neuroedge_result.go`](../../pkg/tools/integration/neuroedge_result.go)). A
-  `BLOCK` with a reason, or `REJECTED`, is reported as "not done; do not work around it". The system
-  prompt carries the same rules ([`pkg/agent/context.go`](../../pkg/agent/context.go)).
-- Tools that reach the machine or its buses are locked off (section 2).
+  `BLOCK` with a reason, or `REJECTED`, is reported as "not done; do not work around it".
+- Whatever lets the model reach beyond chat, its workspace and those tools is yours to turn on or off,
+  and each one that is on is named at startup (section 2).
 
-## 2. Lockdown: off whatever the config says
+## 2. Risk labels
 
-[`pkg/config/lockdown.go`](../../pkg/config/lockdown.go) runs on the defaults and again after
-`config.json`, `.security.yml` and `NEUROCLAW_*` variables are loaded. It turns off:
+Nothing is locked: every PicoClaw capability is there, with PicoClaw's defaults. When `gateway` or
+`agent` starts, [`pkg/config/risk.go`](../../pkg/config/risk.go) logs one warning
+`NeuroClaw risk=<name>` for each of these that is on:
 
-| Off | What it would have done |
-|:---|:---|
-| `exec` | Run shell commands |
-| `i2c`, `spi`, `serial` | Talk to buses and ports on the board |
-| `install_skill`, `find_skills` | Fetch skills from registries at the model's request |
-| Skill registries (ClawHub, GitHub) | Same, from the CLI |
-| `cron.allow_command` | Scheduled shell commands |
-| Process hooks | Start external programs on agent events |
-| `devices`, USB monitoring | Watch and announce USB devices |
-| stdio MCP servers | Start an MCP server as a child process |
+| Label | On when | What it lets the model do | Default |
+|:---|:---|:---|:---|
+| `shell` | `tools.exec.enabled` | Run shell commands on this machine | on |
+| `cron_shell` | `tools.cron` with `allow_command`, and `exec` | Scheduled jobs run shell commands | on |
+| `hardware_bus` | `tools.i2c`, `tools.spi`, `tools.serial` | Talk to buses and ports directly, not through a NeuroEdge gate | off |
+| `skill_install` | `tools.skills` with `install_skill` or `find_skills` (the registries they use are listed) | Fetch skills (instructions it follows) from the internet | on |
+| `process_hooks` | `hooks.enabled` and an enabled `hooks.processes.*` | External programs run on agent events | off |
+| `usb_monitor` | `devices.enabled` and `devices.monitor_usb` | Watch and announce USB devices | off (`monitor_usb` on, `devices` off) |
+| `stdio_mcp` | `tools.mcp.enabled` and an enabled stdio server | MCP servers run as programs on this machine | off |
 
-There are also checks in the code, not only in config:
+The `claude-cli` and `codex-cli` LLM providers (section 4) also start a program, the `claude` or
+`codex` CLI, when you configure one of them as a model.
 
-- `IsToolEnabled` answers false for the locked tools.
-- The `cron` tool is built with commands disabled.
-- The process-hook loader returns nothing.
-- The MCP manager and `neuroclaw mcp add` both refuse `stdio`.
+**On a NeuroEdge home** the gate decides only what goes through it. A brain with `shell` or
+`hardware_bus` on the same machine as the home box can reach devices around the gate unless it runs
+as a user without device access; for a closed brain, turn those off in `config.json` (the NeuroEdge
+demo `i2f-chat-den-cua` does).
 
-One exception is kept on purpose: the `claude-cli` and `codex-cli` LLM providers (section 4) start the
-`claude` or `codex` program when you configure one of them as a model.
+Builds of NeuroClaw before the labels (2026-10-13) forced `shell`, `cron_shell`, `skill_install` and USB
+monitoring off, and `onboard` saved them off: turn them on in `config.json`, or `neuroclaw config reset`.
 
 ## 3. Chat channels
 
@@ -134,14 +135,16 @@ Defaults from [`pkg/config/defaults.go`](../../pkg/config/defaults.go); configur
 | `load_image` | on | Look at an image |
 | `send_tts` | off | Speak a reply; needs a TTS model |
 | `skills` | on | Read a skill's instructions |
-| `cron` | on | Reminders and scheduled agent runs (section 8); never commands |
+| `cron` | on | Reminders, scheduled agent runs and, with `exec` and `allow_command`, shell commands (section 8) |
 | `spawn`, `subagent` | on | Run a task in a subagent, in the background or waiting for it ([spawn tasks](../guides/spawn-tasks.md)) |
 | `spawn_status` | off | Ask how a spawned task is doing |
 | `delegate` | when there is more than one agent | Hand a turn to another configured agent |
 | MCP tools | off until a server is configured | Tools of remote MCP servers (section 6) |
 | `tool_search_tool_bm25`, `tool_search_tool_regex` | off | Find deferred MCP tools when there are many |
 | `short_grep`, `short_expand` | with the `seahorse` context manager | Search and expand old conversation |
-| `exec`, `i2c`, `spi`, `serial`, `install_skill`, `find_skills` | **locked off** | Section 2 |
+| `exec` | on (`risk=shell`) | Run shell commands; `restrict_to_workspace` keeps the working directory in the workspace |
+| `i2c`, `spi`, `serial` | off (`risk=hardware_bus`) | Talk to buses and serial ports on the board |
+| `find_skills`, `install_skill` | on (`risk=skill_install`) | Search the skill registries and install a skill |
 
 **Web search.** Providers are Sogou, DuckDuckGo, Brave, Tavily, Kagi, SearXNG, Perplexity, Gemini, GLM
 and Baidu. Only Sogou is enabled by default, and it needs no key. With provider `auto`, NeuroClaw tries
@@ -155,8 +158,8 @@ When the model has built-in search, that is preferred (`prefer_native`).
 
 ## 6. MCP and the NeuroEdge box
 
-- MCP servers go under `tools.mcp.servers.<name>`. Transports are `http`, `streamable-http` and `sse`;
-  `stdio` is refused. Many tools can be `deferred`, found through the tool-search tools instead of
+- MCP servers go under `tools.mcp.servers.<name>`. Transports are `stdio` (a program on this machine,
+  `risk=stdio_mcp`; the default of `neuroclaw mcp add`), `http`, `streamable-http` and `sse`. Many tools can be `deferred`, found through the tool-search tools instead of
   sitting in every prompt.
 - **Mutual TLS** (NeuroClaw only): `tls.ca_file`, `cert_file`, `key_file`, `server_name`
   ([`pkg/mcp/tls.go`](../../pkg/mcp/tls.go)). It requires `https` and TLS 1.3, and the certificate and
@@ -208,7 +211,8 @@ or applies new *skills* under `state/evolution`. It improves skills, not chat me
 - Jobs are stored in `cron/jobs.json`.
 - The `neuroclaw cron` CLI does the same: `list`, `add -n -m -e|-c --to --channel`, `remove`,
   `enable`, `disable`.
-- No job can run a shell command.
+- A job can run a shell command (`command`) when `exec` and `tools.cron.allow_command` are on
+  (`risk=cron_shell`), as in PicoClaw.
 
 **Heartbeat** ([`pkg/heartbeat`](../../pkg/heartbeat)):
 
@@ -230,7 +234,7 @@ Skills are loaded from three places. When two have the same name, the earlier pl
 3. the built-in skills (`$NEUROCLAW_BUILTIN_SKILLS`, or `./skills`).
 
 To manage them: `neuroclaw skills list|show|remove|list-builtin|install-builtin`. Registries
-(`search`, `install`) are locked off.
+(`search`, `install`; ClawHub and GitHub, on by default, `risk=skill_install`) fetch skills from the internet.
 
 Shipped in [`workspace/skills`](../../workspace/skills): `weather`, `skill-creator`, `summarize`,
 `github`, `tmux`, `agent-browser`, `hardware`, `picoclaw-agent`. See section 13: most of them need
@@ -260,7 +264,8 @@ tools that NeuroClaw locks.
 | `cron …`, `mcp …`, `skills …` | Sections 6, 8, 9 |
 | `migrate --from openclaw` | Import an OpenClaw config and workspace |
 | `config reset` | Back to defaults |
-| `update` | Replace the binary with the latest release of this repository (`neuroclaw_<os>_<arch>.tar.gz` for linux amd64/arm64 and darwin arm64, checked against `SHA256SUMS`); `-u` for another release URL |
+| `update` | Replace the binary with the latest release of this repository, checked against its checksums; `-u` for another release URL |
+| `neuroclaw-launcher` | The web console: configure, chat, channels, skills, logs, in a browser (`-console`, `-public`, `-no-browser`) |
 
 **Configuration:**
 
@@ -269,7 +274,7 @@ tools that NeuroClaw locks.
 - Secrets can live in `.security.yml` next to `config.json`.
 - `onboard --enc` stores secrets encrypted (`enc://`, AES-256-GCM, passphrase in
   `NEUROCLAW_KEY_PASSPHRASE`).
-- Without a config file, NeuroClaw starts on the locked-down defaults.
+- Without a config file, NeuroClaw starts on PicoClaw's defaults.
 - [Configuration guide](../guides/configuration.md).
 
 **Gateway HTTP** (default `localhost:18790`):
@@ -279,8 +284,8 @@ tools that NeuroClaw locks.
 - the webhooks of the channels that use them (`/pico/`, `/webhook/line`).
 
 **Isolation** ([`pkg/isolation`](../../pkg/isolation)) is opt-in. It sandboxes child processes only
-(bwrap on Linux, restricted token on Windows), not NeuroClaw itself. With the lockdown, the only child
-processes left are the `claude-cli` and `codex-cli` providers.
+(bwrap on Linux, restricted token on Windows), not NeuroClaw itself. It covers `exec`, cron commands, process
+hooks, stdio MCP servers and the `claude-cli` / `codex-cli` providers.
 
 ## 12. NeuroClaw-ESP: the same brain on one chip
 
@@ -316,8 +321,7 @@ know them when you configure a brain:
 
 | Gap | Where | Effect |
 |:---|:---|:---|
-| Legacy `tools.skills.github.*` settings re-create an enabled GitHub registry | `pkg/skills/config_bridge.go` | `neuroclaw skills install` could fetch from GitHub despite the lockdown. Not tried; leave those keys empty |
 | Empty `allow_from` lets anyone talk | `pkg/channels/base.go` | Only a warning is logged; set the owner's ID |
-| Shipped skills need locked tools | `workspace/skills` | `github`, `tmux`, `summarize`, `agent-browser` call command-line programs; `hardware` needs `i2c`/`spi`. They show in the catalog but cannot work. `picoclaw-agent` still describes PicoClaw |
-| PicoClaw names left over | help text, banner, MQTT topic `/picoclaw`, Makefile `build-launcher` targets (no `web/` any more) | Cosmetic |
+| `picoclaw-agent` skill | `workspace/skills` | Still describes PicoClaw |
+| PicoClaw names left over | help text, banner, MQTT topic `/picoclaw`, IRC nick, links to docs.picoclaw.io | Cosmetic |
 | WeCom variables are not prefixed | `pkg/config/config.go` (`BOT_ID`, `SECRET`) | Can collide with other programs' variables |

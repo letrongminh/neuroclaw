@@ -1,7 +1,7 @@
 # ============================================================
-# Stage 1: Build the picoclaw binary
+# Stage 1: Build the neuroclaw binary
 # ============================================================
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git make
 
@@ -27,7 +27,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget -q --spider http://localhost:18790/health || exit 1
 
 # Copy binary and first-run entrypoint (same as release image).
-COPY --from=builder /src/build/picoclaw /usr/local/bin/picoclaw
+COPY --from=builder /src/build/neuroclaw /usr/local/bin/neuroclaw
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 

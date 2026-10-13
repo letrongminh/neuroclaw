@@ -1,7 +1,7 @@
 # ============================================================
-# Stage 1: Build the picoclaw binary
+# Stage 1: Build the neuroclaw binary
 # ============================================================
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 RUN apk add --no-cache git make
 
@@ -35,10 +35,10 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh && \
   uv --version
 
 # Copy binary
-COPY --from=builder /src/build/picoclaw /usr/local/bin/picoclaw
+COPY --from=builder /src/build/neuroclaw /usr/local/bin/neuroclaw
 
-# Create picoclaw home directory
-RUN /usr/local/bin/picoclaw onboard
+# Create neuroclaw home directory
+RUN /usr/local/bin/neuroclaw onboard
 
-ENTRYPOINT ["picoclaw"]
+ENTRYPOINT ["neuroclaw"]
 CMD ["gateway"]

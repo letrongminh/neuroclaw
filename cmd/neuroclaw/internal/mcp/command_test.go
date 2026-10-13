@@ -45,14 +45,12 @@ func TestNewMCPCommand(t *testing.T) {
 	}
 }
 
-func TestMCPAddRefusesAStdioServer(t *testing.T) {
-	setupMCPConfigEnv(t)
+func TestMCPAddAddsGenericStdioServer(t *testing.T) {
+	configPath := setupMCPConfigEnv(t)
 
 	cmd := NewMCPCommand()
 	output, err := executeCommand(cmd, []string{
 		"add",
-		"--transport",
-		"stdio",
 		"sqlite",
 		"npx",
 		"-y",
@@ -60,9 +58,18 @@ func TestMCPAddRefusesAStdioServer(t *testing.T) {
 		"--db",
 		"./mydb.db",
 	}, "")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "NeuroClaw does not do")
-	assert.NotContains(t, output, `MCP server "sqlite" saved`)
+	require.NoError(t, err)
+	assert.Contains(t, output, `MCP server "sqlite" saved`)
+
+	cfg := readMCPConfig(t, configPath)
+	require.True(t, cfg.Tools.MCP.Enabled)
+
+	server, ok := cfg.Tools.MCP.Servers["sqlite"]
+	require.True(t, ok)
+	assert.True(t, server.Enabled)
+	assert.Equal(t, "stdio", server.Type)
+	assert.Equal(t, "npx", server.Command)
+	assert.Equal(t, []string{"-y", "@modelcontextprotocol/server-sqlite", "--db", "./mydb.db"}, server.Args)
 }
 
 func TestMCPAddSupportsHeadersAfterURL(t *testing.T) {
@@ -106,6 +113,55 @@ func TestMCPAddSupportsTransportBeforeName(t *testing.T) {
 	assert.Equal(t, "https://api.fiscal.ai/mcp/sse", server.URL)
 }
 
+func TestMCPAddSupportsExplicitStdioCommandAfterSeparator(t *testing.T) {
+	configPath := setupMCPConfigEnv(t)
+
+	cmd := NewMCPCommand()
+	_, err := executeCommand(cmd, []string{
+		"add",
+		"--transport",
+		"stdio",
+		"--env",
+		"AIRTABLE_API_KEY=YOUR_KEY",
+		"airtable",
+		"--",
+		"npx",
+		"-y",
+		"airtable-mcp-server",
+	}, "")
+	require.NoError(t, err)
+
+	cfg := readMCPConfig(t, configPath)
+	server := cfg.Tools.MCP.Servers["airtable"]
+	assert.Equal(t, "stdio", server.Type)
+	assert.Equal(t, "npx", server.Command)
+	assert.Equal(t, []string{"-y", "airtable-mcp-server"}, server.Args)
+	assert.Equal(t, map[string]string{"AIRTABLE_API_KEY": "YOUR_KEY"}, server.Env)
+}
+
+func TestMCPAddSupportsEnvFileForStdio(t *testing.T) {
+	configPath := setupMCPConfigEnv(t)
+
+	cmd := NewMCPCommand()
+	_, err := executeCommand(cmd, []string{
+		"add",
+		"--env-file",
+		".env.mcp",
+		"filesystem",
+		"npx",
+		"-y",
+		"@modelcontextprotocol/server-filesystem",
+	}, "")
+	require.NoError(t, err)
+
+	cfg := readMCPConfig(t, configPath)
+	server := cfg.Tools.MCP.Servers["filesystem"]
+	assert.Equal(t, "stdio", server.Type)
+	assert.Equal(t, "npx", server.Command)
+	assert.Equal(t, []string{"-y", "@modelcontextprotocol/server-filesystem"}, server.Args)
+	assert.Equal(t, ".env.mcp", server.EnvFile)
+}
+
 func TestMCPAddRejectsEnvFileForHTTP(t *testing.T) {
 	setupMCPConfigEnv(t)
 
@@ -121,6 +177,51 @@ func TestMCPAddRejectsEnvFileForHTTP(t *testing.T) {
 	}, "")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "--env-file can only be used with stdio transport")
+}
+
+func TestMCPAddRejectsNonExecutableLocalCommand(t *testing.T) {
+	setupMCPConfigEnv(t)
+
+	tmpDir := t.TempDir()
+	localCmd := filepath.Join(tmpDir, "server.sh")
+	require.NoError(t, os.WriteFile(localCmd, []byte("#!/bin/sh\nexit 0\n"), 0o644))
+
+	cmd := NewMCPCommand()
+	_, err := executeCommand(cmd, []string{"add", "local", localCmd}, "")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "not executable")
+}
+
+func TestMCPAddExpandsHomeInSavedLocalCommand(t *testing.T) {
+	configPath := setupMCPConfigEnv(t)
+
+	homeDir := t.TempDir()
+	t.Setenv("HOME", homeDir)
+	t.Setenv("USERPROFILE", homeDir)
+
+	localCmd := filepath.Join(homeDir, "bin", "my-mcp")
+	require.NoError(t, os.MkdirAll(filepath.Dir(localCmd), 0o755))
+	require.NoError(t, os.WriteFile(localCmd, []byte("#!/bin/sh\nexit 0\n"), 0o755))
+
+	tildeCmd := "~" + string(os.PathSeparator) + filepath.Join("bin", "my-mcp")
+
+	cmd := NewMCPCommand()
+	_, err := executeCommand(cmd, []string{"add", "local-home", tildeCmd}, "")
+	require.NoError(t, err)
+
+	cfg := readMCPConfig(t, configPath)
+	server := cfg.Tools.MCP.Servers["local-home"]
+	assert.Equal(t, localCmd, server.Command)
+}
+
+func TestMCPAddShowsClearErrorForRemoteURLWithoutTransport(t *testing.T) {
+	setupMCPConfigEnv(t)
+
+	cmd := NewMCPCommand()
+	_, err := executeCommand(cmd, []string{"add", "apify", "https://mcp.apify.com/"}, "")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `looks like a remote MCP URL`)
+	assert.Contains(t, err.Error(), `Use --transport http or --transport sse`)
 }
 
 func TestMCPAddOverwritePromptDecline(t *testing.T) {
@@ -159,8 +260,8 @@ func TestMCPAddOverwriteWithConfirmation(t *testing.T) {
 				Servers: map[string]config.MCPServerConfig{
 					"filesystem": {
 						Enabled: true,
-						Type:    "http",
-						URL:     "https://old.example/mcp",
+						Type:    "stdio",
+						Command: "old",
 					},
 				},
 			},
@@ -168,11 +269,11 @@ func TestMCPAddOverwriteWithConfirmation(t *testing.T) {
 	})
 
 	cmd := NewMCPCommand()
-	_, err := executeCommand(cmd, []string{"add", "filesystem", "https://new.example/mcp"}, "y\n")
+	_, err := executeCommand(cmd, []string{"add", "filesystem", "new-command"}, "y\n")
 	require.NoError(t, err)
 
 	cfg := readMCPConfig(t, configPath)
-	assert.Equal(t, "https://new.example/mcp", cfg.Tools.MCP.Servers["filesystem"].URL)
+	assert.Equal(t, "new-command", cfg.Tools.MCP.Servers["filesystem"].Command)
 }
 
 func TestMCPAddHTTPServer(t *testing.T) {
@@ -305,8 +406,8 @@ func TestMCPListWithStatusUsesProbe(t *testing.T) {
 				Servers: map[string]config.MCPServerConfig{
 					"filesystem": {
 						Enabled: true,
-						Type:    "http",
-						URL:     "https://box.example/mcp",
+						Type:    "stdio",
+						Command: "npx",
 					},
 				},
 			},
@@ -318,7 +419,7 @@ func TestMCPListWithStatusUsesProbe(t *testing.T) {
 	serverProbe = func(_ context.Context, name string, server config.MCPServerConfig, workspacePath string) (probeResult, error) {
 		assert.Equal(t, "filesystem", name)
 		assert.Equal(t, readMCPConfig(t, configPath).WorkspacePath(), workspacePath)
-		assert.Equal(t, "https://box.example/mcp", server.URL)
+		assert.Equal(t, "npx", server.Command)
 		return probeResult{ToolCount: 3}, nil
 	}
 
@@ -399,7 +500,7 @@ func TestMCPAddDeferredFlag(t *testing.T) {
 	configPath := setupMCPConfigEnv(t)
 
 	cmd := NewMCPCommand()
-	_, err := executeCommand(cmd, []string{"add", "--deferred", "myserver", "https://box.example/mcp"}, "")
+	_, err := executeCommand(cmd, []string{"add", "--deferred", "myserver", "npx", "my-mcp"}, "")
 	require.NoError(t, err)
 
 	cfg := readMCPConfig(t, configPath)
@@ -412,7 +513,7 @@ func TestMCPAddNoDeferredFlag(t *testing.T) {
 	configPath := setupMCPConfigEnv(t)
 
 	cmd := NewMCPCommand()
-	_, err := executeCommand(cmd, []string{"add", "--no-deferred", "myserver", "https://box.example/mcp"}, "")
+	_, err := executeCommand(cmd, []string{"add", "--no-deferred", "myserver", "npx", "my-mcp"}, "")
 	require.NoError(t, err)
 
 	cfg := readMCPConfig(t, configPath)
@@ -425,7 +526,7 @@ func TestMCPAddNoDeferredByDefault(t *testing.T) {
 	configPath := setupMCPConfigEnv(t)
 
 	cmd := NewMCPCommand()
-	_, err := executeCommand(cmd, []string{"add", "myserver", "https://box.example/mcp"}, "")
+	_, err := executeCommand(cmd, []string{"add", "myserver", "npx", "my-mcp"}, "")
 	require.NoError(t, err)
 
 	cfg := readMCPConfig(t, configPath)
@@ -476,8 +577,8 @@ func TestMCPShowUsesProbe(t *testing.T) {
 				Servers: map[string]config.MCPServerConfig{
 					"myserver": {
 						Enabled: true,
-						Type:    "http",
-						URL:     "https://box.example/mcp",
+						Type:    "stdio",
+						Command: "npx",
 					},
 				},
 			},

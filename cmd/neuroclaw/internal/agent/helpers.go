@@ -14,6 +14,7 @@ import (
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal"
 	"github.com/letrongminh/neuroclaw/pkg/agent"
 	"github.com/letrongminh/neuroclaw/pkg/bus"
+	"github.com/letrongminh/neuroclaw/pkg/config"
 	"github.com/letrongminh/neuroclaw/pkg/logger"
 	"github.com/letrongminh/neuroclaw/pkg/providers"
 )
@@ -29,6 +30,7 @@ func agentCmd(message, sessionKey, model string, debug bool) error {
 	}
 
 	logger.ConfigureFromEnv()
+	config.LogRiskLabels(cfg)
 
 	if debug {
 		logger.SetLevel(logger.DEBUG)

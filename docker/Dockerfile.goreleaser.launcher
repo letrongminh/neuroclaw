@@ -1,0 +1,11 @@
+FROM alpine:3.21
+
+ARG TARGETPLATFORM
+
+RUN apk add --no-cache ca-certificates tzdata
+
+COPY $TARGETPLATFORM/neuroclaw /usr/local/bin/neuroclaw
+COPY $TARGETPLATFORM/neuroclaw-launcher /usr/local/bin/neuroclaw-launcher
+
+ENTRYPOINT ["neuroclaw-launcher"]
+CMD ["-console", "-public", "-no-browser"]

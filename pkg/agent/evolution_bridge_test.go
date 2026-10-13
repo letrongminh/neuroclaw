@@ -821,6 +821,8 @@ func TestEvolutionBridge_TurnEndUsesPayloadWorkspace(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newEvolutionBridge: %v", err)
 	}
+	// Wait for the async writers before t.TempDir is removed (cleanups run last-in, first-out).
+	t.Cleanup(func() { _ = bridge.Close() })
 
 	err = bridge.OnEvent(context.Background(), Event{
 		Kind: EventKindTurnEnd,
@@ -859,6 +861,8 @@ func TestEvolutionBridge_TurnEndUsesExplicitAttemptTrail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newEvolutionBridge: %v", err)
 	}
+	// Wait for the async writers before t.TempDir is removed (cleanups run last-in, first-out).
+	t.Cleanup(func() { _ = bridge.Close() })
 
 	err = bridge.OnEvent(context.Background(), Event{
 		Kind: EventKindTurnEnd,
@@ -912,6 +916,8 @@ func TestEvolutionBridge_CloseStopsColdPathRunnerIdempotently(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newEvolutionBridge: %v", err)
 	}
+	// Wait for the async writers before t.TempDir is removed (cleanups run last-in, first-out).
+	t.Cleanup(func() { _ = bridge.Close() })
 	if bridge.coldPathRunner == nil {
 		t.Fatal("expected cold path runner")
 	}
@@ -940,6 +946,8 @@ func TestEvolutionBridge_CloseRejectsLateTurnEndEvents(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newEvolutionBridge: %v", err)
 	}
+	// Wait for the async writers before t.TempDir is removed (cleanups run last-in, first-out).
+	t.Cleanup(func() { _ = bridge.Close() })
 
 	if closeErr := bridge.Close(); closeErr != nil {
 		t.Fatalf("Close() error = %v", closeErr)

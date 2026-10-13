@@ -27,3 +27,51 @@ jobs:
         run: go test -tags "$TAGS" ./...
       - name: build
         run: go build -tags "$TAGS" -o neuroclaw ./cmd/neuroclaw && ./neuroclaw --no-color version
+
+  release-dry-run:
+    # Every release platform, the launcher with its web console, deb/rpm and the
+    # Android bundle, as release.yml builds them, without publishing anything.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        id: setup-go
+        with:
+          go-version-file: go.mod
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/frontend/pnpm-lock.yaml
+      - name: goreleaser snapshot
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --snapshot --clean --skip=publish,docker,sign,notarize
+        env:
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          GOVERSION: ${{ steps.setup-go.outputs.go-version }}
+          INCLUDE_ANDROID_BUNDLE: "true"
+      - name: what was built
+        run: |
+          ls dist/*.tar.gz dist/*.zip dist/*.deb dist/*.rpm build/neuroclaw-android-universal.zip
+          test "$(ls dist/*.tar.gz dist/*.zip | wc -l)" -ge 18
+          tar -xzf dist/neuroclaw_Linux_x86_64.tar.gz -C /tmp neuroclaw neuroclaw-launcher
+          /tmp/neuroclaw --no-color version
+          /tmp/neuroclaw-launcher -h 2>&1 | head -5 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-dry-run
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.deb
+            dist/checksums.txt
+          retention-days: 3

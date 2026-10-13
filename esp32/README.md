@@ -16,7 +16,7 @@ The full list of what both brains do is in [What NeuroClaw can do](../docs/refer
 | | Go NeuroClaw (Linux, cloud) | NeuroClaw-ESP (one chip) |
 |:---|:---|:---|
 | Way to a device | MCP tools of the home box over mTLS | `nc_gate` callbacks into the firmware's gate (`ne_gate`) |
-| Shell, GPIO, I2C, cron commands | Off, whatever the config says | Do not exist; `cron` refuses `command` |
+| Shell, GPIO, I2C, cron commands | As PicoClaw, by config, each labelled at startup (`risk=shell`…) | Do not exist; `cron` refuses `command` |
 | Who is heard | The owner (`allow_from`) | The owner's Telegram user id; everyone else dropped before the model |
 | The gate asks the owner | Model told it cannot approve | Same words; the chip sends the owner approve / refuse buttons, only the owner's press counts, once |
 | Long-term memory | `memory/MEMORY.md`, in the prompt | Same file, same prompt, on LittleFS |

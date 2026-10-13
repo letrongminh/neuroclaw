@@ -1,34 +1,120 @@
-name: release
+name: Release
+
 on:
   push:
     tags: ["v*"]
-permissions:
-  contents: write
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release (e.g. v0.2.0)"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark as pre-release"
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: "Create as draft"
+        required: false
+        type: boolean
+        default: false
+
 jobs:
-  build:
+  release:
+    name: GoReleaser Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     env:
-      CGO_ENABLED: "0"
+      TAG: ${{ inputs.tag || github.ref_name }}
+      HAS_DOCKERHUB: ${{ secrets.DOCKERHUB_USERNAME != '' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - name: Verify tag exists
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh api "repos/${{ github.repository }}/git/ref/tags/${{ env.TAG }}" --silent 2>/dev/null; then
+            echo "::error::Tag '${{ env.TAG }}' does not exist. Create it first using the 'Create Tag' workflow."
+            exit 1
+          fi
+
+      - name: Checkout tag
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ env.TAG }}
+
+      - name: Setup Go from go.mod
+        id: setup-go
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-      - name: build
-        run: |
-          set -euo pipefail
-          pkg=github.com/letrongminh/neuroclaw/pkg/config
-          flags="-s -w -X $pkg.Version=${GITHUB_REF_NAME} -X $pkg.GitCommit=${GITHUB_SHA::8}"
-          mkdir dist
-          for target in linux/amd64 linux/arm64 darwin/arm64; do
-            os=${target%/*}; arch=${target#*/}
-            name=neuroclaw_${os}_${arch}
-            GOOS=$os GOARCH=$arch go build -tags goolm,stdjson -ldflags "$flags" -o dist/$name/neuroclaw ./cmd/neuroclaw
-            cp LICENSE NOTICE dist/$name/
-            tar -C dist -czf dist/$name.tar.gz $name
-          done
-          (cd dist && sha256sum *.tar.gz > SHA256SUMS)
-      - name: publish
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.33.0
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/frontend/pnpm-lock.yaml
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        # Only when the repository has Docker Hub credentials; images always go to GHCR.
+        if: ${{ env.HAS_DOCKERHUB == 'true' }}
+        uses: docker/login-action@v4
+        with:
+          registry: docker.io
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Install zip
+        run: sudo apt-get install -y zip
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          version: ~> v2
+          args: release --clean
         env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS --title "NeuroClaw $GITHUB_REF_NAME" --notes "See README.md (What changed from PicoClaw)."
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+          DOCKERHUB_IMAGE_NAME: ${{ env.HAS_DOCKERHUB == 'true' && vars.DOCKERHUB_REPOSITORY || '' }}
+          GOVERSION: ${{ steps.setup-go.outputs.go-version }}
+          INCLUDE_ANDROID_BUNDLE: "true"
+          MACOS_SIGN_P12: ${{ secrets.MACOS_SIGN_P12 }}
+          MACOS_SIGN_PASSWORD: ${{ secrets.MACOS_SIGN_PASSWORD }}
+          MACOS_NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+          MACOS_NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+          MACOS_NOTARY_KEY: ${{ secrets.MACOS_NOTARY_KEY }}
+
+      - name: Apply release flags
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "$TAG" \
+            --draft=${{ inputs.draft || false }} \
+            --prerelease=${{ inputs.prerelease || false }}
+

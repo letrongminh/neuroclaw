@@ -204,9 +204,19 @@ func enabledBuiltinHookNames(specs map[string]config.BuiltinHookConfig) []string
 	return names
 }
 
-func enabledProcessHookNames(_ map[string]config.ProcessHookConfig) []string {
-	// NeuroClaw lockdown: process hooks run external programs, so none is mounted.
-	return nil
+func enabledProcessHookNames(specs map[string]config.ProcessHookConfig) []string {
+	if len(specs) == 0 {
+		return nil
+	}
+
+	names := make([]string, 0, len(specs))
+	for name, spec := range specs {
+		if spec.Enabled {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	return names
 }
 
 func processHookOptionsFromConfig(spec config.ProcessHookConfig) (ProcessHookOptions, error) {

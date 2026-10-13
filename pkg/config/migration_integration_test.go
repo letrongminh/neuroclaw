@@ -181,8 +181,8 @@ func TestMigration_Integration_LegacyConfigWithWorkspace(t *testing.T) {
 	if cfg.Gateway.Port != 8080 {
 		t.Errorf("Gateway.Port = %d, want %d", cfg.Gateway.Port, 8080)
 	}
-	if cfg.Devices.Enabled {
-		t.Error("NeuroClaw lockdown: Devices.Enabled must be false")
+	if !cfg.Devices.Enabled {
+		t.Error("Devices.Enabled should be true")
 	}
 }
 
@@ -1101,8 +1101,8 @@ func TestLoadConfig_V2DirectLoad(t *testing.T) {
 	if !ok {
 		t.Fatal("expected default github skills registry to survive V0 migration")
 	}
-	if githubRegistry.Enabled {
-		t.Error("NeuroClaw lockdown: the github skills registry survives migration but stays off")
+	if !githubRegistry.Enabled {
+		t.Error("github skills registry should remain enabled after V0 migration")
 	}
 	if githubRegistry.BaseURL != "https://github.com" {
 		t.Errorf("github registry base_url = %q, want %q", githubRegistry.BaseURL, "https://github.com")

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=NeuroClaw Launcher
+Comment=Web-based configuration and management UI for NeuroClaw
+Exec=neuroclaw-launcher
+Icon=neuroclaw-launcher
+Terminal=true
+Type=Application
+Categories=Utility;Network;
+Keywords=neuroclaw;ai;agent;bot;

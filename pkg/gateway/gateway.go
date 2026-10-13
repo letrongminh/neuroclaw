@@ -155,6 +155,7 @@ func Run(debug bool, homePath, configPath string, allowEmptyStartup bool) (runEr
 	if err = preCheckConfig(cfg); err != nil {
 		return fmt.Errorf("config pre-check failed: %w", err)
 	}
+	config.LogRiskLabels(cfg)
 
 	// Debug mode permanently overrides the config log level to DEBUG.
 	if debug {

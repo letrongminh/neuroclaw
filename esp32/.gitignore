@@ -1,6 +1,8 @@
 .cache/
 build/
 build-*/
+build-*.log
+.ccache/
 sdkconfig
 sdkconfig.old
 managed_components/

@@ -30,12 +30,27 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      IDF_CCACHE_ENABLE: "1"
+      CCACHE_DIR: ${{ github.workspace }}/esp32/.ccache
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            esp32/.ccache
+            esp32/examples/wifi/managed_components
+          key: esp32-${{ matrix.target }}-idf5.4-${{ hashFiles('esp32/examples/wifi/main/idf_component.yml') }}-${{ github.sha }}
+          restore-keys: esp32-${{ matrix.target }}-idf5.4-${{ hashFiles('esp32/examples/wifi/main/idf_component.yml') }}-
       - name: Build the Wi-Fi example
         run: |
           . "$IDF_PATH/export.sh"
           esp32/scripts/build_targets.sh ${{ matrix.target }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: esp32-build-${{ matrix.target }}
+          path: esp32/examples/wifi/build-*.log
   qemu:
     name: Telegram, LLM, gate, memory, cron, web, heartbeat, console — two boots on QEMU
     runs-on: ubuntu-latest

@@ -30,12 +30,14 @@ typedef enum {
 int nc_llm_api_parse(const char *name);
 
 /*
- * The Messages body for chat-completions `messages` (borrowed): every system
+ * The Messages body for chat-completions `messages` (borrowed); NULL when out of
+ * memory. Every system
  * message joined into `system`; user and assistant text as text blocks;
  * assistant tool_calls as tool_use blocks (arguments parsed into `input`);
  * tool messages as tool_result blocks in a user message. Consecutive messages
  * of one role are merged (the API wants them alternating), empty text is left
- * out, and a conversation whose first kept message is the assistant's starts
+ * out, an assistant message with nothing left in it is dropped, a tool result
+ * whose tool_use was not emitted just before it is dropped, and a conversation whose first kept message is the assistant's starts
  * with a short user note. Tool call ids are kept, with any character outside
  * [A-Za-z0-9_-] replaced by '_', the same way in tool_use and tool_result.
  * Tools as name, description, input_schema. malloc'd.
@@ -45,7 +47,8 @@ char *nc_anthropic_request(const char *model, int max_tokens, const cJSON *messa
 
 /* Parse a Messages reply: text blocks joined, tool_use blocks as calls (their
  * input printed back to JSON text). As nc_llm_parse: text only when there is no
- * call; 0 on success, -1 when there is neither. */
+ * call; 0 on success, -1 when there is neither. stop_reason "max_tokens" sets
+ * `truncated`; calls are then dropped and the parse fails, text is kept. */
 int nc_anthropic_parse(const char *body, nc_llm_reply *reply);
 
 #ifdef __cplusplus

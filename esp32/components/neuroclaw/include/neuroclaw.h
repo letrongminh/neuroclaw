@@ -109,27 +109,30 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate);
 
 /*
  * Local administration, as MimiClaw's serial commands: for the owner at the
- * serial console or an app's own UI, never for the model. Safe from any task
- * after neuroclaw_start; each waits (up to 2 min) for the brain to finish the
- * turn it is in. Returns ESP_OK, or an ESP_ERR_* code.
+ * serial console or an app's own UI, never for the model. Safe from any task.
+ * Each waits (up to 2 min) for the brain to finish the turn it is in, and
+ * returns ESP_OK, ESP_ERR_TIMEOUT when the brain stayed busy (nothing was
+ * done), ESP_ERR_INVALID_STATE before neuroclaw_start, or another ESP_ERR_*.
  */
-char *neuroclaw_memory_read(void);            /* memory/MEMORY.md, malloc'd; NULL when none */
+/* memory/MEMORY.md in `*out` (malloc'd); ESP_ERR_NOT_FOUND when there is none. */
+int neuroclaw_memory_read(char **out);
 int neuroclaw_memory_write(const char *text); /* replaces memory/MEMORY.md */
 /* "telegram=<messages> summary_bytes=<n> cron_jobs=<n>" */
 int neuroclaw_session_list(char *out, size_t cap);
 int neuroclaw_session_clear(void); /* the conversation and its summary; memory stays */
-void neuroclaw_heartbeat_trigger(void); /* a heartbeat on the brain's next loop */
+int neuroclaw_heartbeat_trigger(void); /* a heartbeat on the brain's next loop */
 /* The job `job_id` runs on the brain's next loop, its schedule unchanged
- * (NULL or "": nothing more than the due jobs, which run anyway). */
-void neuroclaw_cron_start(const char *job_id);
-char *neuroclaw_diagnostics(void); /* get_diagnostics' JSON, malloc'd */
+ * (NULL or "": nothing more than the due jobs, which run anyway).
+ * ESP_ERR_INVALID_ARG for an id longer than any job's. */
+int neuroclaw_cron_start(const char *job_id);
+int neuroclaw_diagnostics(char **out); /* get_diagnostics' JSON in `*out`, malloc'd */
 /* LLM calls per hour and per day, 0 = no limit (Kconfig gives the boot values). */
-void neuroclaw_set_llm_limits(int per_hour, int per_day);
+int neuroclaw_set_llm_limits(int per_hour, int per_day);
 
 /* The above as esp_console commands (memory_read, memory_write, session_list,
- * session_clear, heartbeat_trigger, cron_start, diag, llm_limit). The app
- * initializes esp_console and reads the lines; nothing is registered unless it
- * calls this. */
+ * session_clear, heartbeat_trigger, cron_start, diag, llm_limit), each replying
+ * `NC_CONSOLE <command> ... result=<ok|busy|empty|...>`. The app initializes
+ * esp_console and reads the lines; nothing is registered unless it calls this. */
 int neuroclaw_console_register(void);
 
 #ifdef __cplusplus

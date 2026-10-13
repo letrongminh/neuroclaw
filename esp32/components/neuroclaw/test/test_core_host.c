@@ -340,6 +340,30 @@ static int check_failover(void)
     return 0;
 }
 
+static int check_truncated(void)
+{
+    nc_llm_reply reply;
+    /* finish_reason "length": calls with cut arguments are never run; text is kept, marked. */
+    CHECK(nc_llm_parse("{\"choices\":[{\"finish_reason\":\"length\",\"message\":{"
+                       "\"content\":null,\"tool_calls\":[{\"id\":\"c\",\"type\":\"function\","
+                       "\"function\":{\"name\":\"front_door_unlock\",\"arguments\":"
+                       "\"{\\\"duration_s\\\":3\"}}]}}]}",
+                       &reply) == -1);
+    CHECK(reply.truncated && reply.call_count == 0 && reply.text == NULL);
+    nc_llm_reply_free(&reply);
+    CHECK(nc_llm_parse("{\"choices\":[{\"finish_reason\":\"length\",\"message\":{"
+                       "\"content\":\"Một câu bị cắt\"}}]}",
+                       &reply) == 0);
+    CHECK(reply.truncated && reply.text != NULL && strcmp(reply.text, "Một câu bị cắt") == 0);
+    nc_llm_reply_free(&reply);
+    CHECK(nc_llm_parse("{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{"
+                       "\"content\":\"xong\"}}]}",
+                       &reply) == 0);
+    CHECK(!reply.truncated);
+    nc_llm_reply_free(&reply);
+    return 0;
+}
+
 static int check_rate(void)
 {
     nc_rate r = {0};
@@ -393,7 +417,6 @@ static int check_diagnostics(void)
         .uptime_s = 3725,
         .heap_free = 120000,
         .heap_min_free = 90000,
-        .heap_largest_block = 65536,
         .stack_free_min = 2600,
         .has_rssi = false,
         .llm_count = 2,
@@ -412,7 +435,7 @@ static int check_diagnostics(void)
     const cJSON *heap = cJSON_GetObjectItem(json, "heap");
     CHECK(cJSON_GetObjectItem(heap, "free")->valueint == 120000);
     CHECK(cJSON_GetObjectItem(heap, "min_free")->valueint == 90000);
-    CHECK(cJSON_GetObjectItem(heap, "largest_block")->valueint == 65536);
+    CHECK(cJSON_GetObjectItem(heap, "largest_block") == NULL);
     CHECK(cJSON_GetObjectItem(json, "brain_stack_free_min")->valueint == 2600);
     CHECK(cJSON_IsNull(cJSON_GetObjectItem(json, "wifi_rssi_dbm")));
     const cJSON *llm = cJSON_GetObjectItem(json, "llm");
@@ -457,6 +480,7 @@ int main(void)
     if (check_guidance() != 0) return 1;
     if (check_llm() != 0) return 1;
     if (check_failover() != 0) return 1;
+    if (check_truncated() != 0) return 1;
     if (check_rate() != 0) return 1;
     if (check_diagnostics() != 0) return 1;
     printf("NC_CORE OK checks=%u\n", s_checks);

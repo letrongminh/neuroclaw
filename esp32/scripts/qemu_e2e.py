@@ -189,6 +189,11 @@ class Cloud:
                 if "đèn xanh" in system:  # the memory replaced on the console
                     return _text("Bạn thích đèn xanh.")
                 return _text("Bạn thích đèn vàng." if "đèn vàng" in system else "Tôi không biết.")
+            if text.startswith("cắt ngang"):
+                # Out of tokens mid-call: the arguments may be cut; the brain must not run it.
+                reply = _calls(("front_door_unlock", {"duration_s": 3}))
+                reply["choices"][0]["finish_reason"] = "length"
+                return reply
             if text.startswith("tình trạng chip"):
                 return _calls(("get_diagnostics", {}))
             if text.startswith("nhắc mỗi giờ"):
@@ -391,6 +396,8 @@ def chat_to_anthropic(reply: dict) -> dict:
             }
         )
     stop = "tool_use" if message.get("tool_calls") else "end_turn"
+    if reply["choices"][0].get("finish_reason") == "length":
+        stop = "max_tokens"
     return {"type": "message", "role": "assistant", "content": content, "stop_reason": stop}
 
 
@@ -921,8 +928,7 @@ def run(build: Path) -> list[str]:
         ):
             raise Fail(f"unexpected diagnostics: {health}")
         evidence.append(
-            f"diag: heap free {health['heap']['free']} B (min {health['heap']['min_free']}, "
-            f"largest block {health['heap']['largest_block']}), "
+            f"diag: heap free {health['heap']['free']} B (min {health['heap']['min_free']}), "
             f"stack free {health['brain_stack_free_min']} B, last error {health['last_error']!r}"
         )
         # get_diagnostics: the model reads the same, and only that.
@@ -933,10 +939,22 @@ def run(build: Path) -> list[str]:
             lambda: any(m["text"].startswith("Chip ổn: heap còn ") for m in cloud.sent),
         )
 
+        # A reply cut by max_tokens mid-call: the call is dropped, never run; the owner is
+        # told the LLM could not answer.
+        doors = uart.text().count("NC_TOOL name=front_door_unlock")
+        cloud.message(OWNER, "cắt ngang mở cửa")
+        evidence.append(uart.expect(r"^NC_LLM_ERROR http=200 reason=truncated$"))
+        wait_for(
+            "the reply after the cut call",
+            lambda: cloud.sent[-1]["text"] == "Không gọi được LLM, thử lại sau nhé.",
+        )
+        if uart.text().count("NC_TOOL name=front_door_unlock") != doors:
+            raise Fail("a call cut by max_tokens was run")
+
         # The memory, read and replaced by hand; the next answer uses the new one.
         console.send("memory_read")
         uart.expect(r"thích đèn vàng")
-        evidence.append(uart.expect(r"^NC_CONSOLE memory_read bytes=\d+$"))
+        evidence.append(uart.expect(r"^NC_CONSOLE memory_read bytes=\d+ result=ok$"))
         console.send("memory_write - Chủ nhà thích đèn xanh")
         evidence.append(uart.expect(r"^NC_CONSOLE memory_write bytes=\d+ result=ok$"))
         cloud.message(OWNER, "tôi thích đèn gì?")
@@ -956,6 +974,8 @@ def run(build: Path) -> list[str]:
         evidence.append(uart.expect(rf"^NC_CRON_RUN id={job} now=1$"))
         evidence.append(uart.expect(r"^NC_CRON result=sent$"))
         wait_for("the job run by hand", sent(cloud, "⏰ Uống nước mỗi giờ"))
+        console.send("cron_start " + "j" * 40)
+        evidence.append(uart.expect(r"^NC_CONSOLE cron_start result=bad_job_id$"))
         console.send("cron_start j999")
         evidence.append(uart.expect(r"^NC_CRON_RUN id=j999 result=unknown_job$"))
 
@@ -1000,7 +1020,7 @@ def run(build: Path) -> list[str]:
         console.send("session_list")
         listed = uart.expect(
             r"^NC_CONSOLE session_list telegram=(\d+) summary_bytes=\d+ "
-            r"cron_jobs=1$"
+            r"cron_jobs=1 result=ok$"
         )
         evidence.append(listed)
         if int(re.search(r"telegram=(\d+)", listed).group(1)) < 4:
@@ -1009,7 +1029,9 @@ def run(build: Path) -> list[str]:
         evidence.append(uart.expect(r"^NC_CONSOLE session_clear result=ok$"))
         console.send("session_list")
         evidence.append(
-            uart.expect(r"^NC_CONSOLE session_list telegram=0 summary_bytes=0 cron_jobs=1$")
+            uart.expect(
+                r"^NC_CONSOLE session_list telegram=0 summary_bytes=0 cron_jobs=1 result=ok$"
+            )
         )
         cloud.message(OWNER, "tôi vừa nhờ gì?")
         wait_for("the answer after the clear", lambda: cloud.sent[-1]["text"] == "Tôi không nhớ.")

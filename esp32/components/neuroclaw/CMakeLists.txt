@@ -25,7 +25,6 @@ idf_component_register(
         log
         esp_timer
         esp_hw_support
-        heap
         console
         lwip
 )

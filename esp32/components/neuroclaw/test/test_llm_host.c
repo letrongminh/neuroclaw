@@ -150,6 +150,38 @@ static int check_request(void)
     CHECK(cJSON_GetObjectItem(req, "tools") == NULL);
     cJSON_Delete(req);
 
+    /* An assistant message with only nameless calls is dropped, not sent empty; a
+     * tool result whose call was not emitted just before it is dropped. */
+    messages = cJSON_Parse(
+        "[{\"role\":\"system\",\"content\":\"s\"},"
+        "{\"role\":\"user\",\"content\":\"a\"},"
+        "{\"role\":\"assistant\",\"content\":\"\",\"tool_calls\":[{\"id\":\"x\","
+        "\"type\":\"function\",\"function\":{\"name\":\"\",\"arguments\":\"{}\"}}]},"
+        "{\"role\":\"tool\",\"tool_call_id\":\"x\",\"content\":\"orphan\"},"
+        "{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"k\","
+        "\"type\":\"function\",\"function\":{\"name\":\"t\",\"arguments\":\"{}\"}}]},"
+        "{\"role\":\"tool\",\"tool_call_id\":\"k\",\"content\":\"kept\"},"
+        "{\"role\":\"tool\",\"tool_call_id\":\"other\",\"content\":\"unknown id\"},"
+        "{\"role\":\"assistant\",\"content\":\"ok\"},"
+        "{\"role\":\"user\",\"content\":\"b\"},"
+        "{\"role\":\"tool\",\"tool_call_id\":\"k\",\"content\":\"after the owner\"}]");
+    body = nc_anthropic_request("m", 64, messages, NULL, 0);
+    cJSON_Delete(messages);
+    req = cJSON_Parse(body);
+    free(body);
+    out = cJSON_GetObjectItem(req, "messages");
+    /* user a, assistant [tool_use k], user [tool_result k], assistant ok, user b */
+    CHECK(cJSON_GetArraySize(out) == 5);
+    const cJSON *uses_k = cJSON_GetObjectItem(cJSON_GetArrayItem(out, 1), "content");
+    CHECK(cJSON_GetArraySize(uses_k) == 1 && strcmp(str(cJSON_GetArrayItem(uses_k, 0), "id"), "k") == 0);
+    const cJSON *results_k = cJSON_GetObjectItem(cJSON_GetArrayItem(out, 2), "content");
+    CHECK(cJSON_GetArraySize(results_k) == 1);
+    CHECK(strcmp(str(cJSON_GetArrayItem(results_k, 0), "content"), "kept") == 0);
+    const cJSON *last = cJSON_GetObjectItem(cJSON_GetArrayItem(out, 4), "content");
+    CHECK(cJSON_GetArraySize(last) == 1 &&
+          strcmp(str(cJSON_GetArrayItem(last, 0), "type"), "text") == 0);
+    cJSON_Delete(req);
+
     CHECK(nc_anthropic_request(NULL, 1, messages, NULL, 0) == NULL);
     CHECK(nc_anthropic_request("m", 1, NULL, NULL, 0) == NULL);
     return 0;
@@ -194,6 +226,25 @@ static int check_parse(void)
                              &reply) == 0);
     CHECK(reply.call_count == NC_MAX_TOOL_CALLS);
     CHECK(strcmp(reply.calls[0].arguments, "{}") == 0);
+    nc_llm_reply_free(&reply);
+
+    /* Out of tokens: calls with cut arguments are never run, the parse fails; text alone
+     * is kept, marked. */
+    CHECK(nc_anthropic_parse("{\"content\":[{\"type\":\"text\",\"text\":\"Mở \"},"
+                             "{\"type\":\"tool_use\",\"id\":\"a\",\"name\":\"front_door_unlock\","
+                             "\"input\":{\"duration_s\":3}}],\"stop_reason\":\"max_tokens\"}",
+                             &reply) == -1);
+    CHECK(reply.truncated && reply.call_count == 0 && reply.text == NULL);
+    nc_llm_reply_free(&reply);
+    CHECK(nc_anthropic_parse("{\"content\":[{\"type\":\"text\",\"text\":\"Một câu bị cắt\"}],"
+                             "\"stop_reason\":\"max_tokens\"}",
+                             &reply) == 0);
+    CHECK(reply.truncated && reply.text != NULL && strcmp(reply.text, "Một câu bị cắt") == 0);
+    nc_llm_reply_free(&reply);
+    CHECK(nc_anthropic_parse("{\"content\":[{\"type\":\"text\",\"text\":\"x\"}],"
+                             "\"stop_reason\":\"end_turn\"}",
+                             &reply) == 0);
+    CHECK(!reply.truncated);
     nc_llm_reply_free(&reply);
 
     /* Neither, an error object, not JSON, an OpenAI reply: -1. */

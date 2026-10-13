@@ -307,7 +307,7 @@ Details and the risk of sharing one chip with the gate: [`esp32/README.md`](../.
 | Cron | Section 8 | Same arguments, `cron/jobs.json`, at most 16 jobs; waits until the clock is set (SNTP, or Telegram's `Date` header) |
 | Heartbeat | 30 min | 30 min (`CONFIG_NEUROCLAW_HEARTBEAT_MIN`, 0 = off) |
 | `web_search` | Ten providers | SearXNG, Brave or Tavily |
-| Health | `neuroclaw status` | `get_diagnostics` tool: uptime, heap, stack, Wi-Fi signal, LLM calls, fallback, limits, last error |
+| Health | `neuroclaw status` | `get_diagnostics` tool: uptime, free heap, stack, Wi-Fi signal, LLM calls, fallback, limits, last error |
 | Local administration | CLI, web console | C API and optional serial commands (`memory_read`, `memory_write`, `session_list`, `session_clear`, `heartbeat_trigger`, `cron_start`, `diag`, `llm_limit`) |
 | `web_fetch` | Private addresses refused | Same rule; every resolved address and every redirect (at most 3) checked; 6000 bytes of text |
 | `message`, `send_file` | Any channel; media off by default in `message` | Same names and rules (final reply not sent after `message`; a turn whose round only delivered files ends there), owner only; files streamed from flash up to `CONFIG_NEUROCLAW_SEND_FILE_MAX` (10 MB), images as photos |

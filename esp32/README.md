@@ -29,11 +29,11 @@ The full list of what both brains do is in [What NeuroClaw can do](../docs/refer
 | Reminders | `cron` tool: `at_seconds`, `every_seconds`, `cron_expr`, add/list/get/update/remove/enable/disable | Same arguments; jobs in `cron/jobs.json`; a job runs the agent and the reply goes to the owner |
 | Heartbeat | `HEARTBEAT.md`, every 30 min, `HEARTBEAT_OK` not sent | Same |
 | Web | `web_search` (Brave, SearXNG, Tavily, …), `web_fetch` (private hosts refused) | `web_search` (SearXNG, Brave or Tavily, Tavily as the Go provider sends it), `web_fetch` (private hosts refused, redirects checked) |
-| LLM protocol | OpenAI-compatible, Anthropic Messages, and more | Chat completions or the Anthropic Messages API, chosen per URL (`llm_api`, `llm_fallback_api`); tool calls and results converted both ways, as the Go `anthropic_messages` provider |
+| LLM protocol | OpenAI-compatible, Anthropic Messages, and more | Chat completions or the Anthropic Messages API, chosen per URL (`llm_api`, `llm_fallback_api`); tool calls and results converted both ways, as the Go `anthropic_messages` provider. A fallback in another format needs its own `llm_fallback_model` (else `NC_OFF fallback_model_required` and no fallback). A reply cut by `max_tokens` / `length` never runs its calls (`NC_LLM_ERROR … reason=truncated`); cut text is delivered and logged (`NC_LLM_TRUNCATED`) |
 | Messages and files | `message` (the final reply is then not sent too), `send_file` (the turn ends when the file was the answer) | Same names, arguments and rules, to the owner only; files streamed from flash, images as photos (a document if Telegram refuses the photo) |
 | A model that fails | `fallbacks`: the next model on network, auth, billing, rate-limit or overload errors, not on a bad request; cooldown 1, 5, 25 min, then 1 h (billing 5 h → 24 h) | `llm_fallback_url` (+ key, model, format): the same rule and the same cooldown |
 | LLM call limits | `rate_limits` per model | Per hour and per day (`CONFIG_NEUROCLAW_LLM_PER_HOUR`, `_PER_DAY`, 0 = none; `neuroclaw_set_llm_limits` at run time). At the limit the owner is told plainly; a reminder still arrives, as written, with the reason |
-| Health | `neuroclaw status`, logs | `get_diagnostics` (read-only): uptime, heap, the brain's stack, Wi-Fi signal (when the app passes `wifi_rssi`), LLM calls, failures, cooldown, limits, the last error |
+| Health | `neuroclaw status`, logs | `get_diagnostics` (read-only): uptime, free heap and its low-water mark (counters; the heap is not walked), the brain's stack, Wi-Fi signal (when the app passes `wifi_rssi`), LLM calls, failures, cooldown, limits, the last error |
 | Local administration | The CLI and web console | A C API and, when the app calls `neuroclaw_console_register`, serial commands: `memory_read`, `memory_write`, `session_list`, `session_clear`, `heartbeat_trigger`, `cron_start [job_id]`, `diag`, `llm_limit` |
 
 ## Not on the chip
@@ -93,8 +93,9 @@ once.
 Serial lines for tests and logs start with `NC_` (`NC_READY`, `NC_SESSION`, `NC_IGNORED`, `NC_TOOL`,
 `NC_ASK`, `NC_BUTTON`, `NC_CRON_RUN`, `NC_HEARTBEAT`, `NC_SUMMARY`, `NC_FETCH`, `NC_MESSAGE`,
 `NC_SEND_FILE`, `NC_LLM_FALLBACK`, `NC_LLM_LIMIT`, `NC_STACK`); none carries the token, the keys or what
-the owner wrote. Replies to serial commands start with `NC_CONSOLE <command>`; `memory_read` prints the
-memory first, because the owner asked to see it.
+the owner wrote. Replies to serial commands are `NC_CONSOLE <command> … result=<r>`: `ok`, `busy` (the brain stayed in a
+turn for 2 minutes; nothing was done), `empty` (no memory yet), `not_started`, `bad_job_id`; `diag`
+prints its JSON instead. `memory_read` prints the memory first, because the owner asked to see it.
 
 ## Test it
 

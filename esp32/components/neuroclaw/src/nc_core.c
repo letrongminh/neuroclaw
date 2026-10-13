@@ -375,6 +375,9 @@ int nc_llm_parse(const char *body, nc_llm_reply *reply)
     const cJSON *message =
         cJSON_GetObjectItemCaseSensitive(cJSON_GetArrayItem(choices, 0), "message");
     const cJSON *calls = cJSON_GetObjectItemCaseSensitive(message, "tool_calls");
+    const cJSON *finish =
+        cJSON_GetObjectItemCaseSensitive(cJSON_GetArrayItem(choices, 0), "finish_reason");
+    reply->truncated = cJSON_IsString(finish) && strcmp(finish->valuestring, "length") == 0;
     const cJSON *call = NULL;
     cJSON_ArrayForEach(call, calls)
     {
@@ -393,6 +396,14 @@ int nc_llm_parse(const char *body, nc_llm_reply *reply)
         reply->call_count++;
     }
     const cJSON *content = cJSON_GetObjectItemCaseSensitive(message, "content");
+    if (reply->truncated && reply->call_count > 0) {
+        /* Cut arguments are never run; the round fails. */
+        for (int i = 0; i < reply->call_count; i++) free(reply->calls[i].arguments);
+        memset(reply->calls, 0, sizeof reply->calls);
+        reply->call_count = 0;
+        cJSON_Delete(root);
+        return -1;
+    }
     if (reply->call_count == 0 && cJSON_IsString(content) && content->valuestring[0] != '\0') {
         reply->text = dup_text(content->valuestring);
     }
@@ -517,7 +528,6 @@ char *nc_diagnostics_text(const nc_diag *d)
     cJSON *heap = cJSON_AddObjectToObject(json, "heap");
     cJSON_AddNumberToObject(heap, "free", d->heap_free);
     cJSON_AddNumberToObject(heap, "min_free", d->heap_min_free);
-    cJSON_AddNumberToObject(heap, "largest_block", d->heap_largest_block);
     if (d->stack_free_min >= 0) {
         cJSON_AddNumberToObject(json, "brain_stack_free_min", d->stack_free_min);
     } else {

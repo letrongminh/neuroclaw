@@ -23,7 +23,6 @@
 
 #include "esp_crt_bundle.h"
 #include "esp_err.h"
-#include "esp_heap_caps.h"
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_random.h"
@@ -636,7 +635,8 @@ static char *diagnostics_text(void)
     d.uptime_s = now_us / 1000000;
     d.heap_free = esp_get_free_heap_size();
     d.heap_min_free = esp_get_minimum_free_heap_size();
-    d.heap_largest_block = (uint32_t)heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+    /* Counters only: walking the heap (largest free block) is left out, a health
+     * check must not be what crashes the chip when the heap is inconsistent. */
     d.stack_free_min = s_task != NULL ? (int32_t)uxTaskGetStackHighWaterMark(s_task) : -1;
     int dbm = 0;
     if (s_wifi_rssi != NULL && s_wifi_rssi(&dbm)) {
@@ -839,7 +839,11 @@ static int llm_call(const cJSON *messages, const nc_tool *tools, size_t tool_cou
                 t->until_us = 0;
                 const int parsed = anthropic ? nc_anthropic_parse(body, reply)
                                              : nc_llm_parse(body, reply);
-                if (parsed != 0) note_error("llm", t->name, -3); /* a 200 with nothing in it */
+                if (parsed != 0 && reply->truncated) {
+                    snprintf(s_last_error, sizeof s_last_error, "llm %s truncated", t->name);
+                } else if (parsed != 0) {
+                    note_error("llm", t->name, -3); /* a 200 with nothing in it */
+                }
             } else {
                 t->failures_total++;
                 note_error("llm", t->name, status);
@@ -923,9 +927,12 @@ static char *run_turn(cJSON *history, int64_t chat_id, const char *text, bool *q
             return strdup(s_limit_text);
         }
         if (reply.text == NULL && reply.call_count == 0) {
-            printf("NC_LLM_ERROR http=%d\n", status);
+            /* Out of tokens mid-call: the cut call was dropped, never run. */
+            printf("NC_LLM_ERROR http=%d%s\n", status, reply.truncated ? " reason=truncated" : "");
+            nc_llm_reply_free(&reply);
             return NULL;
         }
+        if (reply.truncated) printf("NC_LLM_TRUNCATED chars=%u\n", (unsigned)strlen(reply.text));
         if (reply.text != NULL) {
             remember(history, "assistant", reply.text);
             char *answer = reply.text;
@@ -1211,10 +1218,22 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
     s_cfg.search_url = keep(config->search_url);
     s_cfg.search_key = keep(config->search_key);
     s_cfg.fetch_allow = keep(config->fetch_allow);
+    const int api = nc_llm_api_parse(config->llm_api);
+    const int fallback_api = nc_llm_api_parse(config->llm_fallback_api);
+    if (api < 0 || fallback_api < 0) {
+        printf("NC_OFF unknown_llm_api\n");
+        return ESP_ERR_INVALID_ARG;
+    }
     s_llm[0] = (nc_llm_target){"primary", s_cfg.llm_url, s_cfg.llm_key, s_cfg.llm_model, 0, 0,
-                               NC_API_OPENAI, 0, 0};
+                               (nc_llm_api)api, 0, 0};
     s_llm_count = 1;
-    if (config->llm_fallback_url != NULL && config->llm_fallback_url[0] != '\0') {
+    const bool has_fallback = config->llm_fallback_url != NULL && config->llm_fallback_url[0];
+    const bool has_fallback_model =
+        config->llm_fallback_model != NULL && config->llm_fallback_model[0] != '\0';
+    if (has_fallback && fallback_api != api && !has_fallback_model) {
+        /* The primary's model name means nothing to another provider's API. */
+        printf("NC_OFF fallback_model_required\n");
+    } else if (has_fallback) {
         s_cfg.llm_fallback_url = keep(config->llm_fallback_url);
         s_cfg.llm_fallback_key = keep(config->llm_fallback_key);
         s_cfg.llm_fallback_model =
@@ -1222,7 +1241,8 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
                      ? config->llm_fallback_model
                      : config->llm_model);
         s_llm[1] = (nc_llm_target){"fallback", s_cfg.llm_fallback_url, s_cfg.llm_fallback_key,
-                                   s_cfg.llm_fallback_model, 0, 0, NC_API_OPENAI, 0, 0};
+                                   s_cfg.llm_fallback_model, 0, 0, (nc_llm_api)fallback_api, 0,
+                                   0};
         s_llm_count = 2;
     }
     const char *search = s_cfg.search_provider;
@@ -1231,14 +1251,6 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
         printf("NC_OFF unknown_search_provider\n");
         return ESP_ERR_INVALID_ARG;
     }
-    const int api = nc_llm_api_parse(config->llm_api);
-    const int fallback_api = nc_llm_api_parse(config->llm_fallback_api);
-    if (api < 0 || fallback_api < 0) {
-        printf("NC_OFF unknown_llm_api\n");
-        return ESP_ERR_INVALID_ARG;
-    }
-    s_llm[0].api = (nc_llm_api)api;
-    s_llm[1].api = (nc_llm_api)fallback_api;
     s_wifi_rssi = config->wifi_rssi;
     s_base_prompt = keep(config->system_prompt ? config->system_prompt : NC_SYSTEM_PROMPT);
     s_owner_chat = strtoll(s_cfg.owner_id, NULL, 10); /* a private chat's id is the user's */
@@ -1277,33 +1289,44 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
 
 #define NC_ADMIN_WAIT pdMS_TO_TICKS(120000) /* the longest turn: rounds of 60 s calls */
 
-static bool admin_lock(void)
+/* ESP_OK with the lock held; ESP_ERR_INVALID_STATE before neuroclaw_start;
+ * ESP_ERR_TIMEOUT when the brain stayed busy (a turn longer than the wait). */
+static esp_err_t admin_lock(void)
 {
-    return s_lock != NULL && xSemaphoreTakeRecursive(s_lock, NC_ADMIN_WAIT) == pdTRUE;
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    return xSemaphoreTakeRecursive(s_lock, NC_ADMIN_WAIT) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
 }
 
-static void memory_path(char *out, size_t cap)
+/* A workspace path, refused when it does not fit (never a cut path). */
+static bool ws_file(char *out, size_t cap, const char *rel)
 {
-    snprintf(out, cap, "%s/memory/MEMORY.md", s_cfg.workspace);
+    const int n = snprintf(out, cap, "%s/%s", s_cfg.workspace, rel);
+    return n > 0 && (size_t)n < cap;
 }
 
-char *neuroclaw_memory_read(void)
+int neuroclaw_memory_read(char **out)
 {
-    if (!admin_lock()) return NULL;
+    if (out == NULL) return ESP_ERR_INVALID_ARG;
+    *out = NULL;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
     char path[192];
-    memory_path(path, sizeof path);
-    char *text = nc_ws_slurp(path, 64u * 1024u);
+    char *text = ws_file(path, sizeof path, "memory/MEMORY.md") ? nc_ws_slurp(path, 64u * 1024u)
+                                                                 : NULL;
     xSemaphoreGiveRecursive(s_lock);
-    return text;
+    if (text == NULL) return ESP_ERR_NOT_FOUND;
+    *out = text;
+    return ESP_OK;
 }
 
 int neuroclaw_memory_write(const char *text)
 {
     if (text == NULL) return ESP_ERR_INVALID_ARG;
-    if (!admin_lock()) return ESP_ERR_TIMEOUT;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
     char path[192];
-    memory_path(path, sizeof path);
-    const int err = nc_ws_store(path, text, false);
+    const int err = ws_file(path, sizeof path, "memory/MEMORY.md") ? nc_ws_store(path, text, false)
+                                                                    : -1;
     xSemaphoreGiveRecursive(s_lock);
     return err == 0 ? ESP_OK : ESP_FAIL;
 }
@@ -1311,11 +1334,13 @@ int neuroclaw_memory_write(const char *text)
 int neuroclaw_session_list(char *out, size_t cap)
 {
     if (out == NULL || cap == 0) return ESP_ERR_INVALID_ARG;
-    if (!admin_lock()) return ESP_ERR_TIMEOUT;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
     char path[192];
-    snprintf(path, sizeof path, "%s/sessions/summary.md", s_cfg.workspace);
     struct stat st;
-    const long summary = stat(path, &st) == 0 ? (long)st.st_size : 0;
+    const long summary = ws_file(path, sizeof path, "sessions/summary.md") && stat(path, &st) == 0
+                             ? (long)st.st_size
+                             : 0;
     snprintf(out, cap, "telegram=%d summary_bytes=%ld cron_jobs=%d",
              cJSON_GetArraySize(s_history) - 1, summary, cJSON_GetArraySize(s_jobs));
     xSemaphoreGiveRecursive(s_lock);
@@ -1324,10 +1349,14 @@ int neuroclaw_session_list(char *out, size_t cap)
 
 int neuroclaw_session_clear(void)
 {
-    if (!admin_lock()) return ESP_ERR_TIMEOUT;
-    while (cJSON_GetArraySize(s_history) > 1) cJSON_DeleteItemFromArray(s_history, 1);
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
     char path[192];
-    snprintf(path, sizeof path, "%s/sessions/summary.md", s_cfg.workspace);
+    if (!ws_file(path, sizeof path, "sessions/summary.md")) {
+        xSemaphoreGiveRecursive(s_lock);
+        return ESP_ERR_INVALID_SIZE;
+    }
+    while (cJSON_GetArraySize(s_history) > 1) cJSON_DeleteItemFromArray(s_history, 1);
     remove(path);
     refresh_system_prompt(s_history);
     save_session();
@@ -1336,32 +1365,43 @@ int neuroclaw_session_clear(void)
     return ESP_OK;
 }
 
-void neuroclaw_heartbeat_trigger(void)
+int neuroclaw_heartbeat_trigger(void)
 {
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
     s_heartbeat_now = true;
+    return ESP_OK;
 }
 
-void neuroclaw_cron_start(const char *job_id)
+int neuroclaw_cron_start(const char *job_id)
 {
-    if (!admin_lock()) return;
+    if (job_id != NULL && strlen(job_id) >= sizeof s_cron_job) return ESP_ERR_INVALID_ARG;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
     snprintf(s_cron_job, sizeof s_cron_job, "%s", job_id != NULL ? job_id : "");
     s_cron_now = true;
     xSemaphoreGiveRecursive(s_lock);
+    return ESP_OK;
 }
 
-char *neuroclaw_diagnostics(void)
+int neuroclaw_diagnostics(char **out)
 {
-    if (!admin_lock()) return NULL;
-    char *text = diagnostics_text();
+    if (out == NULL) return ESP_ERR_INVALID_ARG;
+    *out = NULL;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    *out = diagnostics_text();
     xSemaphoreGiveRecursive(s_lock);
-    return text;
+    return *out != NULL ? ESP_OK : ESP_ERR_NO_MEM;
 }
 
-void neuroclaw_set_llm_limits(int per_hour, int per_day)
+int neuroclaw_set_llm_limits(int per_hour, int per_day)
 {
-    if (!admin_lock()) return;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
     s_rate.per_hour = per_hour > 0 ? per_hour : 0;
     s_rate.per_day = per_day > 0 ? per_day : 0;
+    const int hour = s_rate.per_hour, day = s_rate.per_day;
     xSemaphoreGiveRecursive(s_lock);
-    printf("NC_LLM_LIMITS per_hour=%d per_day=%d\n", s_rate.per_hour, s_rate.per_day);
+    printf("NC_LLM_LIMITS per_hour=%d per_day=%d\n", hour, day);
+    return ESP_OK;
 }

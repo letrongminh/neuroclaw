@@ -116,8 +116,9 @@ Model selection and resilience:
 - A failing model cools down 1 min → 5 → 25 → 1 h. A billing error cools it down 5 h, doubling to 24 h.
 - Calls are retried twice, 2 s apart.
 - An optional LLM call budget (`agents.defaults.llm_budget.max_calls_per_hour` / `max_calls_per_day`,
-  off by default) stops calling the model when used up, tells the user when it resets, and skips cron
-  and heartbeat turns until then.
+  off by default) counts every request to a model and, when used up, stops calling the model and tells
+  the user when it resets; cron reminders are then sent as written and heartbeat turns are skipped
+  ([rate limiting](rate-limiting.md#llm-call-budget)).
 
 More in the [providers guide](../guides/providers.md) and [rate limiting](rate-limiting.md).
 `neuroclaw auth login -p openai|anthropic|antigravity` does OAuth sign-in.
@@ -268,7 +269,7 @@ tools that NeuroClaw locks.
 | `model [name]`, `model add` | Show or set the default model; add an OpenAI-compatible endpoint |
 | `cron …`, `mcp …`, `skills …` | Sections 6, 8, 9 |
 | `session list`, `session clear <key>\|--all` | List the stored conversations; clear one or all, as `/clear` does (refused while the gateway runs) |
-| `heartbeat run` | Run one heartbeat turn now and print the answer (section 8) |
+| `heartbeat run [--force]` | Run one heartbeat turn now and print the answer (section 8); refused while the gateway runs unless `--force` |
 | `migrate --from openclaw` | Import an OpenClaw config and workspace |
 | `config reset` | Back to defaults |
 | `update` | Replace the binary with the latest release of this repository, checked against its checksums; `-u` for another release URL |

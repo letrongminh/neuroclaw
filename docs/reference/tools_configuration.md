@@ -373,8 +373,9 @@ arguments and has the same name as the NeuroClaw-ESP tool. It returns JSON with:
 - `last_llm_error`: time and message of the last failed LLM call, or `null`.
 
 It reports names, counters and states only. API keys, tokens and URLs are never included: the last
-LLM error has credentials and query strings stripped from any URL in it, then goes through
-[sensitive data filtering](#sensitive-data-filtering).
+LLM error has credentials and query strings stripped from any URL in it, and `sk-…` keys, `Bearer`
+tokens, values of `key=`, `api_key=`, `token=` (and `:` forms) and Telegram `/bot<id>:<token>` paths
+replaced by `[redacted]`; then it goes through [sensitive data filtering](#sensitive-data-filtering).
 
 | Config    | Type | Default | Description                         |
 |-----------|------|---------|-------------------------------------|

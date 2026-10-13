@@ -365,7 +365,7 @@ Les étiquettes de risque et leur signification sont décrites dans [Ce que Neur
 - `risk_labels` : les capacités à risque activées (telles que journalisées au démarrage) ;
 - `last_llm_error` : date et message du dernier appel LLM en échec, ou `null`.
 
-L'outil ne rapporte que des noms, des compteurs et des états. Les clés d'API, jetons et URL n'y figurent jamais : dans la dernière erreur LLM, les identifiants et les paramètres de requête des URL sont retirés, puis le texte passe par le [filtrage des données sensibles](../security/sensitive_data_filtering.md).
+L'outil ne rapporte que des noms, des compteurs et des états. Les clés d'API, jetons et URL n'y figurent jamais : dans la dernière erreur LLM, les identifiants et les paramètres de requête des URL sont retirés, et les clés `sk-…`, les jetons `Bearer`, les valeurs de `key=`, `api_key=`, `token=` (et leurs formes avec `:`) ainsi que les chemins Telegram `/bot<id>:<token>` sont remplacés par `[redacted]` ; le texte passe ensuite par le [filtrage des données sensibles](../security/sensitive_data_filtering.md).
 
 | Config | Type | Par défaut | Description |
 |--------|------|------------|-------------|

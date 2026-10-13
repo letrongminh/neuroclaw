@@ -437,7 +437,7 @@ func setupAndStartServices(
 		cfg.Heartbeat.Enabled,
 	)
 	runningServices.HeartbeatService.SetBus(msgBus)
-	runningServices.HeartbeatService.SetHandler(NewHeartbeatHandler(agentLoop))
+	runningServices.HeartbeatService.SetHandler(createHeartbeatHandler(agentLoop))
 	if err = runningServices.HeartbeatService.Start(); err != nil {
 		return nil, fmt.Errorf("error starting heartbeat service: %w", err)
 	}
@@ -685,7 +685,7 @@ func restartServices(
 		cfg.Heartbeat.Enabled,
 	)
 	runningServices.HeartbeatService.SetBus(msgBus)
-	runningServices.HeartbeatService.SetHandler(NewHeartbeatHandler(al))
+	runningServices.HeartbeatService.SetHandler(createHeartbeatHandler(al))
 	if err = runningServices.HeartbeatService.Start(); err != nil {
 		return fmt.Errorf("error restarting heartbeat service: %w", err)
 	}
@@ -867,9 +867,7 @@ func setupCronTool(
 	return cronService, nil
 }
 
-// NewHeartbeatHandler runs heartbeat prompts through agentLoop. Used by the
-// gateway's heartbeat service and by `neuroclaw heartbeat run`.
-func NewHeartbeatHandler(agentLoop *agent.AgentLoop) func(prompt, channel, chatID string) *tools.ToolResult {
+func createHeartbeatHandler(agentLoop *agent.AgentLoop) func(prompt, channel, chatID string) *tools.ToolResult {
 	return func(prompt, channel, chatID string) *tools.ToolResult {
 		if channel == "" || chatID == "" {
 			channel, chatID = "cli", "direct"

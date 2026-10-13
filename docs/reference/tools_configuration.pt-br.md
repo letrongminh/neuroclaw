@@ -365,7 +365,7 @@ Os rótulos de risco e o que cada um significa estão em [O que o NeuroClaw pode
 - `risk_labels`: as capacidades de risco que estão ligadas (como registradas na inicialização);
 - `last_llm_error`: horário e mensagem da última chamada LLM que falhou, ou `null`.
 
-A ferramenta informa apenas nomes, contadores e estados. Chaves de API, tokens e URLs nunca aparecem: no último erro de LLM, credenciais e query strings são removidas de qualquer URL, e o texto ainda passa pela [filtragem de dados sensíveis](../security/sensitive_data_filtering.md).
+A ferramenta informa apenas nomes, contadores e estados. Chaves de API, tokens e URLs nunca aparecem: no último erro de LLM, credenciais e query strings são removidas de qualquer URL, chaves `sk-…`, tokens `Bearer`, valores de `key=`, `api_key=`, `token=` (e as formas com `:`) e caminhos do Telegram `/bot<id>:<token>` viram `[redacted]`, e o texto ainda passa pela [filtragem de dados sensíveis](../security/sensitive_data_filtering.md).
 
 | Config | Tipo | Padrão | Descrição |
 |--------|------|--------|-----------|

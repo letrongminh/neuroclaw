@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -10,11 +11,15 @@ import (
 // day, across all models. It sits beside the per-model rpm token bucket:
 // RateLimiterRegistry smooths request rate, LLMBudget bounds the total.
 //
-// Windows are fixed and follow local wall-clock time: the hourly window
-// resets at the top of each hour (14:00, 15:00, ...) and the daily window at
-// local midnight. A fixed window can let up to twice the hourly limit through
-// around a boundary (end of one hour, start of the next); that is accepted in
-// exchange for a reset time the user can be told plainly.
+// Windows are fixed and keyed by absolute time, so a daylight-saving change
+// neither merges nor skips a window: the hourly window is the absolute hour
+// (now.Truncate(time.Hour), on the hour in whole-hour zones) and the daily
+// window ends at the next local midnight, computed from the calendar date
+// (a 23- or 25-hour day stays one day). Wall-clock time is only used to tell
+// the user when the budget resets. A fixed window can let up to twice the
+// hourly limit through around a boundary (end of one hour, start of the
+// next); that is accepted in exchange for a reset time the user can be told
+// plainly.
 //
 // Counters live in memory only and restart from zero when the process
 // restarts. A nil *LLMBudget allows everything. Thread-safe.
@@ -22,8 +27,8 @@ type LLMBudget struct {
 	mu        sync.Mutex
 	maxHour   int
 	maxDay    int
-	hourStart time.Time
-	dayStart  time.Time
+	hourEnd   time.Time // end of the current hourly window (exclusive)
+	dayEnd    time.Time // end of the current daily window: next local midnight
 	hourCount int
 	dayCount  int
 	nowFunc   func() time.Time // for testing
@@ -48,11 +53,19 @@ type LLMBudgetExceededError struct {
 }
 
 func (e *LLMBudgetExceededError) Error() string {
+	reset := "at " + e.ResetAt.Format("15:04") + " (local time)"
+	if e.Window == "daily" {
+		reset = "tomorrow at " + e.ResetAt.Format("15:04") + " (local time, " + e.ResetAt.Format("2006-01-02") + ")"
+	}
 	return fmt.Sprintf(
-		"The %s LLM call budget is used up (%d of %d calls), so I am not calling the model now. "+
-			"It resets at %s (local time).",
-		e.Window, e.Used, e.Limit, e.ResetAt.Format("15:04"),
+		"The %s LLM call budget is used up (%d of %d calls), so I am not calling the model now. It resets %s.",
+		e.Window, e.Used, e.Limit, reset,
 	)
+}
+
+func isLLMBudgetExceeded(err error) bool {
+	var exceeded *LLMBudgetExceededError
+	return errors.As(err, &exceeded)
 }
 
 // NewLLMBudget creates a budget; 0 (or less) for a limit means no limit.
@@ -87,16 +100,22 @@ func (b *LLMBudget) Enabled() bool {
 
 // rollLocked starts a new window when the clock has moved past the current one.
 func (b *LLMBudget) rollLocked(now time.Time) {
-	hour := time.Date(now.Year(), now.Month(), now.Day(), now.Hour(), 0, 0, 0, now.Location())
-	if !hour.Equal(b.hourStart) {
-		b.hourStart = hour
+	if hourEnd := now.Truncate(time.Hour).Add(time.Hour); !hourEnd.Equal(b.hourEnd) {
+		b.hourEnd = hourEnd
 		b.hourCount = 0
 	}
-	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-	if !day.Equal(b.dayStart) {
-		b.dayStart = day
+	if dayEnd := nextLocalMidnight(now); !dayEnd.Equal(b.dayEnd) {
+		b.dayEnd = dayEnd
 		b.dayCount = 0
 	}
+}
+
+// nextLocalMidnight is the first instant of the calendar day after now's, in
+// now's location. time.Date normalizes the day overflow and a midnight that a
+// DST change skips.
+func nextLocalMidnight(now time.Time) time.Time {
+	y, m, d := now.Date()
+	return time.Date(y, m, d+1, 0, 0, 0, 0, now.Location())
 }
 
 // exceededLocked returns the window that is used up, daily first because it
@@ -104,12 +123,12 @@ func (b *LLMBudget) rollLocked(now time.Time) {
 func (b *LLMBudget) exceededLocked() *LLMBudgetExceededError {
 	if b.maxDay > 0 && b.dayCount >= b.maxDay {
 		return &LLMBudgetExceededError{
-			Window: "daily", Limit: b.maxDay, Used: b.dayCount, ResetAt: b.dayStart.AddDate(0, 0, 1),
+			Window: "daily", Limit: b.maxDay, Used: b.dayCount, ResetAt: b.dayEnd,
 		}
 	}
 	if b.maxHour > 0 && b.hourCount >= b.maxHour {
 		return &LLMBudgetExceededError{
-			Window: "hourly", Limit: b.maxHour, Used: b.hourCount, ResetAt: b.hourStart.Add(time.Hour),
+			Window: "hourly", Limit: b.maxHour, Used: b.hourCount, ResetAt: b.hourEnd,
 		}
 	}
 	return nil
@@ -166,7 +185,7 @@ func (b *LLMBudget) Snapshot() LLMBudgetStatus {
 		MaxCallsPerDay:  b.maxDay,
 		CallsThisHour:   b.hourCount,
 		CallsToday:      b.dayCount,
-		HourResetsAt:    b.hourStart.Add(time.Hour),
-		DayResetsAt:     b.dayStart.AddDate(0, 0, 1),
+		HourResetsAt:    b.hourEnd,
+		DayResetsAt:     b.dayEnd,
 	}
 }

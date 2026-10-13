@@ -14,9 +14,9 @@ func newSeahorseContextManager(_ json.RawMessage, _ *AgentLoop) (ContextManager,
 	return nil, fmt.Errorf("seahorse context manager is unavailable on this platform")
 }
 
-// clearSeahorseSession has nothing to clear: seahorse never runs here.
-func clearSeahorseSession(context.Context, string, string) error {
-	return nil
+// openSeahorseClearer has nothing to clear: seahorse never runs here.
+func openSeahorseClearer(string) (clearFn func(context.Context, string) error, closeFn func(), err error) {
+	return func(context.Context, string) error { return nil }, func() {}, nil
 }
 
 func init() {

@@ -367,7 +367,7 @@ Các nhãn rủi ro và ý nghĩa của từng nhãn nằm ở [NeuroClaw làm �
 - `risk_labels`: các khả năng rủi ro đang bật (như được ghi log lúc khởi động);
 - `last_llm_error`: thời điểm và nội dung lần gọi LLM lỗi gần nhất, hoặc `null`.
 
-Công cụ chỉ báo tên, bộ đếm và trạng thái. Khóa API, token và URL không bao giờ xuất hiện: trong lỗi LLM gần nhất, thông tin đăng nhập và chuỗi truy vấn trong mọi URL đều bị bỏ, rồi văn bản còn đi qua bước [lọc dữ liệu nhạy cảm](../security/sensitive_data_filtering.md).
+Công cụ chỉ báo tên, bộ đếm và trạng thái. Khóa API, token và URL không bao giờ xuất hiện: trong lỗi LLM gần nhất, thông tin đăng nhập và chuỗi truy vấn trong mọi URL đều bị bỏ; khóa `sk-…`, token `Bearer`, giá trị của `key=`, `api_key=`, `token=` (cả dạng `:`) và đường dẫn Telegram `/bot<id>:<token>` được thay bằng `[redacted]`; rồi văn bản còn đi qua bước [lọc dữ liệu nhạy cảm](../security/sensitive_data_filtering.md).
 
 | Cấu hình | Kiểu | Mặc định | Mô tả |
 |----------|------|----------|-------|

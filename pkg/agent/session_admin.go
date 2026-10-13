@@ -117,7 +117,15 @@ func ClearStoredSessions(ctx context.Context, cfg *config.Config, keys []string)
 				}
 			}
 		}
-		seahorseDB := filepath.Join(d.dir, "seahorse.db")
+		var clearSeahorse func(context.Context, string) error
+		if seahorseDB := filepath.Join(d.dir, "seahorse.db"); len(targets) > 0 && fileExists(seahorseDB) {
+			clearFn, closeFn, err := openSeahorseClearer(seahorseDB)
+			if err != nil {
+				return cleared, fmt.Errorf("open seahorse context: %w", err)
+			}
+			defer closeFn()
+			clearSeahorse = clearFn
+		}
 		for _, key := range targets {
 			if err := store.SetHistory(ctx, key, nil); err != nil {
 				return cleared, fmt.Errorf("clear %s: %w", key, err)
@@ -125,8 +133,8 @@ func ClearStoredSessions(ctx context.Context, cfg *config.Config, keys []string)
 			if err := store.SetSummary(ctx, key, ""); err != nil {
 				return cleared, fmt.Errorf("clear summary of %s: %w", key, err)
 			}
-			if _, err := os.Stat(seahorseDB); err == nil {
-				if err := clearSeahorseSession(ctx, seahorseDB, key); err != nil {
+			if clearSeahorse != nil {
+				if err := clearSeahorse(ctx, key); err != nil {
 					return cleared, fmt.Errorf("clear seahorse context of %s: %w", key, err)
 				}
 			}

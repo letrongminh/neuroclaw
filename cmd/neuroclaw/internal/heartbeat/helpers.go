@@ -1,6 +1,7 @@
 package heartbeat
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -9,14 +10,28 @@ import (
 	"github.com/letrongminh/neuroclaw/pkg/agent"
 	"github.com/letrongminh/neuroclaw/pkg/bus"
 	"github.com/letrongminh/neuroclaw/pkg/config"
-	"github.com/letrongminh/neuroclaw/pkg/gateway"
 	"github.com/letrongminh/neuroclaw/pkg/heartbeat"
 	"github.com/letrongminh/neuroclaw/pkg/logger"
+	"github.com/letrongminh/neuroclaw/pkg/pid"
 	"github.com/letrongminh/neuroclaw/pkg/providers"
 	"github.com/letrongminh/neuroclaw/pkg/tools"
 )
 
-func heartbeatRunCmd(out io.Writer) error {
+// gatewayRunning reports the PID of a live gateway, or 0.
+func gatewayRunning() int {
+	if data := pid.ReadPidFileWithCheck(internal.GetPicoclawHome()); data != nil {
+		return data.PID
+	}
+	return 0
+}
+
+func heartbeatRunCmd(out io.Writer, force bool) error {
+	if running := gatewayRunning(); running != 0 && !force {
+		return fmt.Errorf(
+			"the gateway is running (PID %d) and does its own heartbeats; running one here as well "+
+				"could repeat their actions. Use --force to run anyway", running)
+	}
+
 	cfg, err := internal.LoadConfig()
 	if err != nil {
 		return fmt.Errorf("error loading config: %w", err)
@@ -41,14 +56,26 @@ func heartbeatRunCmd(out io.Writer) error {
 	agentLoop := agent.NewAgentLoop(cfg, msgBus, provider)
 	defer agentLoop.Close()
 
-	hs := heartbeat.NewHeartbeatService(cfg.WorkspacePath(), cfg.Heartbeat.Interval, true)
-	handler := gateway.NewHeartbeatHandler(agentLoop)
-	// Answer here, not in a chat: no channel manager runs in this process.
+	return runHeartbeat(out, cfg.WorkspacePath(), cfg.Heartbeat.Interval, agentLoop.ProcessHeartbeat)
+}
+
+type processHeartbeatFunc func(ctx context.Context, content, channel, chatID string) (string, error)
+
+// runHeartbeat runs one heartbeat turn and prints its answer. The answer goes
+// to the terminal, not a chat: no channel manager runs in this process.
+func runHeartbeat(out io.Writer, workspace string, interval int, process processHeartbeatFunc) error {
+	var turnErr error
+	var response string
+	hs := heartbeat.NewHeartbeatService(workspace, interval, true)
 	hs.SetHandler(func(prompt, _, _ string) *tools.ToolResult {
-		return handler(prompt, "cli", "direct")
+		response, turnErr = process(context.Background(), prompt, "cli", "direct")
+		if turnErr != nil {
+			return tools.ErrorResult(turnErr.Error())
+		}
+		return tools.SilentResult(response)
 	})
 
-	result, err := hs.RunNow()
+	_, err := hs.RunNow()
 	if errors.Is(err, heartbeat.ErrNoHeartbeatTasks) {
 		fmt.Fprintln(out, "Nothing to run: HEARTBEAT.md has no tasks below its marker line.")
 		return nil
@@ -56,21 +83,18 @@ func heartbeatRunCmd(out io.Writer) error {
 	if err != nil {
 		return err
 	}
-	return printResult(out, result)
-}
 
-func printResult(out io.Writer, result *tools.ToolResult) error {
-	if result == nil {
-		fmt.Fprintln(out, "Heartbeat returned no result.")
+	var budgetErr *providers.LLMBudgetExceededError
+	if errors.As(turnErr, &budgetErr) {
+		return fmt.Errorf("heartbeat skipped: %w", budgetErr)
+	}
+	if turnErr != nil {
+		return fmt.Errorf("heartbeat failed: %w", turnErr)
+	}
+	if response == "" || response == "HEARTBEAT_OK" {
+		fmt.Fprintf(out, "%s Heartbeat OK: nothing to report.\n", internal.Logo)
 		return nil
 	}
-	if result.IsError {
-		return errors.New(result.ForLLM)
-	}
-	text := result.ForUser
-	if text == "" {
-		text = result.ForLLM
-	}
-	fmt.Fprintf(out, "%s %s\n", internal.Logo, text)
+	fmt.Fprintf(out, "%s %s\n", internal.Logo, response)
 	return nil
 }

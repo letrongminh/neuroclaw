@@ -17,7 +17,23 @@ type llmErrorRecord struct {
 	Message string
 }
 
-var errorURLPattern = regexp.MustCompile(`[a-zA-Z][a-zA-Z0-9+.-]*://[^\s"'<>]+`)
+var (
+	errorURLPattern = regexp.MustCompile(`[a-zA-Z][a-zA-Z0-9+.-]*://[^\s"'<>]+`)
+
+	// Secrets that can appear in provider error text outside a URL query.
+	errorSecretPatterns = []struct {
+		re   *regexp.Regexp
+		with string
+	}{
+		{regexp.MustCompile(`/bot\d+:[A-Za-z0-9_-]+`), "/bot[redacted]"},                // Telegram bot token in a path
+		{regexp.MustCompile(`(?i)\bBearer\s+[A-Za-z0-9._~+/=-]+`), "Bearer [redacted]"}, // Authorization header
+		{regexp.MustCompile(`\bsk-[A-Za-z0-9_-]{6,}`), "sk-[redacted]"},                 // OpenAI/Anthropic-style keys
+		{
+			regexp.MustCompile(`(?i)\b((?:api_?key|key|token|access_token|secret)\s*[=:]\s*"?)[^\s"&,;]+`),
+			"${1}[redacted]",
+		},
+	}
+)
 
 // redactErrorURLs drops credentials and query strings (where providers such
 // as Gemini carry the API key) from URLs quoted in an error message.
@@ -34,26 +50,53 @@ func redactErrorURLs(s string) string {
 	})
 }
 
-// recordLLMError keeps a redacted, truncated copy of an LLM failure.
+// redactLLMError removes credentials from an LLM error message: URL
+// userinfo and query strings, then keys, bearer tokens, key=/token= values
+// and Telegram bot tokens wherever they appear.
+func redactLLMError(s string) string {
+	s = redactErrorURLs(s)
+	for _, p := range errorSecretPatterns {
+		s = p.re.ReplaceAllString(s, p.with)
+	}
+	return s
+}
+
+// recordLLMError keeps a redacted, truncated copy of an LLM failure. A used-up
+// LLM budget is not a failure and is not recorded.
 func (al *AgentLoop) recordLLMError(err error) {
-	if err == nil {
+	if err == nil || isLLMBudgetExceeded(err) {
 		return
 	}
-	msg := redactErrorURLs(err.Error())
+	msg := redactLLMError(err.Error())
 	if cfg := al.GetConfig(); cfg != nil {
 		msg = cfg.FilterSensitiveData(msg)
 	}
 	al.lastLLMError.Store(&llmErrorRecord{At: time.Now(), Message: utils.Truncate(msg, 300)})
 }
 
-// acquireLLMBudget counts one LLM call against the hourly/daily budget and
-// logs when the budget refuses it.
-func (al *AgentLoop) acquireLLMBudget(source, agentID string) error {
-	err := al.llmBudget.Acquire()
-	if err != nil {
-		logLLMBudget(err, source, agentID, "")
+func isLLMBudgetExceeded(err error) bool {
+	var exceeded *providers.LLMBudgetExceededError
+	return errors.As(err, &exceeded)
+}
+
+// budgetRegistryProviders makes every provider of every agent count against
+// the LLM budget: the main one, the light (routing) one and the per-candidate
+// fallback ones. Subagents, summaries and seahorse use these providers.
+func budgetRegistryProviders(registry *AgentRegistry, budget *providers.LLMBudget) {
+	if registry == nil {
+		return
 	}
-	return err
+	for _, agentID := range registry.ListAgentIDs() {
+		agent, ok := registry.GetAgent(agentID)
+		if !ok {
+			continue
+		}
+		agent.Provider = providers.WithLLMBudget(agent.Provider, budget)
+		agent.LightProvider = providers.WithLLMBudget(agent.LightProvider, budget)
+		for key, p := range agent.CandidateProviders {
+			agent.CandidateProviders[key] = providers.WithLLMBudget(p, budget)
+		}
+	}
 }
 
 // LLMBudgetBlocked reports, without counting a call, whether the LLM budget
@@ -62,19 +105,9 @@ func (al *AgentLoop) LLMBudgetBlocked() error {
 	return al.llmBudget.Check()
 }
 
-// LogLLMBudgetSkip logs a background turn skipped because of the LLM budget.
+// LogLLMBudgetSkip logs work skipped because of the LLM budget.
 func LogLLMBudgetSkip(err error, source string) {
-	logLLMBudget(err, source, "", "skipped")
-}
-
-func logLLMBudget(err error, source, agentID, action string) {
-	fields := map[string]any{"source": source}
-	if agentID != "" {
-		fields["agent_id"] = agentID
-	}
-	if action != "" {
-		fields["action"] = action
-	}
+	fields := map[string]any{"source": source, "action": "skipped"}
 	var exceeded *providers.LLMBudgetExceededError
 	if errors.As(err, &exceeded) {
 		fields["window"] = exceeded.Window

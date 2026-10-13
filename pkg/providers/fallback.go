@@ -229,6 +229,11 @@ func (fc *FallbackChain) ExecuteCandidate(
 			return nil, context.Canceled
 		}
 
+		// A used-up LLM budget refuses every candidate alike: stop, no cooldown.
+		if isLLMBudgetExceeded(err) {
+			return nil, err
+		}
+
 		// Classify the error.
 		failErr := ClassifyError(err, candidate.Provider, candidate.Model)
 
@@ -345,6 +350,10 @@ func (fc *FallbackChain) ExecuteImage(
 				Duration: elapsed,
 			})
 			return nil, context.Canceled
+		}
+
+		if isLLMBudgetExceeded(err) {
+			return nil, err
 		}
 
 		// Image dimension/size errors are non-retriable.

@@ -23,14 +23,22 @@ func TestClearStoredSessions_ClearsSeahorseContext(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	msgs := []seahorse.Message{{Role: "user", Content: "remember the blue door"}}
-	if _, err = engine.Ingest(ctx, key, msgs); err != nil {
+	const other = "agent:main:t"
+	if err = store.AddMessage(ctx, other, "user", "and the red one"); err != nil {
 		t.Fatal(err)
+	}
+	for _, k := range []string{key, other} {
+		msgs := []seahorse.Message{{Role: "user", Content: "remember the door " + k}}
+		if _, err = engine.Ingest(ctx, k, msgs); err != nil {
+			t.Fatal(err)
+		}
 	}
 	engine.Close()
 
-	if _, err = ClearStoredSessions(ctx, cfg, []string{key}); err != nil {
-		t.Fatal(err)
+	// --all: one engine for the directory clears both sessions.
+	cleared, err := ClearStoredSessions(ctx, cfg, nil)
+	if err != nil || len(cleared) != 2 {
+		t.Fatalf("ClearStoredSessions(all) = %+v, %v", cleared, err)
 	}
 
 	engine, err = seahorse.NewEngine(seahorse.Config{DBPath: dbPath}, nil)
@@ -39,17 +47,20 @@ func TestClearStoredSessions_ClearsSeahorseContext(t *testing.T) {
 	}
 	defer engine.Close()
 	st := engine.GetRetrieval().Store()
-	conv, err := st.GetConversationBySessionKey(ctx, key)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if conv != nil {
+	for _, k := range []string{key, other} {
+		conv, err := st.GetConversationBySessionKey(ctx, k)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if conv == nil {
+			continue
+		}
 		n, err := st.GetMessageCount(ctx, conv.ConversationID)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if n != 0 {
-			t.Fatalf("seahorse still holds %d messages after clear", n)
+			t.Fatalf("seahorse still holds %d messages of %s after clear", n, k)
 		}
 	}
 }

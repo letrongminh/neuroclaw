@@ -373,7 +373,7 @@ Cron 工具用于调度周期性任务。
 - `risk_labels`：当前开启的有风险能力（与启动时日志一致）；
 - `last_llm_error`：最近一次失败的 LLM 调用的时间和信息，没有则为 `null`。
 
-它只报告名称、计数和状态，绝不包含 API 密钥、令牌或 URL：最近一次 LLM 错误中，任何 URL 的凭据和查询字符串都会被去掉，之后再经过[敏感数据过滤](../security/sensitive_data_filtering.zh.md)。
+它只报告名称、计数和状态，绝不包含 API 密钥、令牌或 URL：最近一次 LLM 错误中，任何 URL 的凭据和查询字符串都会被去掉，`sk-…` 密钥、`Bearer` 令牌、`key=`、`api_key=`、`token=`（以及 `:` 形式）的值和 Telegram 的 `/bot<id>:<token>` 路径会被替换为 `[redacted]`，之后再经过[敏感数据过滤](../security/sensitive_data_filtering.zh.md)。
 
 | 配置 | 类型 | 默认 | 说明 |
 |------|------|------|------|

@@ -561,9 +561,6 @@ func (al *AgentLoop) askSideQuestion(
 	// is used, vision errors from fallback providers will not trigger retry.
 	var resp *providers.LLMResponse
 	var err error
-	if err = al.acquireLLMBudget("btw", agent.ID); err != nil {
-		return "", err
-	}
 	resp, err = callSideLLM(messages)
 	if err != nil && hasMediaRefs(messages) && isVisionUnsupportedError(err) {
 		al.emitEvent(
@@ -582,9 +579,6 @@ func (al *AgentLoop) askSideQuestion(
 			},
 		)
 		messagesWithoutMedia := stripMessageMedia(messages)
-		if err = al.acquireLLMBudget("btw", agent.ID); err != nil {
-			return "", err
-		}
 		resp, err = callSideLLM(messagesWithoutMedia)
 	}
 	if err != nil {
@@ -651,6 +645,7 @@ func (al *AgentLoop) isolatedSideQuestionProvider(
 	if err != nil {
 		return nil, "", nil, func() {}, fmt.Errorf("isolatedSideQuestionProvider: %w", err)
 	}
+	provider = providers.WithLLMBudget(provider, al.llmBudget)
 
 	cleanup := func() {
 		closeProviderIfStateful(provider)

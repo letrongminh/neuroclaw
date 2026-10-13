@@ -307,6 +307,7 @@ func (al *AgentLoop) buildCommandsRuntime(
 			if err != nil {
 				return "", fmt.Errorf("failed to initialize model %q: %w", value, err)
 			}
+			nextProvider = providers.WithLLMBudget(nextProvider, al.llmBudget)
 
 			nextCandidates := resolveModelCandidates(cfg, cfg.Agents.Defaults.Provider, value, agent.Fallbacks)
 			if len(nextCandidates) == 0 {

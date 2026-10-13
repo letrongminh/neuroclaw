@@ -30,6 +30,14 @@ func (al *AgentLoop) transcribeAudioInMessage(ctx context.Context, msg bus.Inbou
 			keptMedia = append(keptMedia, ref)
 			continue
 		}
+		// A transcription is one call to a speech or audio model: it counts
+		// against the LLM budget like a chat request.
+		if budgetErr := al.llmBudget.Acquire(); budgetErr != nil {
+			LogLLMBudgetSkip(budgetErr, "transcription")
+			transcriptions = append(transcriptions, "")
+			keptMedia = append(keptMedia, ref)
+			continue
+		}
 		result, err := al.transcriber.Transcribe(ctx, path)
 		if err != nil {
 			logger.WarnCF("voice", "Transcription failed", map[string]any{"ref": ref, "error": err})

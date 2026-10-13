@@ -1,0 +1,8 @@
+menu "NeuroClaw-ESP QEMU example"
+    config EXAMPLE_CLOUD
+        string "Fake Telegram + LLM on the host"
+        default "http://10.0.2.2:8090"
+    config EXAMPLE_OWNER
+        string "Owner's Telegram user id"
+        default "123456789"
+endmenu

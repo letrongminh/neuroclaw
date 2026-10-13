@@ -8,3 +8,15 @@ PicoClaw is Copyright (c) 2026 PicoClaw contributors and released under the MIT 
 NeuroClaw keeps that license for all code, original and new; see LICENSE.
 
 What NeuroClaw changes, and why, is in README.md ("What changed from PicoClaw").
+
+NeuroClaw-ESP (esp32/)
+----------------------
+
+The C brain for one ESP32-S3 adapts the Telegram long-poll and chat-completions
+clients of zclaw (https://github.com/tnm/zclaw, commit e3ad271), Copyright (c)
+2026 Ted Nyman, MIT License; full text in esp32/LICENSE-zclaw. Its agent loop and
+GPIO tools are not used: every action goes through the host firmware's gate.
+cJSON (MIT, Dave Gamble) comes with ESP-IDF; the host tests fetch the same
+v1.7.18 sources. The QEMU example keeps the workspace on joltwallet/littlefs
+1.22.3 (ESP-IDF component registry; MIT, Copyright 2020 Brian Pugh; littlefs
+itself BSD-3-Clause, Arm Limited), fetched at build time, not vendored.

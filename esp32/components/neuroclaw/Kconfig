@@ -1,0 +1,46 @@
+menu "NeuroClaw-ESP"
+
+    config NEUROCLAW_TASK_STACK
+        int "Brain task stack (bytes)"
+        default 8192
+        range 6144 32768
+
+    config NEUROCLAW_HISTORY
+        int "Messages kept after the system prompt"
+        default 16
+        range 4 64
+        help
+            The conversation is saved to sessions/telegram.json of the
+            workspace after every turn and read back at boot.
+
+    config NEUROCLAW_MAX_ROUNDS
+        int "LLM rounds per owner message"
+        default 4
+        range 1 8
+        help
+            A round is one LLM call; tool calls start another. After this many
+            the owner is told the request was not finished.
+
+    config NEUROCLAW_HEARTBEAT_MIN
+        int "Heartbeat interval (minutes, 0 = off)"
+        default 30
+        range 0 1440
+        help
+            As the Go NeuroClaw's heartbeat (default 30): every so often the
+            brain reads HEARTBEAT.md of its workspace and, if it lists tasks,
+            checks them; a reply of HEARTBEAT_OK is not sent to the owner.
+
+    config NEUROCLAW_POLL_S
+        int "Telegram long-poll timeout (s)"
+        default 25
+        range 1 50
+
+    config NEUROCLAW_HTTP_MAX
+        int "Largest HTTP reply kept (bytes)"
+        default 65536
+        range 8192 524288
+        help
+            A larger reply is dropped, never cut: a cut JSON reply could parse
+            into something the model did not say.
+
+endmenu

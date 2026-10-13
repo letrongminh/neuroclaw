@@ -1,0 +1,3 @@
+dependencies:
+  # The workspace (memory, sessions, cron) on flash. MIT, Brian Pugh.
+  joltwallet/littlefs: "==1.22.3"

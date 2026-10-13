@@ -1,0 +1,46 @@
+name: esp32
+# NeuroClaw-ESP (esp32/): host tests of the decisions, then the QEMU example end
+# to end against a fake Telegram and a fake LLM on the runner.
+on:
+  push:
+    branches: [main]
+    paths: ["esp32/**", ".github/workflows/esp32.yml"]
+  pull_request:
+    paths: ["esp32/**", ".github/workflows/esp32.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  host:
+    name: Decisions on the host (ASan, UBSan)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: esp32/scripts/host_test.sh
+  qemu:
+    name: Telegram, LLM, gate, memory, cron, web, heartbeat — two boots on QEMU
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: espressif/idf:v5.4
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the QEMU example
+        working-directory: esp32/examples/qemu
+        run: |
+          . "$IDF_PATH/export.sh"
+          idf.py set-target esp32s3
+          idf.py build
+      - name: Install Espressif QEMU
+        run: python "$IDF_PATH/tools/idf_tools.py" install qemu-xtensa
+      - name: End to end
+        run: |
+          . "$IDF_PATH/export.sh"
+          python3 esp32/scripts/qemu_e2e.py esp32/examples/qemu/build
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: esp32-qemu-uart
+          path: esp32/examples/qemu/build/e2e-uart-*.log

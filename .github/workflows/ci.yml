@@ -1,0 +1,26 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+      TAGS: goolm,stdjson
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: test -z "$(gofmt -l pkg cmd)"
+      - name: vet
+        run: go vet -tags "$TAGS" ./...
+      - name: test
+        run: go test -tags "$TAGS" ./...
+      - name: build
+        run: go build -tags "$TAGS" -o neuroclaw ./cmd/neuroclaw && ./neuroclaw --no-color version

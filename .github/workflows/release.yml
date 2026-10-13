@@ -1,0 +1,34 @@
+name: release
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CGO_ENABLED: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: build
+        run: |
+          set -euo pipefail
+          pkg=github.com/letrongminh/neuroclaw/pkg/config
+          flags="-s -w -X $pkg.Version=${GITHUB_REF_NAME} -X $pkg.GitCommit=${GITHUB_SHA::8}"
+          mkdir dist
+          for target in linux/amd64 linux/arm64 darwin/arm64; do
+            os=${target%/*}; arch=${target#*/}
+            name=neuroclaw_${os}_${arch}
+            GOOS=$os GOARCH=$arch go build -tags goolm,stdjson -ldflags "$flags" -o dist/$name/neuroclaw ./cmd/neuroclaw
+            cp LICENSE NOTICE dist/$name/
+            tar -C dist -czf dist/$name.tar.gz $name
+          done
+          (cd dist && sha256sum *.tar.gz > SHA256SUMS)
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.tar.gz dist/SHA256SUMS --title "NeuroClaw $GITHUB_REF_NAME" --notes "See README.md (What changed from PicoClaw)."

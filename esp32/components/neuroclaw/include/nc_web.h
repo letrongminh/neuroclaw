@@ -1,8 +1,8 @@
 /*
  * NeuroClaw-ESP's web tools, as the Go NeuroClaw's web_search and web_fetch
  * (pkg/tools/integration/web.go): search through a configured provider
- * (SearXNG, keyless and self-hostable, or Brave with a key), and fetch a page as
- * text.
+ * (SearXNG, keyless and self-hostable; Brave or Tavily with a key), and fetch a
+ * page as text.
  *
  * web_fetch never reaches a private or local address — loopback, RFC 1918,
  * link-local, CGNAT, multicast, IPv6 ULA and link-local — unless the host is in
@@ -43,10 +43,18 @@ bool nc_host_allowed(const char *host, const char *allow);
 /* Percent-encode for a query string. malloc'd. */
 char *nc_url_encode(const char *text);
 
-/* The search request URL for `provider` ("searxng" or "brave"), malloc'd; NULL
- * for an unknown provider. `range` is d, w, m, y or NULL. */
+/* The search request URL for `provider` ("searxng", "brave" or "tavily"),
+ * malloc'd; NULL for an unknown provider. `range` is d, w, m, y or NULL. For
+ * Tavily `base_url` is the whole endpoint (NULL or "": https://api.tavily.com/search),
+ * as the Go provider's base_url, and the query goes in the body. */
 char *nc_search_url(const char *provider, const char *base_url, const char *query, int count,
                     const char *range);
+
+/* The POST body of a search, as the Go Tavily provider sends it (the key in
+ * the body, search_depth "advanced", time_range day/week/month/year);
+ * NULL for providers searched with GET. malloc'd. */
+char *nc_search_body(const char *provider, const char *key, const char *query, int count,
+                     const char *range);
 
 /* A provider's JSON reply as the Go tool's text: "Results for: <q> (via <p>)"
  * then "N. title\n   url\n   snippet". malloc'd; an error text when it does not

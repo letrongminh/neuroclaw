@@ -477,3 +477,82 @@ void nc_history_trim(cJSON *messages, int keep)
         cJSON_DeleteItemFromArray(messages, 1);
     }
 }
+
+/* --- limits and diagnostics ---------------------------------------------------------------- */
+
+const char *nc_rate_take(nc_rate *rate, int64_t now_s, int64_t *wait_s)
+{
+    if (wait_s != NULL) *wait_s = 0;
+    if (rate == NULL) return NULL;
+    if (rate->hour_count > 0 && now_s - rate->hour_start >= 3600) rate->hour_count = 0;
+    if (rate->day_count > 0 && now_s - rate->day_start >= 86400) rate->day_count = 0;
+    const char *full = NULL;
+    int64_t wait = 0;
+    if (rate->per_day > 0 && rate->day_count >= rate->per_day) {
+        full = "day";
+        wait = rate->day_start + 86400 - now_s;
+    } else if (rate->per_hour > 0 && rate->hour_count >= rate->per_hour) {
+        full = "hour";
+        wait = rate->hour_start + 3600 - now_s;
+    }
+    if (full != NULL) {
+        rate->refused++;
+        if (wait_s != NULL) *wait_s = wait > 0 ? wait : 0;
+        return full;
+    }
+    if (rate->hour_count == 0) rate->hour_start = now_s;
+    if (rate->day_count == 0) rate->day_start = now_s;
+    rate->hour_count++;
+    rate->day_count++;
+    rate->total++;
+    return NULL;
+}
+
+char *nc_diagnostics_text(const nc_diag *d)
+{
+    if (d == NULL) return NULL;
+    cJSON *json = cJSON_CreateObject();
+    if (json == NULL) return NULL;
+    cJSON_AddNumberToObject(json, "uptime_s", (double)d->uptime_s);
+    cJSON *heap = cJSON_AddObjectToObject(json, "heap");
+    cJSON_AddNumberToObject(heap, "free", d->heap_free);
+    cJSON_AddNumberToObject(heap, "min_free", d->heap_min_free);
+    cJSON_AddNumberToObject(heap, "largest_block", d->heap_largest_block);
+    if (d->stack_free_min >= 0) {
+        cJSON_AddNumberToObject(json, "brain_stack_free_min", d->stack_free_min);
+    } else {
+        cJSON_AddNullToObject(json, "brain_stack_free_min");
+    }
+    if (d->has_rssi) {
+        cJSON_AddNumberToObject(json, "wifi_rssi_dbm", d->rssi_dbm);
+    } else {
+        cJSON_AddNullToObject(json, "wifi_rssi_dbm");
+    }
+    cJSON *llm = cJSON_AddArrayToObject(json, "llm");
+    for (int i = 0; i < d->llm_count && i < 2; i++) {
+        cJSON *t = cJSON_CreateObject();
+        cJSON_AddStringToObject(t, "name", d->llm[i].name ? d->llm[i].name : "");
+        cJSON_AddStringToObject(t, "api", d->llm[i].api ? d->llm[i].api : "openai");
+        cJSON_AddNumberToObject(t, "calls", (double)d->llm[i].calls);
+        cJSON_AddNumberToObject(t, "failures", (double)d->llm[i].failures_total);
+        cJSON_AddNumberToObject(t, "failures_in_a_row", d->llm[i].failures);
+        cJSON_AddNumberToObject(t, "cooldown_s", (double)d->llm[i].cooldown_s);
+        cJSON_AddItemToArray(llm, t);
+    }
+    if (d->rate != NULL) {
+        cJSON *r = cJSON_AddObjectToObject(json, "llm_limits");
+        cJSON_AddNumberToObject(r, "per_hour", d->rate->per_hour);
+        cJSON_AddNumberToObject(r, "per_day", d->rate->per_day);
+        cJSON_AddNumberToObject(r, "this_hour", d->rate->hour_count);
+        cJSON_AddNumberToObject(r, "this_day", d->rate->day_count);
+        cJSON_AddNumberToObject(r, "since_boot", (double)d->rate->total);
+        cJSON_AddNumberToObject(r, "refused", (double)d->rate->refused);
+    }
+    cJSON_AddNumberToObject(json, "tools", d->tools);
+    cJSON_AddNumberToObject(json, "cron_jobs", d->jobs);
+    cJSON_AddNumberToObject(json, "history_messages", d->history);
+    cJSON_AddStringToObject(json, "last_error", d->last_error ? d->last_error : "");
+    char *out = cJSON_PrintUnformatted(json);
+    cJSON_Delete(json);
+    return out;
+}

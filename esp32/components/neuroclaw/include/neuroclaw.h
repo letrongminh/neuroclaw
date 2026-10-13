@@ -76,15 +76,15 @@ typedef struct {
     const char *telegram_token;
     const char *owner_id;     /* the owner's Telegram user id; empty refuses to start */
     const char *telegram_api; /* NULL: https://api.telegram.org */
-    const char *llm_url;      /* OpenAI-compatible chat completions URL */
+    const char *llm_url;      /* chat completions URL, or a Messages URL with llm_api "anthropic" */
     const char *llm_key;      /* may be empty for a local model */
     const char *llm_model;
     const char *system_prompt; /* NULL: the built-in NeuroClaw prompt */
     const char *workspace;     /* a mounted directory (LittleFS) for memory, sessions, cron */
     const char *tz;            /* POSIX TZ for reminders and notes, e.g. "<+07>-7"; NULL: UTC */
-    const char *search_provider; /* "searxng" or "brave"; NULL: no web_search tool */
-    const char *search_url;      /* SearXNG base URL */
-    const char *search_key;      /* Brave API key */
+    const char *search_provider; /* "searxng", "brave" or "tavily"; NULL: no web_search tool */
+    const char *search_url;      /* SearXNG base URL; Tavily endpoint (NULL: api.tavily.com) */
+    const char *search_key;      /* Brave or Tavily API key */
     const char *fetch_allow;     /* comma-separated private hosts web_fetch may reach anyway */
     /* A second OpenAI-compatible URL, tried when the first fails in a way another
      * model may not (network, auth, billing, rate limit, overload), as the Go
@@ -92,11 +92,45 @@ typedef struct {
     const char *llm_fallback_url;
     const char *llm_fallback_key;   /* may be empty */
     const char *llm_fallback_model; /* NULL: llm_model */
+    /* The wire format of llm_url and of llm_fallback_url, each on its own:
+     * "openai" (chat completions, Bearer key; NULL means this) or "anthropic"
+     * (the Messages API, x-api-key, as the Go NeuroClaw's anthropic_messages). */
+    const char *llm_api;
+    const char *llm_fallback_api;
+    /* The Wi-Fi signal for get_diagnostics, e.g. from esp_wifi_sta_get_ap_info;
+     * false when not connected. NULL: not reported (the component does not link
+     * Wi-Fi itself, so a board on Ethernet pays nothing for it). */
+    bool (*wifi_rssi)(int *dbm);
 } nc_config;
 
 /* Copy the configuration and start the brain task. ESP_ERR_INVALID_ARG when a
  * field it cannot work without is missing (token, owner, LLM URL, model). */
 int neuroclaw_start(const nc_config *config, const nc_gate *gate);
+
+/*
+ * Local administration, as MimiClaw's serial commands: for the owner at the
+ * serial console or an app's own UI, never for the model. Safe from any task
+ * after neuroclaw_start; each waits (up to 2 min) for the brain to finish the
+ * turn it is in. Returns ESP_OK, or an ESP_ERR_* code.
+ */
+char *neuroclaw_memory_read(void);            /* memory/MEMORY.md, malloc'd; NULL when none */
+int neuroclaw_memory_write(const char *text); /* replaces memory/MEMORY.md */
+/* "telegram=<messages> summary_bytes=<n> cron_jobs=<n>" */
+int neuroclaw_session_list(char *out, size_t cap);
+int neuroclaw_session_clear(void); /* the conversation and its summary; memory stays */
+void neuroclaw_heartbeat_trigger(void); /* a heartbeat on the brain's next loop */
+/* The job `job_id` runs on the brain's next loop, its schedule unchanged
+ * (NULL or "": nothing more than the due jobs, which run anyway). */
+void neuroclaw_cron_start(const char *job_id);
+char *neuroclaw_diagnostics(void); /* get_diagnostics' JSON, malloc'd */
+/* LLM calls per hour and per day, 0 = no limit (Kconfig gives the boot values). */
+void neuroclaw_set_llm_limits(int per_hour, int per_day);
+
+/* The above as esp_console commands (memory_read, memory_write, session_list,
+ * session_clear, heartbeat_trigger, cron_start, diag, llm_limit). The app
+ * initializes esp_console and reads the lines; nothing is registered unless it
+ * calls this. */
+int neuroclaw_console_register(void);
 
 #ifdef __cplusplus
 }

@@ -5,6 +5,15 @@ menu "NeuroClaw-ESP"
         default 8192
         range 6144 32768
 
+    config NEUROCLAW_TASK_CORE
+        int "Core the brain task is pinned to (-1 = any)"
+        default -1
+        range -1 1
+        help
+            On a dual-core chip, pinning the brain to one core leaves the
+            other to the app (Wi-Fi runs on core 0 by default). Ignored on a
+            single-core chip.
+
     config NEUROCLAW_HISTORY
         int "Messages kept after the system prompt"
         default 16
@@ -37,6 +46,28 @@ menu "NeuroClaw-ESP"
         help
             The file is streamed from flash to Telegram, so this is not bounded
             by RAM; Telegram takes documents up to 50 MB, photos up to 10 MB.
+
+    config NEUROCLAW_LLM_PER_HOUR
+        int "LLM calls per hour (0 = no limit)"
+        default 0
+        range 0 100000
+        help
+            As zclaw's rate limit: at the limit the owner is told plainly and
+            NC_LLM_LIMIT is logged; a reminder still reaches the owner as it
+            was written. Changeable at run time (neuroclaw_set_llm_limits).
+
+    config NEUROCLAW_LLM_PER_DAY
+        int "LLM calls per day (0 = no limit)"
+        default 0
+        range 0 1000000
+
+    config NEUROCLAW_MAX_TOKENS
+        int "max_tokens of an Anthropic Messages request"
+        default 1024
+        range 64 32768
+        help
+            The Messages API requires it; chat completions requests leave it
+            to the server.
 
     config NEUROCLAW_POLL_S
         int "Telegram long-poll timeout (s)"

@@ -1,7 +1,8 @@
 # NeuroClaw-ESP — the NeuroClaw brain as an ESP-IDF component (NeuroEdge Q-79).
-# src/nc_core.c, nc_workspace.c, nc_cron.c, nc_web.c and nc_send.c are plain C (+ cJSON, POSIX files)
-# and are tested on the host (esp32/scripts/host_test.sh); src/nc_brain.c owns
-# HTTP, the clock and the task.
+# src/nc_core.c, nc_workspace.c, nc_cron.c, nc_web.c, nc_send.c and nc_llm.c are plain C
+# (+ cJSON, POSIX files) and are tested on the host (esp32/scripts/host_test.sh);
+# src/nc_brain.c owns HTTP, the clock and the task; src/nc_console.c the optional
+# esp_console commands.
 idf_component_register(
     SRCS
         "src/nc_core.c"
@@ -9,7 +10,9 @@ idf_component_register(
         "src/nc_cron.c"
         "src/nc_web.c"
         "src/nc_send.c"
+        "src/nc_llm.c"
         "src/nc_brain.c"
+        "src/nc_console.c"
     INCLUDE_DIRS
         "include"
     REQUIRES
@@ -22,6 +25,8 @@ idf_component_register(
         log
         esp_timer
         esp_hw_support
+        heap
+        console
         lwip
 )
 

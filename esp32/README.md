@@ -11,6 +11,8 @@ the same tools and the same promises.
 
 ## Same as the Go NeuroClaw
 
+The full list of what both brains do is in [What NeuroClaw can do](../docs/reference/capabilities.md).
+
 | | Go NeuroClaw (Linux, cloud) | NeuroClaw-ESP (one chip) |
 |:---|:---|:---|
 | Way to a device | MCP tools of the home box over mTLS | `nc_gate` callbacks into the firmware's gate (`ne_gate`) |

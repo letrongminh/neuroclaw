@@ -32,6 +32,9 @@ sessions, cron and heartbeat, web search, messages, built-in skills, subagents. 
 are in [`docs/`](docs/) ([original README](docs/PICOCLAW_README.md)); read `picoclaw` as
 `neuroclaw` there.
 
+**[What NeuroClaw can do](docs/reference/capabilities.md)** lists every capability of both brains, what
+is on by default, what the lockdown keeps off, and what is known to be wrong.
+
 ## Connect it to a NeuroEdge box
 
 The box runs `neuroedge mcp serve --http --ui …`; its keys come from NeuroEdge's

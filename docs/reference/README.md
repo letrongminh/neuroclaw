@@ -2,6 +2,7 @@
 
 Reference docs for precise configuration, runtime behavior, and tool semantics.
 
+- [What NeuroClaw can do](capabilities.md): every capability of NeuroClaw and NeuroClaw-ESP, what is on, what is locked off, and known gaps.
 - [Tools Configuration](tools_configuration.md): per-tool configuration, execution policies, MCP, and Skills.
 - [MCP Server CLI](mcp-cli.md): add, list, test, edit, and remove MCP server entries from the command line.
 - [Scheduled Tasks and Cron Jobs](cron.md): schedule types, delivery modes, command gates, and storage.

@@ -17,16 +17,16 @@ NeuroClaw được phát hành dưới dạng một binary tĩnh, `neuroclaw`, v
 | Android | Termux với `Linux_arm64`: [hướng dẫn Termux](android-termux.md) |
 | Một chip ESP32-S3 | Không phải tải về. Xem [esp32/README.md](../../esp32/README.md) |
 
-Các bản nén được đặt tên `neuroclaw_<OS>_<arch>.tar.gz` (`.zip` trên Windows). Mọi tệp đều được liệt kê trong `checksums.txt` ở trang phát hành.
+Các bản nén được đặt tên `neuroclaw_<OS>_<arch>.tar.gz` (`.zip` trên Windows). Mọi tệp đều được liệt kê trong `neuroclaw_<version>_checksums.txt` ở trang phát hành.
 
 ## Kiểm tra bản tải về
 
 ```bash
-sha256sum --check --ignore-missing checksums.txt     # Linux
-shasum -a 256 --check --ignore-missing checksums.txt # macOS
+sha256sum --check --ignore-missing neuroclaw_*_checksums.txt     # Linux
+shasum -a 256 --check --ignore-missing neuroclaw_*_checksums.txt # macOS
 ```
 
-Trên Windows, so sánh `Get-FileHash <file>` với dòng tương ứng trong `checksums.txt`.
+Trên Windows, so sánh `Get-FileHash <file>` với dòng tương ứng trong `neuroclaw_<version>_checksums.txt`.
 
 ## Chạy lần đầu
 
@@ -135,7 +135,7 @@ Termux trên điện thoại ARM64 chạy bản nén `Linux_arm64` qua `termux-c
 neuroclaw update
 ```
 
-`neuroclaw update` tải bản phát hành mới nhất của kho này và kiểm tra bản nén với `checksums.txt`. Cờ: `--url` (trang phát hành hoặc một asset), `--platform`, `--arch`. Các gói cài bằng `dpkg` hoặc `rpm` cũng có thể cập nhật bằng cách cài gói mới hơn. Docker: `docker compose pull`.
+`neuroclaw update` tải bản phát hành mới nhất của kho này và kiểm tra bản nén với `neuroclaw_<version>_checksums.txt`. Cờ: `--url` (trang phát hành hoặc một asset), `--platform`, `--arch`. Các gói cài bằng `dpkg` hoặc `rpm` cũng có thể cập nhật bằng cách cài gói mới hơn. Docker: `docker compose pull`.
 
 ## Làm bộ não của một nhà NeuroEdge
 

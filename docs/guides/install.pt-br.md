@@ -17,16 +17,16 @@ O NeuroClaw é distribuído como um único binário estático, `neuroclaw`, e um
 | Android | Termux com `Linux_arm64`: [Guia Termux](android-termux.md) |
 | Um ESP32-S3 | Não é um download. Veja [esp32/README.md](../../esp32/README.md) |
 
-Os arquivos se chamam `neuroclaw_<OS>_<arch>.tar.gz` (`.zip` no Windows). Todos os arquivos estão listados em `checksums.txt` na página da release.
+Os arquivos se chamam `neuroclaw_<OS>_<arch>.tar.gz` (`.zip` no Windows). Todos os arquivos estão listados em `neuroclaw_<version>_checksums.txt` na página da release.
 
 ## Verificar um download
 
 ```bash
-sha256sum --check --ignore-missing checksums.txt     # Linux
-shasum -a 256 --check --ignore-missing checksums.txt # macOS
+sha256sum --check --ignore-missing neuroclaw_*_checksums.txt     # Linux
+shasum -a 256 --check --ignore-missing neuroclaw_*_checksums.txt # macOS
 ```
 
-No Windows, compare `Get-FileHash <file>` com a linha em `checksums.txt`.
+No Windows, compare `Get-FileHash <file>` com a linha em `neuroclaw_<version>_checksums.txt`.
 
 ## Primeira execução
 
@@ -135,7 +135,7 @@ O Termux em um celular ARM64 roda o arquivo `Linux_arm64` por meio do `termux-ch
 neuroclaw update
 ```
 
-O `neuroclaw update` baixa a release mais recente deste repositório e confere o arquivo com o `checksums.txt`. Flags: `--url` (uma página de release ou um asset), `--platform`, `--arch`. Pacotes instalados com `dpkg` ou `rpm` também podem ser atualizados instalando o pacote mais novo. Docker: `docker compose pull`.
+O `neuroclaw update` baixa a release mais recente deste repositório e confere o arquivo com o `neuroclaw_<version>_checksums.txt`. Flags: `--url` (uma página de release ou um asset), `--platform`, `--arch`. Pacotes instalados com `dpkg` ou `rpm` também podem ser atualizados instalando o pacote mais novo. Docker: `docker compose pull`.
 
 ## Como cérebro de uma casa NeuroEdge
 

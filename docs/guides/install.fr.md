@@ -17,16 +17,16 @@ NeuroClaw est distribué sous la forme d'un binaire statique, `neuroclaw`, et d'
 | Android | Termux avec `Linux_arm64` : [guide Termux](android-termux.md) |
 | Un seul ESP32-S3 | Pas un téléchargement. Voir [esp32/README.md](../../esp32/README.md) |
 
-Les archives s'appellent `neuroclaw_<OS>_<arch>.tar.gz` (`.zip` sous Windows). Chaque fichier figure dans `checksums.txt` sur la page de la version.
+Les archives s'appellent `neuroclaw_<OS>_<arch>.tar.gz` (`.zip` sous Windows). Chaque fichier figure dans `neuroclaw_<version>_checksums.txt` sur la page de la version.
 
 ## Vérifier un téléchargement
 
 ```bash
-sha256sum --check --ignore-missing checksums.txt     # Linux
-shasum -a 256 --check --ignore-missing checksums.txt # macOS
+sha256sum --check --ignore-missing neuroclaw_*_checksums.txt     # Linux
+shasum -a 256 --check --ignore-missing neuroclaw_*_checksums.txt # macOS
 ```
 
-Sous Windows, comparez `Get-FileHash <fichier>` avec la ligne correspondante de `checksums.txt`.
+Sous Windows, comparez `Get-FileHash <fichier>` avec la ligne correspondante de `neuroclaw_<version>_checksums.txt`.
 
 ## Premier lancement
 
@@ -135,7 +135,7 @@ Termux sur un téléphone ARM64 exécute l'archive `Linux_arm64` via `termux-chr
 neuroclaw update
 ```
 
-`neuroclaw update` télécharge la dernière version de ce dépôt et vérifie l'archive avec `checksums.txt`. Options : `--url` (une page de version ou un fichier), `--platform`, `--arch`. Les paquets installés avec `dpkg` ou `rpm` peuvent aussi être mis à jour en installant le paquet plus récent. Docker : `docker compose pull`.
+`neuroclaw update` télécharge la dernière version de ce dépôt et vérifie l'archive avec `neuroclaw_<version>_checksums.txt`. Options : `--url` (une page de version ou un fichier), `--platform`, `--arch`. Les paquets installés avec `dpkg` ou `rpm` peuvent aussi être mis à jour en installant le paquet plus récent. Docker : `docker compose pull`.
 
 ## Comme cerveau d'une maison NeuroEdge
 

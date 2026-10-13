@@ -17,16 +17,16 @@ NeuroClaw 以一个静态二进制文件 `neuroclaw` 和一个 Web 控制台二�
 | Android | 在 Termux 中使用 `Linux_arm64`：[Termux 指南](android-termux.md)（英文） |
 | 一颗 ESP32-S3 | 不是下载文件。见 [esp32/README.md](../../esp32/README.md) |
 
-压缩包命名为 `neuroclaw_<OS>_<arch>.tar.gz`（Windows 为 `.zip`）。每个文件都列在发布页面的 `checksums.txt` 中。
+压缩包命名为 `neuroclaw_<OS>_<arch>.tar.gz`（Windows 为 `.zip`）。每个文件都列在发布页面的 `neuroclaw_<version>_checksums.txt` 中。
 
 ## 校验下载的文件
 
 ```bash
-sha256sum --check --ignore-missing checksums.txt     # Linux
-shasum -a 256 --check --ignore-missing checksums.txt # macOS
+sha256sum --check --ignore-missing neuroclaw_*_checksums.txt     # Linux
+shasum -a 256 --check --ignore-missing neuroclaw_*_checksums.txt # macOS
 ```
 
-在 Windows 上，请把 `Get-FileHash <file>` 的结果与 `checksums.txt` 中对应的那一行比较。
+在 Windows 上，请把 `Get-FileHash <file>` 的结果与 `neuroclaw_<version>_checksums.txt` 中对应的那一行比较。
 
 ## 首次运行
 
@@ -135,7 +135,7 @@ ARM64 手机上的 Termux 通过 `termux-chroot` 运行 `Linux_arm64` 压缩包�
 neuroclaw update
 ```
 
-`neuroclaw update` 会下载本仓库的最新发布版本，并用 `checksums.txt` 检查压缩包。参数：`--url`（发布页面或资源文件）、`--platform`、`--arch`。用 `dpkg` 或 `rpm` 安装的软件包，也可以通过安装更新的软件包来升级。Docker：`docker compose pull`。
+`neuroclaw update` 会下载本仓库的最新发布版本，并用 `neuroclaw_<version>_checksums.txt` 检查压缩包。参数：`--url`（发布页面或资源文件）、`--platform`、`--arch`。用 `dpkg` 或 `rpm` 安装的软件包，也可以通过安装更新的软件包来升级。Docker：`docker compose pull`。
 
 ## 作为 NeuroEdge 之家的大脑
 

@@ -17,16 +17,16 @@ NeuroClaw は、静的バイナリ 1 つの `neuroclaw` と、Web コンソー�
 | Android | Termux で `Linux_arm64` を使用：[Termux ガイド](android-termux.md) |
 | ESP32-S3 1 個 | ダウンロードではありません。[esp32/README.md](../../esp32/README.md) を参照 |
 
-アーカイブ名は `neuroclaw_<OS>_<arch>.tar.gz` です（Windows は `.zip`）。すべてのファイルはリリースページの `checksums.txt` に記載されています。
+アーカイブ名は `neuroclaw_<OS>_<arch>.tar.gz` です（Windows は `.zip`）。すべてのファイルはリリースページの `neuroclaw_<version>_checksums.txt` に記載されています。
 
 ## ダウンロードの検証
 
 ```bash
-sha256sum --check --ignore-missing checksums.txt     # Linux
-shasum -a 256 --check --ignore-missing checksums.txt # macOS
+sha256sum --check --ignore-missing neuroclaw_*_checksums.txt     # Linux
+shasum -a 256 --check --ignore-missing neuroclaw_*_checksums.txt # macOS
 ```
 
-Windows では、`Get-FileHash <file>` の出力と `checksums.txt` の該当行を比べます。
+Windows では、`Get-FileHash <file>` の出力と `neuroclaw_<version>_checksums.txt` の該当行を比べます。
 
 ## 初回起動
 
@@ -135,7 +135,7 @@ ARM64 スマートフォンの Termux では、`Linux_arm64` アーカイブを 
 neuroclaw update
 ```
 
-`neuroclaw update` は、このリポジトリの最新リリースをダウンロードし、アーカイブを `checksums.txt` と照合します。フラグ：`--url`（リリースページまたはアセット）、`--platform`、`--arch`。`dpkg` や `rpm` でインストールしたパッケージは、新しいパッケージをインストールして更新することもできます。Docker の場合は `docker compose pull` です。
+`neuroclaw update` は、このリポジトリの最新リリースをダウンロードし、アーカイブを `neuroclaw_<version>_checksums.txt` と照合します。フラグ：`--url`（リリースページまたはアセット）、`--platform`、`--arch`。`dpkg` や `rpm` でインストールしたパッケージは、新しいパッケージをインストールして更新することもできます。Docker の場合は `docker compose pull` です。
 
 ## NeuroEdge ホームの頭脳として
 

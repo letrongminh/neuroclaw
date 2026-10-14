@@ -13,7 +13,7 @@ on:
 permissions:
   contents: read
 env:
-  NEUROEDGE_REF: c8618ca5689a24d953a4abec9463a58193df51be # letrongminh/neuroedge-init
+  NEUROEDGE_REF: f1a8111d6d5fd611ef68a1f6a3a90363572265e7 # letrongminh/neuroedge-init main (PR #135)
 jobs:
   contract:
     name: Against the pinned NeuroEdge box

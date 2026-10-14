@@ -528,25 +528,25 @@ func (c *OpenClawConfig) ConvertToPicoClaw(sourceHome string) (*PicoClawConfig, 
 		warnings = append(
 			warnings,
 			fmt.Sprintf(
-				"Skills (%d entries) not automatically migrated - reinstall via picoclaw CLI",
+				"Skills (%d entries) not automatically migrated - reinstall via neuroclaw CLI",
 				len(c.Skills.Entries),
 			),
 		)
 	}
 	if c.HasMemory() {
-		warnings = append(warnings, "Memory backend config not migrated - PicoClaw uses SQLite with vector embeddings")
+		warnings = append(warnings, "Memory backend config not migrated - NeuroClaw uses SQLite with vector embeddings")
 	}
 	if c.HasCron() {
 		warnings = append(
 			warnings,
-			"Cron job scheduling not supported in PicoClaw - consider using external schedulers",
+			"Cron job scheduling not supported in NeuroClaw - consider using external schedulers",
 		)
 	}
 	if c.HasHooks() {
-		warnings = append(warnings, "Webhook hooks not supported in PicoClaw - use event system instead")
+		warnings = append(warnings, "Webhook hooks not supported in NeuroClaw - use event system instead")
 	}
 	if c.HasSession() {
-		warnings = append(warnings, "Session scope config differs - PicoClaw uses per-agent sessions by default")
+		warnings = append(warnings, "Session scope config differs - NeuroClaw uses per-agent sessions by default")
 	}
 	if c.HasAuthProfiles() {
 		warnings = append(
@@ -903,13 +903,13 @@ func (c *OpenClawConfig) convertChannels(warnings *[]string) ChannelsConfig {
 	}
 
 	if c.Channels.Signal != nil {
-		*warnings = append(*warnings, "Channel 'signal': No PicoClaw adapter available")
+		*warnings = append(*warnings, "Channel 'signal': No NeuroClaw adapter available")
 	}
 	if c.Channels.IRC != nil {
-		*warnings = append(*warnings, "Channel 'irc': No PicoClaw adapter available")
+		*warnings = append(*warnings, "Channel 'irc': No NeuroClaw adapter available")
 	}
 	if c.Channels.Mattermost != nil {
-		*warnings = append(*warnings, "Channel 'mattermost': No PicoClaw adapter available")
+		*warnings = append(*warnings, "Channel 'mattermost': No NeuroClaw adapter available")
 	}
 	if c.Channels.IMessage != nil {
 		*warnings = append(*warnings, "Channel 'imessage': macOS-only channel - requires manual setup")
@@ -917,7 +917,7 @@ func (c *OpenClawConfig) convertChannels(warnings *[]string) ChannelsConfig {
 	if c.Channels.BlueBubbles != nil {
 		*warnings = append(
 			*warnings,
-			"Channel 'bluebubbles': No PicoClaw adapter available - consider iMessage instead",
+			"Channel 'bluebubbles': No NeuroClaw adapter available - consider iMessage instead",
 		)
 	}
 

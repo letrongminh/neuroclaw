@@ -16,7 +16,7 @@ jobs:
     name: Decisions on the host (ASan, UBSan)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: esp32/scripts/host_test.sh
   targets:
     name: Builds for ${{ matrix.target }}
@@ -34,7 +34,7 @@ jobs:
       IDF_CCACHE_ENABLE: "1"
       CCACHE_DIR: ${{ github.workspace }}/esp32/.ccache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/cache@v4
         with:
           path: |
@@ -60,7 +60,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build the QEMU example
         working-directory: esp32/examples/qemu
         run: |

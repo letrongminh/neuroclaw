@@ -161,6 +161,12 @@ var toolCatalog = []toolCatalogEntry{
 		ConfigKey:   "spawn_status",
 	},
 	{
+		Name:        "get_diagnostics",
+		Description: "Report NeuroClaw's own health: version, uptime, memory, disk, model cooldowns and LLM budget.",
+		Category:    "agents",
+		ConfigKey:   "get_diagnostics",
+	},
+	{
 		Name:        "i2c",
 		Description: "Interact with I2C hardware devices exposed on the host.",
 		Category:    "hardware",
@@ -379,6 +385,8 @@ func applyToolState(cfg *config.Config, toolName string, enabled bool) error {
 			cfg.Tools.Spawn.Enabled = true
 			cfg.Tools.Subagent.Enabled = true
 		}
+	case "get_diagnostics":
+		cfg.Tools.GetDiagnostics.Enabled = enabled
 	case "i2c":
 		cfg.Tools.I2C.Enabled = enabled
 	case "spi":

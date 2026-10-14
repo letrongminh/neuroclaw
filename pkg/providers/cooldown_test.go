@@ -267,3 +267,31 @@ func TestCooldown_MultipleProviders(t *testing.T) {
 		t.Error("groq should be available")
 	}
 }
+
+func TestCooldown_Snapshot(t *testing.T) {
+	now := time.Date(2026, 10, 13, 12, 0, 0, 0, time.UTC)
+	ct, current := newTestTracker(now)
+
+	if got := ct.Snapshot(); len(got) != 0 {
+		t.Fatalf("Snapshot() of a fresh tracker = %+v, want empty", got)
+	}
+
+	ct.MarkFailure("openai/gpt", FailoverRateLimit)
+	ct.MarkFailure("anthropic/claude", FailoverBilling)
+	got := ct.Snapshot()
+	if len(got) != 2 || got[0].Key != "anthropic/claude" || got[1].Key != "openai/gpt" {
+		t.Fatalf("Snapshot() = %+v, want two entries sorted by key", got)
+	}
+	if got[0].Available || got[0].DisabledReason != "billing" || got[0].RemainingSec != 5*3600 {
+		t.Fatalf("billing entry = %+v", got[0])
+	}
+	if got[1].Available || got[1].RemainingSec != 60 || got[1].ErrorCount != 1 {
+		t.Fatalf("rate-limit entry = %+v", got[1])
+	}
+
+	*current = now.Add(2 * time.Minute)
+	got = ct.Snapshot()
+	if !got[1].Available || got[1].RemainingSec != 0 {
+		t.Fatalf("rate-limit entry after cooldown = %+v", got[1])
+	}
+}

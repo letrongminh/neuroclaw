@@ -270,6 +270,12 @@ func (p *Pipeline) CallLLM(
 		if err == nil {
 			break
 		}
+		// The providers count each request against the LLM budget; once it
+		// is used up, stop and let the user read the plain budget message.
+		if isLLMBudgetExceeded(err) {
+			cancelConfiguredStreamingLLM(turnCtx, exec)
+			return ControlBreak, err
+		}
 		if ts.hardAbortRequested() && errors.Is(err, context.Canceled) {
 			_ = ts.requestHardAbort()
 			exec.abortedByHardAbort = true
@@ -452,6 +458,7 @@ func (p *Pipeline) CallLLM(
 	}
 
 	if err != nil {
+		al.recordLLMError(err)
 		al.emitEvent(
 			runtimeevents.KindAgentError,
 			ts.eventMeta("runTurn", "turn.error"),

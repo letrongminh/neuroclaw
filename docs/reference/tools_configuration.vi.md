@@ -344,12 +344,46 @@ Mọi công cụ khác đều có công tắc `enabled` riêng dưới `tools.<n
 | `message` | bật | `media_enabled` mặc định tắt |
 | `spawn`, `subagent` | bật | |
 | `spawn_status` | tắt | |
+| `get_diagnostics` | bật | Xem [Công cụ chẩn đoán](#diagnostics-tool) |
 | `find_skills`, `install_skill` | bật | Chỉ có hiệu lực khi `tools.skills.enabled`; được báo là `risk=skill_install` |
 | `send_tts` | tắt | |
 | `i2c`, `spi`, `serial` | tắt | Công cụ phần cứng; `i2c` và `spi` chỉ dành cho Linux. Khi bật được báo là `risk=hardware_bus` |
 | `media_cleanup` | bật | `max_age_minutes` 30, `interval_minutes` 5 |
 
 Các nhãn rủi ro và ý nghĩa của từng nhãn nằm ở [NeuroClaw làm được gì, mục 2](capabilities.md#2-risk-labels).
+
+<a id="diagnostics-tool"></a>
+## Công cụ chẩn đoán
+
+`get_diagnostics` cho phép mô hình báo cáo tình trạng của chính NeuroClaw. Công cụ chỉ đọc, không nhận tham số và trùng tên với công cụ của NeuroClaw-ESP. Nó trả về JSON gồm:
+
+- `version`, `git_commit`, `go_version`, `os`, `arch`, `num_cpu`;
+- `started_at` và `uptime_sec` của tiến trình;
+- `memory` (heap Go và tổng bộ nhớ theo runtime, số lần GC) và `goroutines`;
+- `workspace_disk`: số byte còn trống và tổng dung lượng của hệ thống tệp chứa workspace của agent (Linux, macOS, FreeBSD, Windows; trên nền tảng khác, mục `error` cho biết không đo được);
+- `channels_enabled`: tên các kênh đang bật;
+- `models`: mô hình mặc định, các mô hình dự phòng và `cooldowns`, mỗi mô hình đã lỗi từ lúc khởi động có một mục (`available: false` khi chuỗi dự phòng đang bỏ qua nó, `remaining_sec`, `disabled_reason` cho lỗi thanh toán);
+- `llm_budget`: giới hạn, số lần gọi trong giờ này và hôm nay, thời điểm đặt lại (xem [ngân sách gọi LLM](rate-limiting.md#llm-call-budget), tiếng Anh);
+- `risk_labels`: các khả năng rủi ro đang bật (như được ghi log lúc khởi động);
+- `last_llm_error`: thời điểm và nội dung lần gọi LLM lỗi gần nhất, hoặc `null`.
+
+Công cụ chỉ báo tên, bộ đếm và trạng thái. Khóa API, token và URL không bao giờ xuất hiện: trong lỗi LLM gần nhất, thông tin đăng nhập và chuỗi truy vấn trong mọi URL đều bị bỏ; khóa `sk-…`, token `Bearer`, giá trị của `key=`, `api_key=`, `token=` (cả dạng `:`) và đường dẫn Telegram `/bot<id>:<token>` được thay bằng `[redacted]`; rồi văn bản còn đi qua bước [lọc dữ liệu nhạy cảm](../security/sensitive_data_filtering.md).
+
+| Cấu hình | Kiểu | Mặc định | Mô tả |
+|----------|------|----------|-------|
+| `enabled` | bool | true | Đăng ký công cụ `get_diagnostics` |
+
+```json
+{
+  "tools": {
+    "get_diagnostics": {
+      "enabled": true
+    }
+  }
+}
+```
+
+Biến môi trường: `NEUROCLAW_TOOLS_GET_DIAGNOSTICS_ENABLED`.
 
 <a id="mcp-tool"></a>
 ## Công cụ MCP

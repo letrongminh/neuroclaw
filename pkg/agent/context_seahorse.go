@@ -168,6 +168,16 @@ func (m *seahorseContextManager) Clear(ctx context.Context, sessionKey string) e
 	return nil
 }
 
+// openSeahorseClearer opens a seahorse database once to clear sessions in it
+// without a running agent (`neuroclaw session clear`). Call closeFn when done.
+func openSeahorseClearer(dbPath string) (clearFn func(context.Context, string) error, closeFn func(), err error) {
+	engine, err := seahorse.NewEngine(seahorse.Config{DBPath: dbPath}, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	return engine.ClearSession, func() { _ = engine.Close() }, nil
+}
+
 // bootstrapSession reconciles JSONL session history into seahorse SQLite.
 func (m *seahorseContextManager) bootstrapSession(ctx context.Context, sessionKey string) {
 	if m.sessions == nil {

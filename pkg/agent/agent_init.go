@@ -28,7 +28,14 @@ func NewAgentLoop(
 	provider providers.LLMProvider,
 	opts ...AgentLoopOption,
 ) *AgentLoop {
+	// Every provider counts against the LLM budget (off when no limit is set).
+	llmBudget := providers.NewLLMBudget(
+		cfg.Agents.Defaults.LLMBudget.MaxCallsPerHour,
+		cfg.Agents.Defaults.LLMBudget.MaxCallsPerDay,
+	)
+	provider = providers.WithLLMBudget(provider, llmBudget)
 	registry := NewAgentRegistry(cfg, provider)
+	budgetRegistryProviders(registry, llmBudget)
 
 	// Set up shared fallback chain with rate limiting.
 	cooldown := providers.NewCooldownTracker()
@@ -69,6 +76,7 @@ func NewAgentLoop(
 		registry:          registry,
 		state:             stateManager,
 		fallback:          fallbackChain,
+		llmBudget:         llmBudget,
 		cmdRegistry:       commands.NewRegistry(commands.BuiltinDefinitions()),
 		evolution:         bridge,
 		steering:          newSteeringQueue(parseSteeringMode(cfg.Agents.Defaults.SteeringMode)),
@@ -252,6 +260,10 @@ func registerSharedTools(
 
 		if ttsProvider != nil {
 			agent.Tools.Register(tools.NewSendTTSTool(ttsProvider, nil))
+		}
+
+		if cfg.Tools.IsToolEnabled("get_diagnostics") {
+			agent.Tools.Register(tools.NewDiagnosticsTool(agent.Workspace, al.diagnosticsRuntimeInfo))
 		}
 
 		if cfg.Tools.IsToolEnabled("load_image") {

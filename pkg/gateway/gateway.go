@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -873,6 +874,10 @@ func createHeartbeatHandler(agentLoop *agent.AgentLoop) func(prompt, channel, ch
 		}
 
 		response, err := agentLoop.ProcessHeartbeat(context.Background(), prompt, channel, chatID)
+		var budgetErr *providers.LLMBudgetExceededError
+		if errors.As(err, &budgetErr) {
+			return tools.SilentResult("Heartbeat skipped: " + budgetErr.Error())
+		}
 		if err != nil {
 			return tools.ErrorResult(fmt.Sprintf("Heartbeat error: %v", err))
 		}

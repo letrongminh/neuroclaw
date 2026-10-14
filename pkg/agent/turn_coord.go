@@ -582,6 +582,7 @@ func (al *AgentLoop) askSideQuestion(
 		resp, err = callSideLLM(messagesWithoutMedia)
 	}
 	if err != nil {
+		al.recordLLMError(err)
 		return "", err
 	}
 	if resp == nil {
@@ -644,6 +645,7 @@ func (al *AgentLoop) isolatedSideQuestionProvider(
 	if err != nil {
 		return nil, "", nil, func() {}, fmt.Errorf("isolatedSideQuestionProvider: %w", err)
 	}
+	provider = providers.WithLLMBudget(provider, al.llmBudget)
 
 	cleanup := func() {
 		closeProviderIfStateful(provider)

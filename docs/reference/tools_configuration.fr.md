@@ -342,12 +342,46 @@ Chaque autre outil a son propre interrupteur `enabled` sous `tools.<name>` (vari
 | `message` | activé | `media_enabled` est désactivé par défaut |
 | `spawn`, `subagent` | activé | |
 | `spawn_status` | désactivé | |
+| `get_diagnostics` | activé | Voir [Outil de diagnostic](#diagnostics-tool) |
 | `find_skills`, `install_skill` | activé | Effectifs seulement avec `tools.skills.enabled` ; signalés par `risk=skill_install` |
 | `send_tts` | désactivé | |
 | `i2c`, `spi`, `serial` | désactivé | Outils matériels ; `i2c` et `spi` uniquement sous Linux. Signalés par `risk=hardware_bus` lorsqu'ils sont activés |
 | `media_cleanup` | activé | `max_age_minutes` 30, `interval_minutes` 5 |
 
 Les étiquettes de risque et leur signification sont décrites dans [Ce que NeuroClaw sait faire, section 2](capabilities.md#2-risk-labels).
+
+<a id="diagnostics-tool"></a>
+## Outil de diagnostic
+
+`get_diagnostics` permet au modèle de rendre compte de l'état de NeuroClaw lui-même. L'outil est en lecture seule, ne prend aucun argument et porte le même nom que l'outil de NeuroClaw-ESP. Il renvoie du JSON contenant :
+
+- `version`, `git_commit`, `go_version`, `os`, `arch`, `num_cpu` ;
+- `started_at` et `uptime_sec` du processus ;
+- `memory` (tas Go et mémoire totale selon le runtime, nombre de GC) et `goroutines` ;
+- `workspace_disk` : octets libres et totaux du système de fichiers qui contient l'espace de travail de l'agent (Linux, macOS, FreeBSD, Windows ; ailleurs, une entrée `error` indique que la valeur n'est pas disponible) ;
+- `channels_enabled` : noms des canaux activés ;
+- `models` : le modèle par défaut, ses replis et `cooldowns`, une entrée par modèle en échec depuis le démarrage (`available: false` tant que la chaîne de repli l'ignore, `remaining_sec`, `disabled_reason` pour les erreurs de facturation) ;
+- `llm_budget` : limites, appels de l'heure et du jour, heures de remise à zéro (voir [budget d'appels LLM](rate-limiting.md#llm-call-budget), en anglais) ;
+- `risk_labels` : les capacités à risque activées (telles que journalisées au démarrage) ;
+- `last_llm_error` : date et message du dernier appel LLM en échec, ou `null`.
+
+L'outil ne rapporte que des noms, des compteurs et des états. Les clés d'API, jetons et URL n'y figurent jamais : dans la dernière erreur LLM, les identifiants et les paramètres de requête des URL sont retirés, et les clés `sk-…`, les jetons `Bearer`, les valeurs de `key=`, `api_key=`, `token=` (et leurs formes avec `:`) ainsi que les chemins Telegram `/bot<id>:<token>` sont remplacés par `[redacted]` ; le texte passe ensuite par le [filtrage des données sensibles](../security/sensitive_data_filtering.md).
+
+| Config | Type | Par défaut | Description |
+|--------|------|------------|-------------|
+| `enabled` | bool | true | Enregistre l'outil `get_diagnostics` |
+
+```json
+{
+  "tools": {
+    "get_diagnostics": {
+      "enabled": true
+    }
+  }
+}
+```
+
+Variable d'environnement : `NEUROCLAW_TOOLS_GET_DIAGNOSTICS_ENABLED`.
 
 <a id="mcp-tool"></a>
 ## Outil MCP

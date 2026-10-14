@@ -22,10 +22,12 @@ import (
 	configcmd "github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/config"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/cron"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/gateway"
+	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/heartbeat"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/mcp"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/migrate"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/model"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/onboard"
+	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/session"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/skills"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/status"
 	"github.com/letrongminh/neuroclaw/cmd/neuroclaw/internal/version"
@@ -135,6 +137,8 @@ neuroclaw --no-color status`,
 		gateway.NewGatewayCommand(),
 		status.NewStatusCommand(),
 		cron.NewCronCommand(),
+		heartbeat.NewHeartbeatCommand(),
+		session.NewSessionCommand(),
 		mcp.NewMCPCommand(),
 		migrate.NewMigrateCommand(),
 		skills.NewSkillsCommand(),

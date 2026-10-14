@@ -2,6 +2,7 @@ package providers
 
 import (
 	"math"
+	"sort"
 	"sync"
 	"time"
 )
@@ -160,6 +161,51 @@ func (ct *CooldownTracker) FailureCount(provider string, reason FailoverReason) 
 		return 0
 	}
 	return entry.FailureCounts[reason]
+}
+
+// CooldownStatus is a point-in-time view of one provider's cooldown entry.
+type CooldownStatus struct {
+	Key            string `json:"key"`
+	ErrorCount     int    `json:"error_count"`
+	Available      bool   `json:"available"`
+	RemainingSec   int64  `json:"remaining_sec,omitempty"`
+	DisabledReason string `json:"disabled_reason,omitempty"`
+	LastFailure    string `json:"last_failure,omitempty"` // RFC 3339
+}
+
+// Snapshot returns the providers that have failed at least once, sorted by key.
+func (ct *CooldownTracker) Snapshot() []CooldownStatus {
+	ct.mu.RLock()
+	defer ct.mu.RUnlock()
+
+	now := ct.nowFunc()
+	out := make([]CooldownStatus, 0, len(ct.entries))
+	for key, entry := range ct.entries {
+		if entry.LastFailure.IsZero() {
+			continue
+		}
+		status := CooldownStatus{
+			Key:         key,
+			ErrorCount:  entry.ErrorCount,
+			Available:   true,
+			LastFailure: entry.LastFailure.Format(time.RFC3339),
+		}
+		var remaining time.Duration
+		if !entry.DisabledUntil.IsZero() && now.Before(entry.DisabledUntil) {
+			remaining = entry.DisabledUntil.Sub(now)
+			status.DisabledReason = string(entry.DisabledReason)
+		}
+		if !entry.CooldownEnd.IsZero() && now.Before(entry.CooldownEnd) {
+			remaining = max(remaining, entry.CooldownEnd.Sub(now))
+		}
+		if remaining > 0 {
+			status.Available = false
+			status.RemainingSec = int64(remaining.Round(time.Second) / time.Second)
+		}
+		out = append(out, status)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
+	return out
 }
 
 func (ct *CooldownTracker) getOrCreate(provider string) *cooldownEntry {

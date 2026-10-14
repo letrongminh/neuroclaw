@@ -344,12 +344,46 @@ Cron ツールは定期タスクのスケジューリングに使用されます
 | `message` | on | `media_enabled` はデフォルトで off |
 | `spawn`、`subagent` | on | |
 | `spawn_status` | off | |
+| `get_diagnostics` | on | [診断ツール](#diagnostics-tool)を参照 |
 | `find_skills`、`install_skill` | on | `tools.skills.enabled` が有効な場合のみ機能する。`risk=skill_install` として報告される |
 | `send_tts` | off | |
 | `i2c`、`spi`、`serial` | off | ハードウェアツール。`i2c` と `spi` は Linux のみ。有効な場合は `risk=hardware_bus` として報告される |
 | `media_cleanup` | on | `max_age_minutes` は 30、`interval_minutes` は 5 |
 
 リスクラベルとそれぞれの意味は、[NeuroClaw にできること、セクション 2](capabilities.md#2-risk-labels)にあります。
+
+<a id="diagnostics-tool"></a>
+## 診断ツール
+
+`get_diagnostics` は、NeuroClaw 自身の状態をモデルが報告するためのツールです。読み取り専用で引数はなく、NeuroClaw-ESP のツールと同じ名前です。次の内容を JSON で返します。
+
+- `version`、`git_commit`、`go_version`、`os`、`arch`、`num_cpu`
+- プロセスの `started_at` と `uptime_sec`
+- `memory`（ランタイムから得た Go ヒープと合計バイト数、GC 回数）と `goroutines`
+- `workspace_disk`：エージェントのワークスペースがあるファイルシステムの空き容量と総容量（Linux、macOS、FreeBSD、Windows。それ以外では取得できない旨を `error` に記載）
+- `channels_enabled`：有効なチャネル名
+- `models`：デフォルトモデル、そのフォールバック、`cooldowns`（起動後に失敗したモデルごとに 1 件。フォールバックチェーンがスキップしている間は `available: false`、`remaining_sec`、課金エラーの場合は `disabled_reason`）
+- `llm_budget`：上限、この 1 時間と今日の呼び出し回数、リセット時刻（[LLM 呼び出し予算](rate-limiting.md#llm-call-budget)、英語）
+- `risk_labels`：有効になっているリスクのある機能（起動時のログと同じもの）
+- `last_llm_error`：最後に失敗した LLM 呼び出しの時刻とメッセージ。なければ `null`
+
+報告するのは名前、カウンター、状態だけです。API キー、トークン、URL は決して含まれません。最後の LLM エラーは、URL から認証情報とクエリ文字列を取り除き、`sk-…` キー、`Bearer` トークン、`key=`・`api_key=`・`token=`（`:` 形式も）の値、Telegram の `/bot<id>:<token>` パスを `[redacted]` に置き換えたうえで[機密データのフィルタリング](../security/sensitive_data_filtering.md)を通します。
+
+| 設定 | 型 | デフォルト | 説明 |
+|------|----|------------|------|
+| `enabled` | bool | true | `get_diagnostics` ツールを登録する |
+
+```json
+{
+  "tools": {
+    "get_diagnostics": {
+      "enabled": true
+    }
+  }
+}
+```
+
+環境変数：`NEUROCLAW_TOOLS_GET_DIAGNOSTICS_ENABLED`
 
 ## MCP ツール
 

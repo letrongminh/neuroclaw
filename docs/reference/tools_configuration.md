@@ -345,12 +345,53 @@ Every other tool has its own `enabled` switch under `tools.<name>` (environment 
 | `message` | on | `media_enabled` is off by default |
 | `spawn`, `subagent` | on | |
 | `spawn_status` | off | |
+| `get_diagnostics` | on | See [Diagnostics Tool](#diagnostics-tool) |
 | `find_skills`, `install_skill` | on | Take effect only with `tools.skills.enabled`; reported as `risk=skill_install` |
 | `send_tts` | off | |
 | `i2c`, `spi`, `serial` | off | Hardware tools; `i2c` and `spi` are Linux only. Reported as `risk=hardware_bus` when on |
 | `media_cleanup` | on | `max_age_minutes` 30, `interval_minutes` 5 |
 
 The risk labels and what each one means are in [What NeuroClaw can do, section 2](capabilities.md#2-risk-labels).
+
+## Diagnostics Tool
+
+`get_diagnostics` lets the model report NeuroClaw's own health. It is read-only, takes no
+arguments and has the same name as the NeuroClaw-ESP tool. It returns JSON with:
+
+- `version`, `git_commit`, `go_version`, `os`, `arch`, `num_cpu`;
+- `started_at` and `uptime_sec` of the process;
+- `memory` (Go heap and total bytes from the runtime, GC count) and `goroutines`;
+- `workspace_disk`: free and total bytes of the filesystem holding the agent's workspace (Linux,
+  macOS, FreeBSD, Windows; elsewhere an `error` entry says it is not reported);
+- `channels_enabled`: names of the enabled channels;
+- `models`: the default model, its fallbacks, and `cooldowns`, one entry per model that has failed
+  since start (`available: false` while the fallback chain skips it, `remaining_sec`,
+  `disabled_reason` for billing errors);
+- `llm_budget`: limits, calls this hour and today, reset times (see
+  [LLM call budget](rate-limiting.md#llm-call-budget));
+- `risk_labels`: the risky capabilities that are on (as logged at startup);
+- `last_llm_error`: time and message of the last failed LLM call, or `null`.
+
+It reports names, counters and states only. API keys, tokens and URLs are never included: the last
+LLM error has credentials and query strings stripped from any URL in it, and `sk-…` keys, `Bearer`
+tokens, values of `key=`, `api_key=`, `token=` (and `:` forms) and Telegram `/bot<id>:<token>` paths
+replaced by `[redacted]`; then it goes through [sensitive data filtering](#sensitive-data-filtering).
+
+| Config    | Type | Default | Description                         |
+|-----------|------|---------|-------------------------------------|
+| `enabled` | bool | true    | Register the `get_diagnostics` tool |
+
+```json
+{
+  "tools": {
+    "get_diagnostics": {
+      "enabled": true
+    }
+  }
+}
+```
+
+Environment variable: `NEUROCLAW_TOOLS_GET_DIAGNOSTICS_ENABLED`.
 
 ## MCP Tool
 

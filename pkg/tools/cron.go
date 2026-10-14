@@ -13,6 +13,7 @@ import (
 	"github.com/letrongminh/neuroclaw/pkg/config"
 	"github.com/letrongminh/neuroclaw/pkg/constants"
 	"github.com/letrongminh/neuroclaw/pkg/cron"
+	"github.com/letrongminh/neuroclaw/pkg/logger"
 	"github.com/letrongminh/neuroclaw/pkg/utils"
 )
 
@@ -22,6 +23,12 @@ type JobExecutor interface {
 	// PublishResponseIfNeeded sends response to the outbound bus only when the
 	// agent did not already deliver content through the message tool in this round.
 	PublishResponseIfNeeded(ctx context.Context, channel, chatID, sessionKey, response string)
+}
+
+// llmBudgetGate is implemented by executors that enforce the hourly/daily
+// LLM budget; cron jobs that need the model are skipped while it is used up.
+type llmBudgetGate interface {
+	LLMBudgetBlocked() error
 }
 
 // CronTool provides scheduling capabilities for the agent
@@ -639,6 +646,28 @@ func (t *CronTool) ExecuteJob(ctx context.Context, job *cron.CronJob) string {
 			Content: output,
 		})
 		return "ok"
+	}
+
+	// While the LLM budget is used up the model is not called, but the job is
+	// not lost: its message goes to the chat as written, with a note, and the
+	// job completes as usual (a one-time reminder is still delivered once).
+	if gate, ok := t.executor.(llmBudgetGate); ok {
+		if err := gate.LLMBudgetBlocked(); err != nil {
+			logger.WarnCF("cron", "NeuroClaw llm_budget", map[string]any{
+				"source": "cron",
+				"action": "delivered_as_written",
+				"job_id": job.ID,
+				"reason": err.Error(),
+			})
+			pubCtx, pubCancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer pubCancel()
+			t.msgBus.PublishOutbound(pubCtx, bus.OutboundMessage{
+				Context: bus.NewOutboundContext(channel, chatID, ""),
+				Content: job.Payload.Message + "\n\n(Scheduled message sent as written, not processed by the model. " +
+					err.Error() + ")",
+			})
+			return "ok"
+		}
 	}
 
 	sessionKey := fmt.Sprintf("agent:cron-%s-%s", job.ID, uuid.New().String())

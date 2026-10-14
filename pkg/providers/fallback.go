@@ -56,6 +56,14 @@ func NewFallbackChain(cooldown *CooldownTracker, rl *RateLimiterRegistry) *Fallb
 	return &FallbackChain{cooldown: cooldown, rl: rl}
 }
 
+// Cooldown returns the chain's cooldown tracker (nil-safe).
+func (fc *FallbackChain) Cooldown() *CooldownTracker {
+	if fc == nil {
+		return nil
+	}
+	return fc.cooldown
+}
+
 // ResolveCandidates parses model config into a deduplicated candidate list.
 func ResolveCandidates(cfg ModelConfig, defaultProvider string) []FallbackCandidate {
 	return ResolveCandidatesWithLookup(cfg, defaultProvider, nil)
@@ -221,6 +229,11 @@ func (fc *FallbackChain) ExecuteCandidate(
 			return nil, context.Canceled
 		}
 
+		// A used-up LLM budget refuses every candidate alike: stop, no cooldown.
+		if isLLMBudgetExceeded(err) {
+			return nil, err
+		}
+
 		// Classify the error.
 		failErr := ClassifyError(err, candidate.Provider, candidate.Model)
 
@@ -337,6 +350,10 @@ func (fc *FallbackChain) ExecuteImage(
 				Duration: elapsed,
 			})
 			return nil, context.Canceled
+		}
+
+		if isLLMBudgetExceeded(err) {
+			return nil, err
 		}
 
 		// Image dimension/size errors are non-retriable.

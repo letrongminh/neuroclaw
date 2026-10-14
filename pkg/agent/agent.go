@@ -50,6 +50,8 @@ type AgentLoop struct {
 	running        atomic.Bool
 	contextManager ContextManager
 	fallback       *providers.FallbackChain
+	llmBudget      *providers.LLMBudget // survives config reload; limits follow cfg
+	lastLLMError   atomic.Pointer[llmErrorRecord]
 	channelManager interfaces.ChannelManager
 	mediaStore     media.MediaStore
 	transcriber    asr.Transcriber
@@ -386,6 +388,9 @@ func (al *AgentLoop) ReloadProviderAndConfig(
 		return fmt.Errorf("config cannot be nil")
 	}
 
+	al.llmBudget.SetLimits(cfg.Agents.Defaults.LLMBudget.MaxCallsPerHour, cfg.Agents.Defaults.LLMBudget.MaxCallsPerDay)
+	provider = providers.WithLLMBudget(provider, al.llmBudget)
+
 	var registry *AgentRegistry
 	func() {
 		defer func() {
@@ -397,6 +402,7 @@ func (al *AgentLoop) ReloadProviderAndConfig(
 			}
 		}()
 		registry = NewAgentRegistry(cfg, provider)
+		budgetRegistryProviders(registry, al.llmBudget)
 	}()
 	if registry == nil {
 		if err := ctx.Err(); err != nil {
@@ -446,7 +452,6 @@ func (al *AgentLoop) ReloadProviderAndConfig(
 		}
 	}
 	al.fallback = providers.NewFallbackChain(providers.NewCooldownTracker(), newRL)
-
 	al.mu.Unlock()
 	al.refreshRuntimeEventLogger(cfg)
 

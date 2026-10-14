@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -1279,5 +1280,81 @@ func TestCronTool_ExecuteJobReturnsErrorWithoutPublish(t *testing.T) {
 
 	if executor.publishedResp != "" {
 		t.Fatalf("unexpected publish on error path: %q", executor.publishedResp)
+	}
+}
+
+type budgetBlockedExecutor struct {
+	stubJobExecutor
+	blocked error
+}
+
+func (b *budgetBlockedExecutor) LLMBudgetBlocked() error { return b.blocked }
+
+func TestCronTool_AtReminderDeliveredAsWrittenWhenLLMBudgetUsedUp(t *testing.T) {
+	executor := &budgetBlockedExecutor{
+		blocked: errors.New("The hourly LLM call budget is used up (5 of 5 calls), so I am not calling the model now."),
+	}
+	tool := newTestCronToolWithExecutorAndConfig(t, executor, config.DefaultConfig())
+	cs := tool.cronService
+	cs.SetOnJob(func(job *cron.CronJob) (string, error) {
+		return tool.ExecuteJob(context.Background(), job), nil
+	})
+
+	at := time.Now().Add(50 * time.Millisecond).UnixMilli()
+	job, err := cs.AddJob("water", cron.CronSchedule{Kind: "at", AtMS: &at}, "Water the plants", "telegram", "chat-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cs.Start(); err != nil {
+		t.Fatal(err)
+	}
+	defer cs.Stop()
+
+	var msg bus.OutboundMessage
+	select {
+	case msg = <-tool.msgBus.OutboundChan():
+	case <-time.After(3 * time.Second):
+		t.Fatal("timeout waiting for the reminder")
+	}
+	if !strings.HasPrefix(msg.Content, "Water the plants") ||
+		!strings.Contains(msg.Content, "not processed by the model") ||
+		!strings.Contains(msg.Content, "hourly LLM call budget") {
+		t.Fatalf("delivered %q, want the message as written with the budget note", msg.Content)
+	}
+	if msg.Channel != "telegram" || msg.ChatID != "chat-1" {
+		t.Fatalf("delivered to %s/%s, want telegram/chat-1", msg.Channel, msg.ChatID)
+	}
+	if executor.lastPrompt != "" {
+		t.Fatalf("the agent ran although the budget is used up: %q", executor.lastPrompt)
+	}
+
+	// The one-time job completed normally: delivered once, then removed.
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if _, ok := cs.GetJob(job.ID); !ok {
+			break
+		}
+		if time.Now().After(deadline) {
+			j, _ := cs.GetJob(job.ID)
+			t.Fatalf("at job still present after delivery: %+v", j.State)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func TestCronTool_ExecuteJobRunsAgentWhenBudgetLeft(t *testing.T) {
+	executor := &budgetBlockedExecutor{}
+	tool := newTestCronToolWithExecutorAndConfig(t, executor, config.DefaultConfig())
+
+	job := &cron.CronJob{ID: "job-budget"}
+	job.Payload.Channel = "telegram"
+	job.Payload.To = "chat-1"
+	job.Payload.Message = "send me a poem"
+
+	if got := tool.ExecuteJob(context.Background(), job); got != "ok" {
+		t.Fatalf("ExecuteJob() with budget left = %q, want ok", got)
+	}
+	if executor.lastPrompt != "send me a poem" {
+		t.Fatalf("prompt = %q, want the job message", executor.lastPrompt)
 	}
 }

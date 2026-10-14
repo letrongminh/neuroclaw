@@ -350,12 +350,46 @@ Cron 工具用于调度周期性任务。
 | `message` | 开 | `media_enabled` 默认关闭 |
 | `spawn`、`subagent` | 开 | |
 | `spawn_status` | 关 | |
+| `get_diagnostics` | 开 | 见[诊断工具](#diagnostics-tool) |
 | `find_skills`、`install_skill` | 开 | 仅在 `tools.skills.enabled` 时生效；记录为 `risk=skill_install` |
 | `send_tts` | 关 | |
 | `i2c`、`spi`、`serial` | 关 | 硬件工具；`i2c` 和 `spi` 仅限 Linux。开启时记录为 `risk=hardware_bus` |
 | `media_cleanup` | 开 | `max_age_minutes` 为 30，`interval_minutes` 为 5 |
 
 风险标签及其含义见[NeuroClaw 能做什么，第 2 节](capabilities.md#2-risk-labels)。
+
+<a id="diagnostics-tool"></a>
+## 诊断工具
+
+`get_diagnostics` 让模型报告 NeuroClaw 自身的运行状况。它是只读的，不接受参数，与 NeuroClaw-ESP 的工具同名。它返回的 JSON 包含：
+
+- `version`、`git_commit`、`go_version`、`os`、`arch`、`num_cpu`；
+- 进程的 `started_at` 和 `uptime_sec`；
+- `memory`（运行时给出的 Go 堆内存与总内存字节数、GC 次数）和 `goroutines`；
+- `workspace_disk`：agent 工作区所在文件系统的可用字节数与总字节数（Linux、macOS、FreeBSD、Windows；其他平台会有一条 `error` 说明无法获取）；
+- `channels_enabled`：已启用的渠道名称；
+- `models`：默认模型、它的回退模型，以及 `cooldowns`——启动以来每个失败过的模型一条（回退链跳过它期间为 `available: false`，还有 `remaining_sec`，计费错误时有 `disabled_reason`）；
+- `llm_budget`：上限、本小时和今天的调用次数、重置时间（见 [LLM 调用预算](rate-limiting.md#llm-call-budget)，英文）；
+- `risk_labels`：当前开启的有风险能力（与启动时日志一致）；
+- `last_llm_error`：最近一次失败的 LLM 调用的时间和信息，没有则为 `null`。
+
+它只报告名称、计数和状态，绝不包含 API 密钥、令牌或 URL：最近一次 LLM 错误中，任何 URL 的凭据和查询字符串都会被去掉，`sk-…` 密钥、`Bearer` 令牌、`key=`、`api_key=`、`token=`（以及 `:` 形式）的值和 Telegram 的 `/bot<id>:<token>` 路径会被替换为 `[redacted]`，之后再经过[敏感数据过滤](../security/sensitive_data_filtering.zh.md)。
+
+| 配置 | 类型 | 默认 | 说明 |
+|------|------|------|------|
+| `enabled` | bool | true | 注册 `get_diagnostics` 工具 |
+
+```json
+{
+  "tools": {
+    "get_diagnostics": {
+      "enabled": true
+    }
+  }
+}
+```
+
+环境变量：`NEUROCLAW_TOOLS_GET_DIAGNOSTICS_ENABLED`。
 
 <a id="mcp-tool"></a>
 ## MCP 工具

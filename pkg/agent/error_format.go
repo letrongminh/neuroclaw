@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/letrongminh/neuroclaw/pkg/providers"
@@ -9,6 +10,12 @@ import (
 func formatProcessingError(err error) string {
 	if err == nil {
 		return ""
+	}
+
+	// The LLM budget message is already written for the user.
+	var budgetErr *providers.LLMBudgetExceededError
+	if errors.As(err, &budgetErr) {
+		return budgetErr.Error()
 	}
 
 	if kind, ok := providers.ClassifyAuthError(err); ok {

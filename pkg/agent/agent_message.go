@@ -76,6 +76,12 @@ func (al *AgentLoop) ProcessHeartbeat(
 		return "", err
 	}
 
+	// A used-up LLM budget skips the whole heartbeat turn before it starts.
+	if err := al.LLMBudgetBlocked(); err != nil {
+		LogLLMBudgetSkip(err, "heartbeat")
+		return "", err
+	}
+
 	agent := al.GetRegistry().GetDefaultAgent()
 	if agent == nil {
 		return "", fmt.Errorf("no default agent for heartbeat")

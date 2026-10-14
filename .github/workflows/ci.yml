@@ -40,7 +40,7 @@ jobs:
         id: setup-go
         with:
           go-version-file: go.mod
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 10.33.0
           run_install: false

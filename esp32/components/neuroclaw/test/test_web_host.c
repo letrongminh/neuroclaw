@@ -117,6 +117,39 @@ static int check_search(void)
     text = nc_search_text("searxng", "<html>blocked</html>", "q", 5);
     CHECK(text != NULL && strncmp(text, "error:", 6) == 0);
     free(text);
+
+    /* Tavily: POST to the endpoint, the key and the query in the body, as the Go provider. */
+    url = nc_search_url("tavily", NULL, "a", 5, NULL);
+    CHECK(url != NULL && strcmp(url, "https://api.tavily.com/search") == 0);
+    free(url);
+    url = nc_search_url("tavily", "http://10.0.2.2:8090/tavily", "a", 5, "d");
+    CHECK(url != NULL && strcmp(url, "http://10.0.2.2:8090/tavily") == 0);
+    free(url);
+    CHECK(nc_search_body("searxng", "k", "a", 5, NULL) == NULL);
+    CHECK(nc_search_body("brave", "k", "a", 5, NULL) == NULL);
+    char *body = nc_search_body("tavily", "tvly-k", "thời \"tiết\"", 3, "w");
+    cJSON *json = body ? cJSON_Parse(body) : NULL;
+    CHECK(json != NULL);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "api_key")->valuestring, "tvly-k") == 0);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "query")->valuestring, "thời \"tiết\"") == 0);
+    CHECK(cJSON_GetObjectItem(json, "max_results")->valueint == 3);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "time_range")->valuestring, "week") == 0);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "search_depth")->valuestring, "advanced") == 0);
+    CHECK(cJSON_IsFalse(cJSON_GetObjectItem(json, "include_raw_content")));
+    cJSON_Delete(json);
+    free(body);
+    body = nc_search_body("tavily", NULL, "a", 1, "x");
+    json = body ? cJSON_Parse(body) : NULL;
+    CHECK(json != NULL && cJSON_GetObjectItem(json, "time_range") == NULL);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "api_key")->valuestring, "") == 0);
+    cJSON_Delete(json);
+    free(body);
+    text = nc_search_text("tavily",
+                          "{\"query\":\"q\",\"results\":[{\"title\":\"T\",\"url\":"
+                          "\"https://t.example\",\"content\":\"c &amp; d\",\"score\":0.9}]}",
+                          "q", 5);
+    CHECK(text != NULL && strstr(text, "(via Tavily)\n1. T\n   https://t.example\n   c & d") != NULL);
+    free(text);
     return 0;
 }
 

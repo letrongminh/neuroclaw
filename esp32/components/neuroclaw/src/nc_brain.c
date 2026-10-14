@@ -2,8 +2,8 @@
  * NeuroClaw-ESP on ESP-IDF (neuroclaw.h): Telegram long polling, the LLM, the
  * workspace (memory, notes, the saved conversation), scheduled jobs and the
  * heartbeat, and the turn loop that sends every device tool call to the gate.
- * Decisions live in nc_core.c, nc_workspace.c, nc_cron.c, nc_web.c and nc_send.c. Telegram and
- * chat-completions clients after zclaw main/telegram.c and main/llm.c
+ * Decisions live in nc_core.c, nc_workspace.c, nc_cron.c, nc_web.c, nc_send.c and
+ * nc_llm.c. Telegram and chat-completions clients after zclaw main/telegram.c and main/llm.c
  * (https://github.com/tnm/zclaw, commit e3ad271, MIT, Copyright (c) 2026 Ted
  * Nyman).
  *
@@ -26,13 +26,16 @@
 #include "esp_http_client.h"
 #include "esp_log.h"
 #include "esp_random.h"
+#include "esp_system.h"
 #include "esp_timer.h"
 #include "lwip/netdb.h"
 #include "lwip/sockets.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "nc_core.h"
 #include "nc_cron.h"
+#include "nc_llm.h"
 #include "nc_send.h"
 #include "nc_web.h"
 #include "nc_utf8.h"
@@ -51,6 +54,25 @@ static size_t s_tool_count;
 static int64_t s_owner_chat;
 static const char *s_base_prompt;
 static int64_t s_next_heartbeat_us;
+static TaskHandle_t s_task;
+static bool (*s_wifi_rssi)(int *dbm);
+
+/* The brain's state (history, jobs, files) is the brain task's; the local
+ * administration API (neuroclaw_memory_read...) takes this lock, which the
+ * brain holds while it handles anything, never while it waits on Telegram. */
+static SemaphoreHandle_t s_lock;
+static volatile bool s_heartbeat_now; /* neuroclaw_heartbeat_trigger */
+static volatile bool s_cron_now;      /* neuroclaw_cron_start */
+static char s_cron_job[24];           /* the job to run now; "" = whatever is due */
+
+static nc_rate s_rate = {.per_hour = CONFIG_NEUROCLAW_LLM_PER_HOUR,
+                         .per_day = CONFIG_NEUROCLAW_LLM_PER_DAY};
+static char s_last_error[64]; /* for get_diagnostics: what last went wrong */
+
+static void note_error(const char *what, const char *name, int status)
+{
+    snprintf(s_last_error, sizeof s_last_error, "%s %s http=%d", what, name, status);
+}
 
 /* The LLM URLs: [0] the configured one, [1] the fallback when there is one. */
 typedef struct {
@@ -60,6 +82,8 @@ typedef struct {
     const char *model;
     int failures;     /* in a row, the kind that sends a call to the other URL */
     int64_t until_us; /* passed over until then */
+    nc_llm_api api;
+    int64_t calls, failures_total;
 } nc_llm_target;
 static nc_llm_target s_llm[2];
 static size_t s_llm_count;
@@ -68,6 +92,9 @@ static size_t s_llm_count;
  * is not sent too, as the Go NeuroClaw), and the last such message. */
 static bool s_turn_messaged;
 static char *s_turn_message;
+/* This turn hit an LLM call limit; what the owner is told. */
+static bool s_turn_limited;
+static char s_limit_text[160];
 
 /* --- HTTP ---------------------------------------------------------------------------------- */
 
@@ -121,6 +148,8 @@ typedef struct {
     bool no_redirect;   /* web_fetch follows redirects itself, checking each */
     char *location;     /* out: a redirect's Location */
     size_t location_cap;
+    const char *header2_name; /* and one more, or NULL */
+    const char *header2_value;
 } nc_http_extra;
 
 static int http_ex(const char *url, const char *bearer, const char *body, int timeout_ms,
@@ -147,6 +176,9 @@ static int http_ex(const char *url, const char *bearer, const char *body, int ti
     }
     if (extra != NULL && extra->header_name != NULL && extra->header_value != NULL) {
         esp_http_client_set_header(client, extra->header_name, extra->header_value);
+    }
+    if (extra != NULL && extra->header2_name != NULL && extra->header2_value != NULL) {
+        esp_http_client_set_header(client, extra->header2_name, extra->header2_value);
     }
     if (bearer != NULL && bearer[0] != '\0') {
         char header[320];
@@ -187,7 +219,10 @@ static int telegram_post(const char *method, const char *body)
     char *reply = NULL;
     const int status = http(url, NULL, body, 15000, &reply, NULL, 0);
     memset(url, 0, sizeof url);
-    if (status != 200) printf("NC_TELEGRAM_ERROR method=%s http=%d\n", method, status);
+    if (status != 200) {
+        printf("NC_TELEGRAM_ERROR method=%s http=%d\n", method, status);
+        note_error("telegram", method, status);
+    }
     free(reply);
     return status;
 }
@@ -409,7 +444,7 @@ static bool is_builtin(const char *name)
     }
     return strcmp(name, "cron") == 0 || strcmp(name, "web_search") == 0 ||
            strcmp(name, "web_fetch") == 0 || strcmp(name, "message") == 0 ||
-           strcmp(name, "send_file") == 0;
+           strcmp(name, "send_file") == 0 || strcmp(name, "get_diagnostics") == 0;
 }
 
 static char *dup_text(const char *text)
@@ -430,10 +465,15 @@ static char *web_search(const cJSON *args)
                               cJSON_IsString(r) ? r->valuestring : NULL);
     if (url == NULL) return dup_text("error: web search is not configured");
     const bool brave = strcmp(s_cfg.search_provider, "brave") == 0;
-    nc_http_extra extra = {brave ? "X-Subscription-Token" : NULL, s_cfg.search_key, false, NULL, 0};
+    nc_http_extra extra = {brave ? "X-Subscription-Token" : NULL, s_cfg.search_key, false, NULL, 0,
+                           NULL, NULL};
+    /* Tavily is a POST with the key in the body; the others a GET. */
+    char *request = nc_search_body(s_cfg.search_provider, s_cfg.search_key, q->valuestring, count,
+                                   cJSON_IsString(r) ? r->valuestring : NULL);
     char *body = NULL;
-    const int status = http_ex(url, NULL, NULL, 20000, &body, NULL, 0, &extra);
+    const int status = http_ex(url, NULL, request, 20000, &body, NULL, 0, &extra);
     free(url);
+    cJSON_free(request);
     char *out = status == 200 ? nc_search_text(s_cfg.search_provider, body, q->valuestring, count)
                               : NULL;
     free(body);
@@ -490,7 +530,7 @@ static char *web_fetch(const cJSON *args)
             return dup_text(w > 0 ? text : "error: private address");
         }
         char location[256] = "";
-        nc_http_extra extra = {NULL, NULL, true, location, sizeof location};
+        nc_http_extra extra = {NULL, NULL, true, location, sizeof location, NULL, NULL};
         char *body = NULL;
         const int status = http_ex(url, NULL, NULL, 20000, &body, NULL, 0, &extra);
         if (status >= 300 && status < 400 && location[0] != '\0') {
@@ -580,6 +620,47 @@ static char *send_file_tool(const cJSON *args, bool *handled)
     return dup_text(err);
 }
 
+static const char *api_name(nc_llm_api api)
+{
+    return api == NC_API_ANTHROPIC ? "anthropic" : "openai";
+}
+
+/* get_diagnostics, as zclaw's: the chip's health, read-only; no key, token or
+ * owner text in it. Also neuroclaw_diagnostics() and the console's `diag`. */
+static char *diagnostics_text(void)
+{
+    nc_diag d;
+    memset(&d, 0, sizeof d);
+    const int64_t now_us = esp_timer_get_time();
+    d.uptime_s = now_us / 1000000;
+    d.heap_free = esp_get_free_heap_size();
+    d.heap_min_free = esp_get_minimum_free_heap_size();
+    /* Counters only: walking the heap (largest free block) is left out, a health
+     * check must not be what crashes the chip when the heap is inconsistent. */
+    d.stack_free_min = s_task != NULL ? (int32_t)uxTaskGetStackHighWaterMark(s_task) : -1;
+    int dbm = 0;
+    if (s_wifi_rssi != NULL && s_wifi_rssi(&dbm)) {
+        d.has_rssi = true;
+        d.rssi_dbm = dbm;
+    }
+    d.llm_count = (int)s_llm_count;
+    for (size_t i = 0; i < s_llm_count && i < 2; i++) {
+        const nc_llm_target *t = &s_llm[i];
+        d.llm[i].name = t->name;
+        d.llm[i].api = api_name(t->api);
+        d.llm[i].calls = t->calls;
+        d.llm[i].failures_total = t->failures_total;
+        d.llm[i].failures = t->failures;
+        d.llm[i].cooldown_s = t->until_us > now_us ? (t->until_us - now_us + 999999) / 1000000 : 0;
+    }
+    d.rate = &s_rate;
+    d.tools = (int)s_tool_count;
+    d.jobs = cJSON_GetArraySize(s_jobs);
+    d.history = s_history != NULL ? cJSON_GetArraySize(s_history) - 1 : 0;
+    d.last_error = s_last_error;
+    return nc_diagnostics_text(&d);
+}
+
 static const char CRON_SCHEMA[] =
     "{\"type\":\"object\",\"properties\":{"
     "\"action\":{\"type\":\"string\",\"enum\":[\"add\",\"list\",\"get\",\"update\",\"remove\","
@@ -599,7 +680,7 @@ static void build_tools(void)
     const nc_tool *gate_tools = NULL;
     const size_t gate_count = s_gate.tools(s_gate.ctx, &gate_tools);
     const size_t ws_count = sizeof NC_WS_TOOLS / sizeof NC_WS_TOOLS[0];
-    s_tools = calloc(ws_count + 5 + gate_count, sizeof *s_tools);
+    s_tools = calloc(ws_count + 6 + gate_count, sizeof *s_tools);
     if (s_tools == NULL) return;
     for (size_t i = 0; i < ws_count; i++) {
         s_tools[s_tool_count++] = (nc_tool){NC_WS_TOOLS[i], nc_ws_tool_description(NC_WS_TOOLS[i]),
@@ -639,6 +720,11 @@ static void build_tools(void)
         "\"path\":{\"type\":\"string\",\"description\":\"Path relative to the workspace\"},"
         "\"filename\":{\"type\":\"string\",\"description\":\"Optional display filename. "
         "Defaults to the basename of path.\"}},\"required\":[\"path\"]}"};
+    s_tools[s_tool_count++] = (nc_tool){
+        "get_diagnostics",
+        "The chip's health: uptime, free memory, the brain's stack, Wi-Fi signal, LLM calls, "
+        "fallback and limits, the last error. Read-only.",
+        "{\"type\":\"object\",\"properties\":{}}"};
     for (size_t i = 0; i < gate_count; i++) {
         if (is_builtin(gate_tools[i].name)) {
             printf("NC_TOOL_CONFLICT name=%s\n", gate_tools[i].name);
@@ -668,6 +754,8 @@ static bool run_tool(cJSON *history, int64_t chat_id, const nc_tool_call *call)
             out = web_search(args);
         } else if (strcmp(call->name, "web_fetch") == 0) {
             out = web_fetch(args);
+        } else if (strcmp(call->name, "get_diagnostics") == 0) {
+            out = diagnostics_text();
         } else {
             out = nc_ws_tool(s_cfg.workspace, call->name, args);
         }
@@ -700,30 +788,72 @@ static bool run_tool(cJSON *history, int64_t chat_id, const nc_tool_call *call)
 
 /* --- the LLM, with its fallback ------------------------------------------------------------ */
 
-/* POST a chat completion. The configured URL first, unless it failed recently
- * and waits out its cooldown; when one fails in a way the other may not
- * (nc_llm_failover), the other is tried. The last HTTP status, the reply in
- * `*out` (malloc'd, may be NULL). */
-static int llm_post(const cJSON *messages, const nc_tool *tools, size_t tool_count, char **out)
+/* Returned by llm_call when a limit (nc_rate) refused the call. */
+#define NC_LLM_LIMITED (-2)
+
+/* One LLM call: the configured URL first, unless it failed recently and waits
+ * out its cooldown; when one fails in a way the other may not
+ * (nc_llm_failover), the other is tried. Each URL in its own format (openai or
+ * anthropic). The last HTTP status, NC_LLM_LIMITED when a limit refused it
+ * (s_limit_text then says so); `reply` holds the answer when it is 200 and
+ * parsed (text or calls), and is empty otherwise. */
+static int llm_call(const cJSON *messages, const nc_tool *tools, size_t tool_count,
+                    nc_llm_reply *reply)
 {
-    *out = NULL;
+    memset(reply, 0, sizeof *reply);
+    int64_t wait_s = 0;
+    const char *full = nc_rate_take(&s_rate, esp_timer_get_time() / 1000000, &wait_s);
+    if (full != NULL) {
+        const bool day = strcmp(full, "day") == 0;
+        const int limit = day ? s_rate.per_day : s_rate.per_hour;
+        printf("NC_LLM_LIMIT window=%s limit=%d wait_s=%" PRId64 "\n", full, limit, wait_s);
+        snprintf(s_limit_text, sizeof s_limit_text,
+                 "Đã dùng hết %d lượt gọi LLM %s; thử lại sau khoảng %d phút nhé.", limit,
+                 day ? "trong ngày" : "trong giờ này", (int)((wait_s + 59) / 60));
+        snprintf(s_last_error, sizeof s_last_error, "llm limit window=%s", full);
+        return NC_LLM_LIMITED;
+    }
     const bool primary_cooling = s_llm_count == 2 && esp_timer_get_time() < s_llm[0].until_us;
     int status = -1;
     for (size_t k = 0; k < s_llm_count; k++) {
         nc_llm_target *t = &s_llm[primary_cooling ? 1 - k : k];
-        char *request = nc_llm_request(t->model, messages, tools, tool_count);
+        const bool anthropic = t->api == NC_API_ANTHROPIC;
+        char *request = anthropic ? nc_anthropic_request(t->model, CONFIG_NEUROCLAW_MAX_TOKENS,
+                                                         messages, tools, tool_count)
+                                  : nc_llm_request(t->model, messages, tools, tool_count);
         if (request == NULL) return -1;
-        free(*out);
-        status = http(t->url, t->key, request, 60000, out, NULL, 0);
+        char *body = NULL;
+        t->calls++;
+        if (anthropic) {
+            nc_http_extra extra = {t->key[0] ? "x-api-key" : NULL, t->key, false, NULL, 0,
+                                   "anthropic-version", NC_ANTHROPIC_VERSION};
+            status = http_ex(t->url, NULL, request, 60000, &body, NULL, 0, &extra);
+        } else {
+            status = http(t->url, t->key, request, 60000, &body, NULL, 0);
+        }
         cJSON_free(request);
         const char *reason = nc_llm_failover(status);
         if (reason == NULL) {
             if (status == 200) {
                 t->failures = 0;
                 t->until_us = 0;
+                const int parsed = anthropic ? nc_anthropic_parse(body, reply)
+                                             : nc_llm_parse(body, reply);
+                if (parsed != 0 && reply->truncated) {
+                    snprintf(s_last_error, sizeof s_last_error, "llm %s truncated", t->name);
+                } else if (parsed != 0) {
+                    note_error("llm", t->name, -3); /* a 200 with nothing in it */
+                }
+            } else {
+                t->failures_total++;
+                note_error("llm", t->name, status);
             }
+            free(body);
             return status;
         }
+        free(body);
+        t->failures_total++;
+        note_error("llm", t->name, status);
         if (s_llm_count < 2) return status;
         t->failures++;
         const int64_t cool = nc_llm_cooldown_s(t->failures, strcmp(reason, "billing") == 0);
@@ -752,20 +882,19 @@ static void summarize_overflow(cJSON *history)
     remember(messages, "system", NC_SUMMARY_INSTRUCTION);
     remember(messages, "user", input ? input : "");
     free(input);
-    char *body = NULL;
-    const int status = llm_post(messages, NULL, 0, &body);
-    cJSON_Delete(messages);
     nc_llm_reply reply;
-    if (status == 200 && nc_llm_parse(body, &reply) == 0 && reply.text != NULL) {
+    const int status = llm_call(messages, NULL, 0, &reply);
+    cJSON_Delete(messages);
+    if (status == 200 && reply.text != NULL) {
         if (strlen(reply.text) >= NC_BOOTSTRAP_MAX) reply.text[NC_BOOTSTRAP_MAX - 1] = '\0';
         nc_utf8_trim(reply.text);
         const int err = nc_ws_store(path, reply.text, false);
         printf("NC_SUMMARY folded=%d result=%s\n", drop, err == 0 ? "ok" : "error");
-        nc_llm_reply_free(&reply);
     } else {
-        printf("NC_SUMMARY folded=0 result=llm_error http=%d\n", status);
+        printf("NC_SUMMARY folded=0 result=%s http=%d\n",
+               status == NC_LLM_LIMITED ? "limited" : "llm_error", status);
     }
-    free(body);
+    nc_llm_reply_free(&reply);
 }
 
 /* --- one turn ------------------------------------------------------------------------------ */
@@ -781,6 +910,7 @@ static char *run_turn(cJSON *history, int64_t chat_id, const char *text, bool *q
 {
     *quiet = false;
     s_turn_messaged = false;
+    s_turn_limited = false;
     free(s_turn_message);
     s_turn_message = NULL;
     remember(history, "user", text);
@@ -788,15 +918,21 @@ static char *run_turn(cJSON *history, int64_t chat_id, const char *text, bool *q
     for (int round = 0; round < CONFIG_NEUROCLAW_MAX_ROUNDS; round++) {
         nc_history_trim(history, CONFIG_NEUROCLAW_HISTORY);
         refresh_system_prompt(history);
-        char *body = NULL;
-        const int status = llm_post(history, s_tools, s_tool_count, &body);
         nc_llm_reply reply;
-        const int parsed = status == 200 ? nc_llm_parse(body, &reply) : -1;
-        free(body);
-        if (parsed != 0) {
-            printf("NC_LLM_ERROR http=%d\n", status);
+        const int status = llm_call(history, s_tools, s_tool_count, &reply);
+        if (status == NC_LLM_LIMITED) {
+            /* Said plainly, as an answer: the owner's message stays in the history. */
+            s_turn_limited = true;
+            remember(history, "assistant", s_limit_text);
+            return strdup(s_limit_text);
+        }
+        if (reply.text == NULL && reply.call_count == 0) {
+            /* Out of tokens mid-call: the cut call was dropped, never run. */
+            printf("NC_LLM_ERROR http=%d%s\n", status, reply.truncated ? " reason=truncated" : "");
+            nc_llm_reply_free(&reply);
             return NULL;
         }
+        if (reply.truncated) printf("NC_LLM_TRUNCATED chars=%u\n", (unsigned)strlen(reply.text));
         if (reply.text != NULL) {
             remember(history, "assistant", reply.text);
             char *answer = reply.text;
@@ -875,6 +1011,24 @@ static void run_background(const char *label, const char *message, bool quiet)
         printf("NC_%s result=llm_error\n", label);
         return;
     }
+    if (s_turn_limited) {
+        free(answer);
+        printf("NC_%s result=limited\n", label);
+        if (quiet) return; /* a heartbeat waits for the next one */
+        /* A reminder still reaches the owner, as it was written, with the reason. */
+        const char *prefix = "[Scheduled task] ";
+        const char *what = strncmp(message, prefix, strlen(prefix)) == 0 ? message + strlen(prefix)
+                                                                         : message;
+        const size_t cap = strlen(what) + sizeof s_limit_text + 16;
+        char *text = malloc(cap);
+        if (text == NULL) return;
+        snprintf(text, cap, "⏰ %s\n(%s)", what, s_limit_text);
+        send_text(s_owner_chat, text, NULL);
+        remember(s_history, "assistant", text);
+        free(text);
+        save_session();
+        return;
+    }
     if (delivered) {
         /* The model sent it itself: what the owner got goes into the main
          * conversation, so a follow-up makes sense. */
@@ -913,16 +1067,41 @@ static void run_due_jobs(void)
     }
 }
 
+/* A job run now by neuroclaw_cron_start(id), its schedule unchanged. */
+static void run_job_now(const char *id)
+{
+    const cJSON *job = NULL;
+    cJSON_ArrayForEach(job, s_jobs)
+    {
+        const cJSON *jid = cJSON_GetObjectItem(job, "id");
+        if (cJSON_IsString(jid) && strcmp(jid->valuestring, id) == 0) break;
+    }
+    const cJSON *msg = cJSON_GetObjectItem(job, "message");
+    if (job == NULL || !cJSON_IsString(msg)) {
+        printf("NC_CRON_RUN id=%s result=unknown_job\n", id);
+        return;
+    }
+    printf("NC_CRON_RUN id=%s now=1\n", id);
+    char text[1200];
+    snprintf(text, sizeof text, "[Scheduled task] %s", msg->valuestring);
+    run_background("CRON", text, false);
+}
+
 static void run_heartbeat(void)
 {
-    if (CONFIG_NEUROCLAW_HEARTBEAT_MIN == 0) return;
+    const bool asked = s_heartbeat_now;
+    s_heartbeat_now = false;
+    if (CONFIG_NEUROCLAW_HEARTBEAT_MIN == 0 && !asked) return;
     const int64_t now_us = esp_timer_get_time();
-    if (now_us < s_next_heartbeat_us) return;
+    if (now_us < s_next_heartbeat_us && !asked) return;
     s_next_heartbeat_us = now_us + (int64_t)CONFIG_NEUROCLAW_HEARTBEAT_MIN * 60 * 1000000;
     char now[48];
     now_text(now, sizeof now);
     char *prompt = nc_heartbeat_prompt(s_cfg.workspace, now);
-    if (prompt == NULL) return; /* no HEARTBEAT.md, or nothing in it */
+    if (prompt == NULL) { /* no HEARTBEAT.md, or nothing in it */
+        if (asked) printf("NC_HEARTBEAT result=nothing_to_check\n");
+        return;
+    }
     run_background("HEARTBEAT", prompt, true);
     free(prompt);
 }
@@ -943,8 +1122,16 @@ static void brain_task(void *arg)
         return;
     }
     while (true) {
+        xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
+        if (s_cron_now) {
+            s_cron_now = false;
+            if (s_cron_job[0] != '\0') run_job_now(s_cron_job);
+            s_cron_job[0] = '\0';
+        }
         run_due_jobs();
         run_heartbeat();
+        xSemaphoreGiveRecursive(s_lock);
+        fflush(stdout);
         int poll_s = CONFIG_NEUROCLAW_POLL_S;
         const int64_t next = now_s() >= NC_CLOCK_VALID ? nc_cron_seconds_to_next(s_jobs, now_s())
                                                        : -1;
@@ -964,8 +1151,10 @@ static void brain_task(void *arg)
                                                          NC_MAX_EVENTS, &offset)
                                     : -1;
         free(body);
+        xSemaphoreTakeRecursive(s_lock, portMAX_DELAY);
         if (n > 0 && offset != before) save_offset(offset);
         if (n < 0) {
+            xSemaphoreGiveRecursive(s_lock);
             printf("NC_TELEGRAM_ERROR method=getUpdates http=%d\n", status);
             fflush(stdout);
             vTaskDelay(pdMS_TO_TICKS(5000));
@@ -983,6 +1172,7 @@ static void brain_task(void *arg)
             }
             fflush(stdout);
         }
+        xSemaphoreGiveRecursive(s_lock);
         memset(events, 0, NC_MAX_EVENTS * sizeof *events); /* owner text, gone */
         if (n > 0) printf("NC_STACK free_min=%u\n", (unsigned)uxTaskGetStackHighWaterMark(NULL));
     }
@@ -1028,9 +1218,22 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
     s_cfg.search_url = keep(config->search_url);
     s_cfg.search_key = keep(config->search_key);
     s_cfg.fetch_allow = keep(config->fetch_allow);
-    s_llm[0] = (nc_llm_target){"primary", s_cfg.llm_url, s_cfg.llm_key, s_cfg.llm_model, 0, 0};
+    const int api = nc_llm_api_parse(config->llm_api);
+    const int fallback_api = nc_llm_api_parse(config->llm_fallback_api);
+    if (api < 0 || fallback_api < 0) {
+        printf("NC_OFF unknown_llm_api\n");
+        return ESP_ERR_INVALID_ARG;
+    }
+    s_llm[0] = (nc_llm_target){"primary", s_cfg.llm_url, s_cfg.llm_key, s_cfg.llm_model, 0, 0,
+                               (nc_llm_api)api, 0, 0};
     s_llm_count = 1;
-    if (config->llm_fallback_url != NULL && config->llm_fallback_url[0] != '\0') {
+    const bool has_fallback = config->llm_fallback_url != NULL && config->llm_fallback_url[0];
+    const bool has_fallback_model =
+        config->llm_fallback_model != NULL && config->llm_fallback_model[0] != '\0';
+    if (has_fallback && fallback_api != api && !has_fallback_model) {
+        /* The primary's model name means nothing to another provider's API. */
+        printf("NC_OFF fallback_model_required\n");
+    } else if (has_fallback) {
         s_cfg.llm_fallback_url = keep(config->llm_fallback_url);
         s_cfg.llm_fallback_key = keep(config->llm_fallback_key);
         s_cfg.llm_fallback_model =
@@ -1038,14 +1241,17 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
                      ? config->llm_fallback_model
                      : config->llm_model);
         s_llm[1] = (nc_llm_target){"fallback", s_cfg.llm_fallback_url, s_cfg.llm_fallback_key,
-                                   s_cfg.llm_fallback_model, 0, 0};
+                                   s_cfg.llm_fallback_model, 0, 0, (nc_llm_api)fallback_api, 0,
+                                   0};
         s_llm_count = 2;
     }
-    if (s_cfg.search_provider[0] != '\0' && strcmp(s_cfg.search_provider, "searxng") != 0 &&
-        strcmp(s_cfg.search_provider, "brave") != 0) {
+    const char *search = s_cfg.search_provider;
+    if (search[0] != '\0' && strcmp(search, "searxng") != 0 && strcmp(search, "brave") != 0 &&
+        strcmp(search, "tavily") != 0) {
         printf("NC_OFF unknown_search_provider\n");
         return ESP_ERR_INVALID_ARG;
     }
+    s_wifi_rssi = config->wifi_rssi;
     s_base_prompt = keep(config->system_prompt ? config->system_prompt : NC_SYSTEM_PROMPT);
     s_owner_chat = strtoll(s_cfg.owner_id, NULL, 10); /* a private chat's id is the user's */
     s_gate = *gate;
@@ -1065,9 +1271,137 @@ int neuroclaw_start(const nc_config *config, const nc_gate *gate)
     if (s_history == NULL || s_jobs == NULL || s_tools == NULL) return ESP_ERR_NO_MEM;
     refresh_system_prompt(s_history);
     s_next_heartbeat_us = (int64_t)CONFIG_NEUROCLAW_HEARTBEAT_MIN * 60 * 1000000;
-    if (xTaskCreate(brain_task, "neuroclaw", CONFIG_NEUROCLAW_TASK_STACK, NULL, 4, NULL) !=
-        pdPASS) {
+    s_lock = xSemaphoreCreateRecursiveMutex();
+    if (s_lock == NULL) return ESP_ERR_NO_MEM;
+#if CONFIG_NEUROCLAW_TASK_CORE >= 0 && CONFIG_NEUROCLAW_TASK_CORE < CONFIG_FREERTOS_NUMBER_OF_CORES
+    const BaseType_t core = CONFIG_NEUROCLAW_TASK_CORE;
+#else
+    const BaseType_t core = tskNO_AFFINITY;
+#endif
+    if (xTaskCreatePinnedToCore(brain_task, "neuroclaw", CONFIG_NEUROCLAW_TASK_STACK, NULL, 4,
+                                &s_task, core) != pdPASS) {
         return ESP_ERR_NO_MEM;
     }
+    return ESP_OK;
+}
+
+/* --- local administration ------------------------------------------------------------------ */
+
+#define NC_ADMIN_WAIT pdMS_TO_TICKS(120000) /* the longest turn: rounds of 60 s calls */
+
+/* ESP_OK with the lock held; ESP_ERR_INVALID_STATE before neuroclaw_start;
+ * ESP_ERR_TIMEOUT when the brain stayed busy (a turn longer than the wait). */
+static esp_err_t admin_lock(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    return xSemaphoreTakeRecursive(s_lock, NC_ADMIN_WAIT) == pdTRUE ? ESP_OK : ESP_ERR_TIMEOUT;
+}
+
+/* A workspace path, refused when it does not fit (never a cut path). */
+static bool ws_file(char *out, size_t cap, const char *rel)
+{
+    const int n = snprintf(out, cap, "%s/%s", s_cfg.workspace, rel);
+    return n > 0 && (size_t)n < cap;
+}
+
+int neuroclaw_memory_read(char **out)
+{
+    if (out == NULL) return ESP_ERR_INVALID_ARG;
+    *out = NULL;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    char path[192];
+    char *text = ws_file(path, sizeof path, "memory/MEMORY.md") ? nc_ws_slurp(path, 64u * 1024u)
+                                                                 : NULL;
+    xSemaphoreGiveRecursive(s_lock);
+    if (text == NULL) return ESP_ERR_NOT_FOUND;
+    *out = text;
+    return ESP_OK;
+}
+
+int neuroclaw_memory_write(const char *text)
+{
+    if (text == NULL) return ESP_ERR_INVALID_ARG;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    char path[192];
+    const int err = ws_file(path, sizeof path, "memory/MEMORY.md") ? nc_ws_store(path, text, false)
+                                                                    : -1;
+    xSemaphoreGiveRecursive(s_lock);
+    return err == 0 ? ESP_OK : ESP_FAIL;
+}
+
+int neuroclaw_session_list(char *out, size_t cap)
+{
+    if (out == NULL || cap == 0) return ESP_ERR_INVALID_ARG;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    char path[192];
+    struct stat st;
+    const long summary = ws_file(path, sizeof path, "sessions/summary.md") && stat(path, &st) == 0
+                             ? (long)st.st_size
+                             : 0;
+    snprintf(out, cap, "telegram=%d summary_bytes=%ld cron_jobs=%d",
+             cJSON_GetArraySize(s_history) - 1, summary, cJSON_GetArraySize(s_jobs));
+    xSemaphoreGiveRecursive(s_lock);
+    return ESP_OK;
+}
+
+int neuroclaw_session_clear(void)
+{
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    char path[192];
+    if (!ws_file(path, sizeof path, "sessions/summary.md")) {
+        xSemaphoreGiveRecursive(s_lock);
+        return ESP_ERR_INVALID_SIZE;
+    }
+    while (cJSON_GetArraySize(s_history) > 1) cJSON_DeleteItemFromArray(s_history, 1);
+    remove(path);
+    refresh_system_prompt(s_history);
+    save_session();
+    xSemaphoreGiveRecursive(s_lock);
+    printf("NC_SESSION cleared\n");
+    return ESP_OK;
+}
+
+int neuroclaw_heartbeat_trigger(void)
+{
+    if (s_lock == NULL) return ESP_ERR_INVALID_STATE;
+    s_heartbeat_now = true;
+    return ESP_OK;
+}
+
+int neuroclaw_cron_start(const char *job_id)
+{
+    if (job_id != NULL && strlen(job_id) >= sizeof s_cron_job) return ESP_ERR_INVALID_ARG;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    snprintf(s_cron_job, sizeof s_cron_job, "%s", job_id != NULL ? job_id : "");
+    s_cron_now = true;
+    xSemaphoreGiveRecursive(s_lock);
+    return ESP_OK;
+}
+
+int neuroclaw_diagnostics(char **out)
+{
+    if (out == NULL) return ESP_ERR_INVALID_ARG;
+    *out = NULL;
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    *out = diagnostics_text();
+    xSemaphoreGiveRecursive(s_lock);
+    return *out != NULL ? ESP_OK : ESP_ERR_NO_MEM;
+}
+
+int neuroclaw_set_llm_limits(int per_hour, int per_day)
+{
+    const esp_err_t locked = admin_lock();
+    if (locked != ESP_OK) return locked;
+    s_rate.per_hour = per_hour > 0 ? per_hour : 0;
+    s_rate.per_day = per_day > 0 ? per_day : 0;
+    const int hour = s_rate.per_hour, day = s_rate.per_day;
+    xSemaphoreGiveRecursive(s_lock);
+    printf("NC_LLM_LIMITS per_hour=%d per_day=%d\n", hour, day);
     return ESP_OK;
 }

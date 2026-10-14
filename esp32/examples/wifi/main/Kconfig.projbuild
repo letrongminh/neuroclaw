@@ -1,0 +1,23 @@
+menu "NeuroClaw-ESP Wi-Fi example"
+    config EXAMPLE_WIFI_SSID
+        string "Wi-Fi SSID"
+    config EXAMPLE_WIFI_PASSWORD
+        string "Wi-Fi password"
+    config EXAMPLE_TELEGRAM_TOKEN
+        string "Telegram bot token"
+    config EXAMPLE_OWNER
+        string "Owner's Telegram user id"
+    config EXAMPLE_LLM_API
+        string "LLM format: openai or anthropic"
+        default "openai"
+    config EXAMPLE_LLM_URL
+        string "LLM URL (chat completions, or Messages for anthropic)"
+        default "https://api.openai.com/v1/chat/completions"
+    config EXAMPLE_LLM_KEY
+        string "LLM API key"
+    config EXAMPLE_LLM_MODEL
+        string "LLM model"
+        default "gpt-4.1-mini"
+    config EXAMPLE_TAVILY_KEY
+        string "Tavily API key (empty: no web_search)"
+endmenu

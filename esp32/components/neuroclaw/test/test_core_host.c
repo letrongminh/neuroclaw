@@ -340,6 +340,139 @@ static int check_failover(void)
     return 0;
 }
 
+static int check_truncated(void)
+{
+    nc_llm_reply reply;
+    /* finish_reason "length": calls with cut arguments are never run; text is kept, marked. */
+    CHECK(nc_llm_parse("{\"choices\":[{\"finish_reason\":\"length\",\"message\":{"
+                       "\"content\":null,\"tool_calls\":[{\"id\":\"c\",\"type\":\"function\","
+                       "\"function\":{\"name\":\"front_door_unlock\",\"arguments\":"
+                       "\"{\\\"duration_s\\\":3\"}}]}}]}",
+                       &reply) == -1);
+    CHECK(reply.truncated && reply.call_count == 0 && reply.text == NULL);
+    nc_llm_reply_free(&reply);
+    CHECK(nc_llm_parse("{\"choices\":[{\"finish_reason\":\"length\",\"message\":{"
+                       "\"content\":\"Một câu bị cắt\"}}]}",
+                       &reply) == 0);
+    CHECK(reply.truncated && reply.text != NULL && strcmp(reply.text, "Một câu bị cắt") == 0);
+    nc_llm_reply_free(&reply);
+    CHECK(nc_llm_parse("{\"choices\":[{\"finish_reason\":\"stop\",\"message\":{"
+                       "\"content\":\"xong\"}}]}",
+                       &reply) == 0);
+    CHECK(!reply.truncated);
+    nc_llm_reply_free(&reply);
+    return 0;
+}
+
+static int check_rate(void)
+{
+    nc_rate r = {0};
+    int64_t wait = -1;
+    /* No limits: everything is counted, nothing refused. */
+    for (int i = 0; i < 100; i++) CHECK(nc_rate_take(&r, 10 + i, &wait) == NULL);
+    CHECK(r.total == 100 && r.refused == 0 && wait == 0);
+
+    nc_rate h = {.per_hour = 3};
+    CHECK(nc_rate_take(&h, 100, NULL) == NULL); /* the window opens at 100 */
+    CHECK(nc_rate_take(&h, 200, NULL) == NULL);
+    CHECK(nc_rate_take(&h, 300, &wait) == NULL);
+    const char *full = nc_rate_take(&h, 400, &wait);
+    CHECK(full != NULL && strcmp(full, "hour") == 0);
+    CHECK(wait == 100 + 3600 - 400);
+    CHECK(h.hour_count == 3 && h.total == 3 && h.refused == 1); /* the refused one is not counted */
+    CHECK(nc_rate_take(&h, 3699, NULL) != NULL);
+    CHECK(nc_rate_take(&h, 3700, &wait) == NULL && wait == 0); /* a new hour */
+    CHECK(h.hour_count == 1 && h.hour_start == 3700);
+
+    nc_rate d = {.per_hour = 10, .per_day = 2};
+    CHECK(nc_rate_take(&d, 0, NULL) == NULL);
+    CHECK(nc_rate_take(&d, 7200, NULL) == NULL);
+    full = nc_rate_take(&d, 7300, &wait);
+    CHECK(full != NULL && strcmp(full, "day") == 0 && wait == 86400 - 7300);
+    CHECK(nc_rate_take(&d, 86400, NULL) == NULL);
+    CHECK(d.day_count == 1 && d.day_start == 86400);
+
+    /* Both full: the day is the one to wait for. */
+    nc_rate b = {.per_hour = 1, .per_day = 1};
+    CHECK(nc_rate_take(&b, 5, NULL) == NULL);
+    full = nc_rate_take(&b, 6, &wait);
+    CHECK(full != NULL && strcmp(full, "day") == 0 && wait == 86399);
+
+    /* A limit lowered at run time takes effect at once. */
+    nc_rate l = {0};
+    for (int i = 0; i < 5; i++) CHECK(nc_rate_take(&l, i, NULL) == NULL);
+    l.per_hour = 2;
+    CHECK(nc_rate_take(&l, 6, NULL) != NULL);
+    l.per_hour = 0;
+    CHECK(nc_rate_take(&l, 7, NULL) == NULL);
+    CHECK(nc_rate_take(NULL, 1, &wait) == NULL && wait == 0);
+    return 0;
+}
+
+static int check_diagnostics(void)
+{
+    nc_rate rate = {.per_hour = 30, .per_day = 0, .hour_count = 2, .day_count = 2, .total = 7,
+                    .refused = 1};
+    nc_diag d = {
+        .uptime_s = 3725,
+        .heap_free = 120000,
+        .heap_min_free = 90000,
+        .stack_free_min = 2600,
+        .has_rssi = false,
+        .llm_count = 2,
+        .llm = {{"primary", "anthropic", 5, 1, 1, 42}, {"fallback", "openai", 2, 0, 0, 0}},
+        .rate = &rate,
+        .tools = 13,
+        .jobs = 1,
+        .history = 9,
+        .last_error = "llm primary http=503",
+    };
+    char *text = nc_diagnostics_text(&d);
+    cJSON *json = text ? cJSON_Parse(text) : NULL;
+    free(text);
+    CHECK(json != NULL);
+    CHECK(cJSON_GetObjectItem(json, "uptime_s")->valueint == 3725);
+    const cJSON *heap = cJSON_GetObjectItem(json, "heap");
+    CHECK(cJSON_GetObjectItem(heap, "free")->valueint == 120000);
+    CHECK(cJSON_GetObjectItem(heap, "min_free")->valueint == 90000);
+    CHECK(cJSON_GetObjectItem(heap, "largest_block") == NULL);
+    CHECK(cJSON_GetObjectItem(json, "brain_stack_free_min")->valueint == 2600);
+    CHECK(cJSON_IsNull(cJSON_GetObjectItem(json, "wifi_rssi_dbm")));
+    const cJSON *llm = cJSON_GetObjectItem(json, "llm");
+    CHECK(cJSON_GetArraySize(llm) == 2);
+    const cJSON *p = cJSON_GetArrayItem(llm, 0);
+    CHECK(strcmp(cJSON_GetObjectItem(p, "api")->valuestring, "anthropic") == 0);
+    CHECK(cJSON_GetObjectItem(p, "calls")->valueint == 5);
+    CHECK(cJSON_GetObjectItem(p, "cooldown_s")->valueint == 42);
+    const cJSON *limits = cJSON_GetObjectItem(json, "llm_limits");
+    CHECK(cJSON_GetObjectItem(limits, "per_hour")->valueint == 30);
+    CHECK(cJSON_GetObjectItem(limits, "refused")->valueint == 1);
+    CHECK(cJSON_GetObjectItem(json, "tools")->valueint == 13);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "last_error")->valuestring, "llm primary http=503") ==
+          0);
+    /* No key, token or owner text in it: the struct has no place for them. */
+    cJSON_Delete(json);
+
+    d.has_rssi = true;
+    d.rssi_dbm = -61;
+    d.stack_free_min = -1;
+    d.llm_count = 1;
+    d.rate = NULL;
+    d.last_error = NULL;
+    text = nc_diagnostics_text(&d);
+    json = text ? cJSON_Parse(text) : NULL;
+    free(text);
+    CHECK(json != NULL);
+    CHECK(cJSON_GetObjectItem(json, "wifi_rssi_dbm")->valueint == -61);
+    CHECK(cJSON_IsNull(cJSON_GetObjectItem(json, "brain_stack_free_min")));
+    CHECK(cJSON_GetArraySize(cJSON_GetObjectItem(json, "llm")) == 1);
+    CHECK(cJSON_GetObjectItem(json, "llm_limits") == NULL);
+    CHECK(strcmp(cJSON_GetObjectItem(json, "last_error")->valuestring, "") == 0);
+    cJSON_Delete(json);
+    CHECK(nc_diagnostics_text(NULL) == NULL);
+    return 0;
+}
+
 int main(void)
 {
     if (check_telegram() != 0) return 1;
@@ -347,6 +480,9 @@ int main(void)
     if (check_guidance() != 0) return 1;
     if (check_llm() != 0) return 1;
     if (check_failover() != 0) return 1;
+    if (check_truncated() != 0) return 1;
+    if (check_rate() != 0) return 1;
+    if (check_diagnostics() != 0) return 1;
     printf("NC_CORE OK checks=%u\n", s_checks);
     return 0;
 }

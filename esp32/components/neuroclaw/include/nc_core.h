@@ -83,13 +83,18 @@ typedef struct {
     char *text; /* malloc'd; NULL when the model called tools */
     nc_tool_call calls[NC_MAX_TOOL_CALLS];
     int call_count;
+    /* The model ran out of tokens (finish_reason "length", stop_reason
+     * "max_tokens"). Its calls are dropped then, never run with cut arguments:
+     * the parse fails. Text alone is kept: the owner gets what was written. */
+    bool truncated;
 } nc_llm_reply;
 
 /* The chat completions body: model, messages (borrowed), tools from the gate. malloc'd. */
 char *nc_llm_request(const char *model, const cJSON *messages, const nc_tool *tools,
                      size_t tool_count);
 
-/* Parse choices[0].message. 0 on success, -1 when there is neither text nor a call. */
+/* Parse choices[0].message. 0 on success, -1 when there is neither text nor a call
+ * (and when a truncated reply had calls: `truncated` then says why). */
 int nc_llm_parse(const char *body, nc_llm_reply *reply);
 void nc_llm_reply_free(nc_llm_reply *reply);
 
@@ -103,6 +108,44 @@ const char *nc_llm_failover(int status);
 /* Seconds a failed URL is passed over, as the Go cooldown: 1 min, 5, 25, then
  * 1 h; for billing 5 h doubling to 24 h. `failures` counts from 1. */
 int64_t nc_llm_cooldown_s(int failures, bool billing);
+
+/* LLM call limits per hour and per day, as zclaw's rate limit: fixed windows
+ * that start with the first call in them, on the uptime clock (no wall clock
+ * needed). 0 = no limit. */
+typedef struct {
+    int64_t hour_start, day_start; /* uptime seconds; 0 = no window open */
+    int hour_count, day_count;
+    int per_hour, per_day;
+    int64_t total;                 /* calls counted since boot */
+    int64_t refused;               /* calls refused since boot */
+} nc_rate;
+
+/* Count one LLM call at uptime `now_s` when it fits: NULL. When a limit is
+ * reached, nothing is counted and the window that is full, "hour" or "day";
+ * `*wait_s` (may be NULL) gets the seconds until that window ends. */
+const char *nc_rate_take(nc_rate *rate, int64_t now_s, int64_t *wait_s);
+
+/* What get_diagnostics reports; filled by the brain, printed here. */
+typedef struct {
+    int64_t uptime_s;
+    uint32_t heap_free, heap_min_free;
+    int32_t stack_free_min; /* the brain task's, bytes; -1 unknown */
+    bool has_rssi;
+    int rssi_dbm;
+    int llm_count; /* 1 or 2 */
+    struct {
+        const char *name, *api;
+        int64_t calls, failures_total;
+        int failures; /* in a row */
+        int64_t cooldown_s; /* left; 0 when usable */
+    } llm[2];
+    const nc_rate *rate;
+    int tools, jobs, history;
+    const char *last_error; /* "" when none */
+} nc_diag;
+
+/* The tool result: one JSON object. malloc'd. */
+char *nc_diagnostics_text(const nc_diag *diag);
 
 /* --- the conversation -------------------------------------------------------------------- */
 

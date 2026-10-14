@@ -4,7 +4,7 @@ This is the list of what NeuroClaw does today, read from the code: what is on by
 turn on, and what each risky capability is labelled. It covers both brains:
 
 - **NeuroClaw** (Go) — this repository's binary, on a Linux board, a server, a Mac or a Windows PC.
-- **NeuroClaw-ESP** (C) — [`esp32/`](../../esp32/), the same brain as an ESP-IDF component on one ESP32-S3.
+- **NeuroClaw-ESP** (C) — [`esp32/`](../../esp32/), the same brain as an ESP-IDF component on one ESP32 chip (S3, and builds for ESP32, C3, C6).
 
 Where the two differ, section 12 says so. Section 13 lists what is known to be wrong or unfinished.
 For how to configure each part, follow the links to the guides; this page says *what* exists, not
@@ -290,13 +290,15 @@ hooks, stdio MCP servers and the `claude-cli` / `codex-cli` providers.
 ## 12. NeuroClaw-ESP: the same brain on one chip
 
 NeuroClaw-ESP is a rewrite in C, not a port: the Go runtime does not target Xtensa, and an ESP32-S3 has
-512 KB of SRAM. What it keeps is the workspace format, the tool names and arguments, and the promises.
+512 KB of SRAM. It runs end to end in QEMU on the ESP32-S3 and builds for the ESP32, ESP32-C3 and
+ESP32-C6. What it keeps is the workspace format, the tool names and arguments, and the promises.
 Details and the risk of sharing one chip with the gate: [`esp32/README.md`](../../esp32/README.md).
 
 | | NeuroClaw (Go) | NeuroClaw-ESP |
 |:---|:---|:---|
 | Channel | 20 channels | Telegram only, owner's user ID only; everyone else dropped before the model |
-| LLM | Many protocols, fallbacks, cooldown | One OpenAI-compatible chat-completions URL and an optional fallback URL, with the Go rules for when to fall back and the same cooldown |
+| LLM | Many protocols, fallbacks, cooldown | A URL and an optional fallback URL, each in chat-completions or Anthropic Messages format, with the Go rules for when to fall back and the same cooldown |
+| LLM limits | `rate_limits` per model | Calls per hour and per day (Kconfig, changeable at run time); the owner is told plainly at the limit |
 | Way to devices | MCP over mTLS to the box | `nc_gate` callbacks into the firmware's gate, same `ALLOW` / `BLOCK` / `REJECTED` |
 | Owner approval | Owner approves at the box | Same guidance text; the chip sends approve / refuse buttons, only the owner's press counts, once |
 | File tools | Five, workspace only | Same five, workspace only, 16 KB a file; `sessions/` and `cron/` not writable by the model |
@@ -304,15 +306,47 @@ Details and the risk of sharing one chip with the gate: [`esp32/README.md`](../.
 | Conversation | JSONL, summarized past a threshold | `sessions/telegram.json` after every turn (16 messages kept); overflow folded by the LLM into `sessions/summary.md`, same `CONTEXT_SUMMARY` prefix |
 | Cron | Section 8 | Same arguments, `cron/jobs.json`, at most 16 jobs; waits until the clock is set (SNTP, or Telegram's `Date` header) |
 | Heartbeat | 30 min | 30 min (`CONFIG_NEUROCLAW_HEARTBEAT_MIN`, 0 = off) |
-| `web_search` | Ten providers | SearXNG or Brave |
+| `web_search` | Ten providers | SearXNG, Brave or Tavily |
+| Health | `neuroclaw status` | `get_diagnostics` tool: uptime, free heap, stack, Wi-Fi signal, LLM calls, fallback, limits, last error |
+| Local administration | CLI, web console | C API and optional serial commands (`memory_read`, `memory_write`, `session_list`, `session_clear`, `heartbeat_trigger`, `cron_start`, `diag`, `llm_limit`) |
 | `web_fetch` | Private addresses refused | Same rule; every resolved address and every redirect (at most 3) checked; 6000 bytes of text |
 | `message`, `send_file` | Any channel; media off by default in `message` | Same names and rules (final reply not sent after `message`; a turn whose round only delivered files ends there), owner only; files streamed from flash up to `CONFIG_NEUROCLAW_SEND_FILE_MAX` (10 MB), images as photos |
 | Rounds per message | Configurable | `CONFIG_NEUROCLAW_MAX_ROUNDS`, 4 |
 | After a crash | | Telegram offset saved before handling: a message is acted on at most once |
-| Not there | | Other channels, other providers, more than one fallback, subagents, MCP client, voice, images from the owner, `reaction`, `load_image`, skill registries |
+| Not there | | Other channels, other protocols, more than one fallback, subagents, MCP client, voice, images from the owner, `reaction`, `load_image`, skill registries |
 
-Tested on the host (ASan, UBSan) and end to end in QEMU over two boots of one flash image
-(`esp32/scripts/`, CI job `esp32`).
+Tested on the host (ASan, UBSan), end to end in QEMU over two boots of one flash image, and built for
+four chips (`esp32/scripts/`, CI job `esp32`).
+
+### Next to zclaw and MimiClaw
+
+[zclaw](https://github.com/tnm/zclaw) and [MimiClaw](https://github.com/memovai/mimiclaw) are the two
+ESP32 agents NeuroClaw-ESP is compared with (its Telegram and LLM clients come from zclaw). Compared from
+their READMEs, October 2026:
+
+| | zclaw | MimiClaw | NeuroClaw-ESP |
+|:---|:---|:---|:---|
+| Chips | ESP32, -S3, -C3, -C6 | ESP32-S3 with 8 MB PSRAM | ESP32-S3 (QEMU end to end), ESP32, -C3, -C6 (build) |
+| Channels | Telegram, a hosted web relay | Telegram, WebSocket gateway | Telegram, owner only |
+| LLM | Anthropic, OpenAI, OpenRouter, Ollama | Anthropic, OpenAI | Chat completions (OpenAI, OpenRouter, local servers) or Anthropic Messages, per URL, plus a fallback URL with cooldown |
+| Web search | | Tavily, Brave | SearXNG, Brave, Tavily; `web_fetch` with private addresses refused |
+| Memory and files | Persistent memory | `MEMORY.md`, `SOUL.md`, `USER.md`, daily notes | Same files as the Go NeuroClaw, five file tools, conversation summary |
+| Schedules, heartbeat | Daily, periodic, once | Cron, `HEARTBEAT.md` | Cron (`at`, `every`, cron expressions), `HEARTBEAT.md` |
+| Send to the owner | | | `message`, `send_file` (photos, documents streamed from flash) |
+| Diagnostics, limits | `get_diagnostics`, 100 calls/h and 1000/day | `heap_info` | `get_diagnostics`, limits per hour and day (off by default) |
+| Serial console | `/gpio`, `/diag`, `/wifi`, `/reboot`… | Settings, `memory_read`, `session_clear`, `heartbeat_trigger`, `cron_start`… | `memory_read`, `memory_write`, `session_list`, `session_clear`, `heartbeat_trigger`, `cron_start`, `diag`, `llm_limit` |
+| GPIO, I2C, sensors | Tools the model calls directly | | None: every device action goes through the home's gate (NeuroEdge Q-79) |
+| Owner approval | | | The gate asks; buttons sent by the chip, only the owner's press counts |
+
+What NeuroClaw-ESP still lacks, and why:
+
+| Missing | Why |
+|:---|:---|
+| GPIO, I2C, DHT tools for the model | On purpose: on a NeuroEdge chip the model reaches devices only through the gate (Q-79) |
+| A WebSocket or web-relay channel | A second listener and session in 512 KB of SRAM; Telegram is the owner's channel |
+| An HTTP proxy (CONNECT) | Not built yet; networks that need one are not supported |
+| Settings over the serial console (Wi-Fi, token, keys) and OTA | The firmware owns them (NeuroEdge provisioning and updates), not the brain |
+| Model-composed tools, personas | Not planned: tools come from the firmware and the gate |
 
 ## 13. Known gaps
 

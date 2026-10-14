@@ -149,6 +149,10 @@ char *nc_search_url(const char *provider, const char *base_url, const char *quer
                                                      : NULL;
         n = snprintf(buf, sizeof buf, "%s/search?q=%s&format=json%s%s", base_url, q,
                      time ? "&time_range=" : "", time ? time : "");
+    } else if (strcmp(provider, "tavily") == 0) {
+        n = snprintf(buf, sizeof buf, "%s",
+                     base_url != NULL && base_url[0] != '\0' ? base_url
+                                                             : "https://api.tavily.com/search");
     } else if (strcmp(provider, "brave") == 0) {
         const char *fresh = range == NULL           ? NULL
                             : strcmp(range, "d") == 0 ? "pd"
@@ -163,6 +167,31 @@ char *nc_search_url(const char *provider, const char *base_url, const char *quer
     free(q);
     if (n < 0 || (size_t)n >= sizeof buf) return NULL;
     return strdup(buf);
+}
+
+char *nc_search_body(const char *provider, const char *key, const char *query, int count,
+                     const char *range)
+{
+    if (provider == NULL || strcmp(provider, "tavily") != 0 || query == NULL) return NULL;
+    const char *time = range == NULL           ? NULL
+                       : strcmp(range, "d") == 0 ? "day"
+                       : strcmp(range, "w") == 0 ? "week"
+                       : strcmp(range, "m") == 0 ? "month"
+                       : strcmp(range, "y") == 0 ? "year"
+                                                 : NULL;
+    cJSON *json = cJSON_CreateObject();
+    if (json == NULL) return NULL;
+    cJSON_AddStringToObject(json, "api_key", key != NULL ? key : "");
+    cJSON_AddStringToObject(json, "query", query);
+    cJSON_AddStringToObject(json, "search_depth", "advanced");
+    cJSON_AddFalseToObject(json, "include_answer");
+    cJSON_AddFalseToObject(json, "include_images");
+    cJSON_AddFalseToObject(json, "include_raw_content");
+    cJSON_AddNumberToObject(json, "max_results", count);
+    if (time != NULL) cJSON_AddStringToObject(json, "time_range", time);
+    char *body = cJSON_PrintUnformatted(json);
+    cJSON_Delete(json);
+    return body;
 }
 
 static char *dup_printf_result(char *buf, size_t n)
@@ -186,6 +215,9 @@ char *nc_search_text(const char *provider, const char *json, const char *query, 
                                                 "results");
         snippet_key = "description";
         label = "Brave";
+    } else if (provider != NULL && strcmp(provider, "tavily") == 0) {
+        list = cJSON_GetObjectItemCaseSensitive(root, "results");
+        label = "Tavily";
     } else {
         list = cJSON_GetObjectItemCaseSensitive(root, "results");
     }

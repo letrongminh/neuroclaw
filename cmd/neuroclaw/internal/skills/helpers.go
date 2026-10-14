@@ -180,7 +180,7 @@ func skillsRemoveFromWorkspace(workspace string, toolsConfig config.SkillsToolsC
 }
 
 func skillsInstallBuiltinCmd(workspace string) {
-	builtinSkillsDir := "./picoclaw/skills"
+	builtinSkillsDir := "./neuroclaw/skills"
 	workspaceSkillsDir := filepath.Join(workspace, "skills")
 
 	fmt.Printf("Copying builtin skills to workspace...\n")
@@ -221,7 +221,7 @@ func skillsListBuiltinCmd() {
 		fmt.Printf("Error loading config: %v\n", err)
 		return
 	}
-	builtinSkillsDir := filepath.Join(filepath.Dir(cfg.WorkspacePath()), "picoclaw", "skills")
+	builtinSkillsDir := filepath.Join(filepath.Dir(cfg.WorkspacePath()), "neuroclaw", "skills")
 
 	fmt.Println("\nAvailable Builtin Skills:")
 	fmt.Println("-----------------------")
@@ -303,9 +303,9 @@ func skillsSearchCmd(query string) {
 			fmt.Printf("     Version: %s\n", result.Version)
 		}
 		if result.RegistryName == "github" {
-			fmt.Printf("     Install: picoclaw skills install %s\n", result.Slug)
+			fmt.Printf("     Install: neuroclaw skills install %s\n", result.Slug)
 		} else {
-			fmt.Printf("     Install: picoclaw skills install --registry=%s %s\n", result.RegistryName, result.Slug)
+			fmt.Printf("     Install: neuroclaw skills install --registry=%s %s\n", result.RegistryName, result.Slug)
 		}
 		fmt.Println()
 	}

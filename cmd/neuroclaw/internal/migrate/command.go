@@ -13,11 +13,11 @@ func NewMigrateCommand() *cobra.Command {
 		Use:   "migrate",
 		Short: "Migrate from xxxclaw(openclaw, etc.) to neuroclaw",
 		Args:  cobra.NoArgs,
-		Example: `  picoclaw migrate
-  picoclaw migrate --from openclaw
-  picoclaw migrate --dry-run
-  picoclaw migrate --refresh
-  picoclaw migrate --force`,
+		Example: `  neuroclaw migrate
+  neuroclaw migrate --from openclaw
+  neuroclaw migrate --dry-run
+  neuroclaw migrate --refresh
+  neuroclaw migrate --force`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			m := migrate.NewMigrateInstance(opts)
 			result, err := m.Run(opts)

@@ -119,7 +119,9 @@ func TestMCPTool_ANeuroEdgeResultInAnUnknownContractIsNotDone(t *testing.T) {
 	manager := &MockMCPManager{
 		callToolFunc: func(ctx context.Context, serverName, toolName string, arguments map[string]any) (*mcp.CallToolResult, error) {
 			return &mcp.CallToolResult{
-				Content:           []mcp.Content{&mcp.TextContent{Text: `{"tool":"front_door_unlock","status":"MAYBE"}`}},
+				Content: []mcp.Content{
+					&mcp.TextContent{Text: `{"tool":"front_door_unlock","status":"MAYBE"}`},
+				},
 				StructuredContent: map[string]any{"tool": "front_door_unlock", "status": "MAYBE"},
 			}, nil
 		},

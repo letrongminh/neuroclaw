@@ -272,7 +272,7 @@ func (t *MCPTool) Execute(ctx context.Context, args map[string]any) *ToolResult 
 	if result.IsError {
 		errMsg := extractContentText(result.Content)
 		t.publishRuntimeEvent(ctx, runtimeevents.KindMCPToolCallEnd, startedAt, true, errMsg)
-		if guidance := neuroedgeGuidance(result.StructuredContent); guidance != "" {
+		if guidance := neuroedgeToolGuidance(t.tool.Meta, result.StructuredContent); guidance != "" {
 			errMsg = guidance + "\n\n" + errMsg
 		}
 		return ErrorResult(fmt.Sprintf("MCP tool returned error: %s", errMsg)).
@@ -282,7 +282,7 @@ func (t *MCPTool) Execute(ctx context.Context, args map[string]any) *ToolResult 
 	t.publishRuntimeEvent(ctx, runtimeevents.KindMCPToolCallEnd, startedAt, false, "")
 	normalized := t.normalizeResultContent(ctx, result.Content)
 	// NeuroClaw: a NeuroEdge BLOCK or REJECTED comes with fixed instructions, first.
-	if guidance := neuroedgeGuidance(result.StructuredContent); guidance != "" {
+	if guidance := neuroedgeToolGuidance(t.tool.Meta, result.StructuredContent); guidance != "" {
 		normalized.ForLLM = guidance + "\n\n" + normalized.ForLLM
 	}
 	return normalized

@@ -1,0 +1,44 @@
+name: neuroedge-contract
+# The contract between NeuroClaw and a NeuroEdge home box (NeuroEdge Q-83, DP-A-07, DP-COM-08):
+# the box at the pinned commit serves its demo and contract-bench agents over MCP (stdio, sim);
+# every tool must declare tool-result.v1, every result must validate, and the guidance must say
+# what happened. Upgrading the box is this one line plus a passing run (DP-NF-02).
+on:
+  push:
+    branches: [main]
+    paths: ["pkg/tools/integration/**", ".github/workflows/neuroedge-contract.yml"]
+  pull_request:
+    paths: ["pkg/tools/integration/**", ".github/workflows/neuroedge-contract.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  NEUROEDGE_REF: f1a8111d6d5fd611ef68a1f6a3a90363572265e7 # letrongminh/neuroedge-init main (PR #135)
+jobs:
+  contract:
+    name: Against the pinned NeuroEdge box
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: letrongminh/neuroedge-init
+          ref: ${{ env.NEUROEDGE_REF }}
+          path: neuroedge
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The box, at the pinned commit
+        run: |
+          python -m venv "$RUNNER_TEMP/box"
+          "$RUNNER_TEMP/box/bin/pip" install --quiet "./neuroedge/python[mcp]"
+      - name: NeuroClaw against it
+        env:
+          NEUROEDGE_REPO: ${{ github.workspace }}/neuroedge
+        run: |
+          NEUROEDGE_BIN="$RUNNER_TEMP/box/bin/neuroedge" \
+            go test -tags neuroedge -count=1 -run 'NeuroEdge' ./pkg/tools/integration/

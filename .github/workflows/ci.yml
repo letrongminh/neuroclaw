@@ -66,7 +66,7 @@ jobs:
           tar -xzf dist/neuroclaw_Linux_x86_64.tar.gz -C /tmp neuroclaw neuroclaw-launcher
           /tmp/neuroclaw --no-color version
           /tmp/neuroclaw-launcher -h 2>&1 | head -5 || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: release-dry-run
           path: |

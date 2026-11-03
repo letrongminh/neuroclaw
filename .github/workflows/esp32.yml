@@ -46,7 +46,7 @@ jobs:
         run: |
           . "$IDF_PATH/export.sh"
           esp32/scripts/build_targets.sh ${{ matrix.target }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: esp32-build-${{ matrix.target }}
@@ -73,7 +73,7 @@ jobs:
         run: |
           . "$IDF_PATH/export.sh"
           python3 esp32/scripts/qemu_e2e.py esp32/examples/qemu/build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: esp32-qemu-uart
